@@ -1,5 +1,34 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Entity/Player/PlayerControllerBase.h"
+#include "Engine/LocalPlayer.h"
+#include "EnhancedInputSubsystems.h"
 
+APlayerControllerBase::APlayerControllerBase() :
+	InputMappingContext(nullptr),
+	MoveAction(nullptr),
+	JumpAction(nullptr),
+	LookAction(nullptr),
+	SprintAction(nullptr),
+	AttackAction(nullptr),
+	HeavyAttackAction(nullptr),
+	LockOnAction(nullptr),
+	DodgeAction(nullptr),
+	ParryingAction(nullptr)
+{
+}
+
+void APlayerControllerBase::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (const ULocalPlayer* LocalPlayer = GetLocalPlayer())
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = 
+			LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+		{
+			if (InputMappingContext)
+			{
+				Subsystem->AddMappingContext(InputMappingContext, 0);
+			}
+		}
+	}
+}
