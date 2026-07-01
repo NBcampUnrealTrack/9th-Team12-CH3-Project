@@ -1,4 +1,4 @@
-# 세키로라이크 보스 1:1 전투 프로젝트
+# 가제: Katana
 
 > **내일배움캠프 Unreal Track 9기 Chapter 3 12조 프로젝트**  
 > Unreal Engine 5.8 기반 세키로라이크 보스 1:1 전투 프로젝트
@@ -9,7 +9,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 프로젝트명 | 세키로라이크 보스 1:1 전투 프로젝트 |
+| 프로젝트명 | Katana |
 | 팀명 | 12조 |
 | 저장소 | https://github.com/NBcampUnrealTrack/9th-Team12-CH3-Project.git |
 | Unreal Engine | 5.8 |
