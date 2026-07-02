@@ -22,4 +22,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	FName TargetActorKeyName = TEXT("TargetActor");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName SelectedActionKeyName = TEXT("SelectedAction");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName SelectedPatternKeyName = TEXT("SelectedPattern");
 };

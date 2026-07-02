@@ -27,7 +27,7 @@ void UEnemyAttackComponent::BeginPlay()
 	// ...
 }
 
-bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor)
+bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern)
 {
 	AActor* OwnerActor = GetOwner();
 
@@ -39,6 +39,17 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor)
 	if (!bCanAttack)
 	{
 		return false;
+	}
+
+	if (SelectedAction == 1)
+	{
+		// TODO: 일반공격
+		UE_LOG(LogTemp, Log, TEXT("Execute Normal Attack Pattern: %d"), SelectedPattern);
+	}
+	else if (SelectedAction == 2)
+	{
+		// TODO: 강공격
+		UE_LOG(LogTemp, Log, TEXT("Execute Strong Attack Pattern: %d"), SelectedPattern);
 	}
 
 	const float DistanceToTarget = FVector::Dist(

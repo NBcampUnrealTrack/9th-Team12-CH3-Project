@@ -17,7 +17,7 @@ public:
 	UEnemyAttackComponent();
 
 	UFUNCTION(BlueprintCallable, Category="Attack")
-	bool ExecuteAttack(AActor* TargetActor);
+	bool ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern);
 
 protected:
 	virtual void BeginPlay() override;

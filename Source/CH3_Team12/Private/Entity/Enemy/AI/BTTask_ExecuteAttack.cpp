@@ -27,6 +27,9 @@ EBTNodeResult::Type UBTTask_ExecuteAttack::ExecuteTask(UBehaviorTreeComponent& O
 		return EBTNodeResult::Failed;
 	}
 
+	const int32 SelectedAction = BlackboardComponent->GetValueAsInt(SelectedActionKeyName);
+	const int32 SelectedPattern = BlackboardComponent->GetValueAsInt(SelectedPatternKeyName);
+
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	if (!AIController)
 	{
@@ -45,6 +48,6 @@ EBTNodeResult::Type UBTTask_ExecuteAttack::ExecuteTask(UBehaviorTreeComponent& O
 		return EBTNodeResult::Failed;
 	}
 
-	const bool bAttackStarted = EnemyAttackComponent->ExecuteAttack(TargetActor);
+	const bool bAttackStarted = EnemyAttackComponent->ExecuteAttack(TargetActor, SelectedAction, SelectedPattern);
 	return bAttackStarted ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }
