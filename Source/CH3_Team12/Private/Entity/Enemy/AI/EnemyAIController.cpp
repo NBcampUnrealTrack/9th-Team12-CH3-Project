@@ -30,14 +30,14 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 		return;
 	}
 
-	UBehaviorTree* EnemyBehaviorTree = EnemyCharacter->GetBehaviorTreeAsset();
-	if (!EnemyBehaviorTree)
+	UBehaviorTree* EnemyBehaviorTreeAsset = EnemyCharacter->GetBehaviorTreeAsset();
+	if (!EnemyBehaviorTreeAsset)
 	{
 		return;
 	}
 
 
-	UBlackboardData* BlackboardAsset = BehaviorTreeAsset->BlackboardAsset;
+	UBlackboardData* BlackboardAsset = EnemyBehaviorTreeAsset->BlackboardAsset;
 	if (!BlackboardAsset)
 	{
 		return;
@@ -53,8 +53,7 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 
 
 	BlackboardComponent->SetValueAsVector(HomeLocationKeyName, InPawn->GetActorLocation());
-
-	BehaviorTreeComponent->StartTree(*BehaviorTreeAsset);
+	BehaviorTreeComponent->StartTree(*EnemyBehaviorTreeAsset);
 }
 
 void AEnemyAIController::OnUnPossess()
