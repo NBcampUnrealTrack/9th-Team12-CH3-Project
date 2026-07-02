@@ -3,11 +3,15 @@
 
 #include "Entity/Enemy/AI/EnemyAIController.h"
 
+#include "TimerManager.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Engine/Engine.h"
 #include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogEnemyAIController, Log, All);
 
 AEnemyAIController::AEnemyAIController()
 {
@@ -19,6 +23,11 @@ AEnemyAIController::AEnemyAIController()
 void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("EnemyAIController OnPossess"));
+	}
 
 	if (!BehaviorTreeComponent || !BlackboardComponent)
 	{
@@ -55,11 +64,15 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 
 	BlackboardComponent->SetValueAsVector(HomeLocationKeyName, InPawn->GetActorLocation());
 
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (PlayerPawn)
-	{
-		BlackboardComponent->SetValueAsObject(TargetActorKeyName, PlayerPawn);
-	}
+	UpdateTargetActor();
+
+	GetWorldTimerManager().SetTimer(
+		TargetActorTimerHandle,
+		this,
+		&AEnemyAIController::UpdateTargetActor,
+		0.2f,
+		true
+	);
 
 	BehaviorTreeComponent->StartTree(*EnemyBehaviorTreeAsset);
 }
@@ -72,4 +85,25 @@ void AEnemyAIController::OnUnPossess()
 	}
 
 	Super::OnUnPossess();
+}
+
+
+void AEnemyAIController::UpdateTargetActor()
+{
+	if (!BlackboardComponent)
+	{
+		UE_LOG(LogEnemyAIController, Error, TEXT("UpdateTargetActor Failed: BlackboardComponent is null"));
+	}
+
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!PlayerPawn)
+	{
+		UE_LOG(LogEnemyAIController, Warning, TEXT("UpdateTargetActor Failed: PlayerPawn is null"));
+	}
+
+	BlackboardComponent->SetValueAsObject(TargetActorKeyName, PlayerPawn);
+
+	UE_LOG(LogEnemyAIController, Log, TEXT("UpdateTargetActor Success: %s"), *GetNameSafe(PlayerPawn));
+
+	GetWorldTimerManager().ClearTimer(TargetActorTimerHandle);
 }
