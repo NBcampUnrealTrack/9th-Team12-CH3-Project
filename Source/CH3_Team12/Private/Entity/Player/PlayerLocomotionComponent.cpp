@@ -92,5 +92,3 @@ void UPlayerLocomotionComponent::DoSprint(bool bStartSprint)
 		MoveComp->MaxWalkSpeed = NormalWalkSpeed;
 	}
 }
-
-
