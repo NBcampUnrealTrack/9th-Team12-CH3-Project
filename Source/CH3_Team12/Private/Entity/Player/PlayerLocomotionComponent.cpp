@@ -1,4 +1,6 @@
 #include "Entity/Player/PlayerLocomotionComponent.h"
+
+#include "CombatGameplayTags.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -23,8 +25,7 @@ void UPlayerLocomotionComponent::DoJump(bool bStartJump) const
 	if (bStartJump)	// 점프 시작
 	{
 		UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
-		if (StateComp &&
-			StateComp->HasStateTag(FGameplayTag::RequestGameplayTag(TEXT("State.Movement.Locked"))))
+		if (StateComp && StateComp->HasStateTag(CombatTags::State_Movement_Locked))
 		{
 			return;	// 이동 불가 시
 		}
@@ -42,7 +43,7 @@ void UPlayerLocomotionComponent::DoMove(const FVector2D& MovementVector)
 
 	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
 	
-	if (StateComp->HasStateTag(FGameplayTag::RequestGameplayTag(TEXT("State.Movement.Locked"))))
+	if (StateComp && StateComp->HasStateTag(CombatTags::State_Movement_Locked))
 	{
 		return;
 	}
@@ -71,25 +72,21 @@ void UPlayerLocomotionComponent::DoSprint(bool bStartSprint)
 
 	if (bStartSprint)	// 달리기 시작
 	{
-		if (StateComp->HasStateTag(
-			FGameplayTag::RequestGameplayTag(TEXT("State.Movement.Locked"))) || 
+		if (StateComp->HasStateTag(CombatTags::State_Movement_Locked) || 
 			MoveComp->Velocity.IsNearlyZero())
 		{
 			return;
 		}
 
-		StateComp->AddStateTag(
-				FGameplayTag::RequestGameplayTag(TEXT("State.Movement.Sprinting")));
+		StateComp->AddStateTag(CombatTags::State_Movement_Sprinting);
         
 		MoveComp->MaxWalkSpeed = SprintSpeed;
 	}
 	else
 	{
-		if (StateComp->HasStateTag(
-			FGameplayTag::RequestGameplayTag(TEXT("State.Movement.Sprinting"))))
+		if (StateComp->HasStateTag(CombatTags::State_Movement_Locked))
 		{
-			StateComp->RemoveStateTag(
-				FGameplayTag::RequestGameplayTag(TEXT("State.Movement.Sprinting")));
+			StateComp->RemoveStateTag(CombatTags::State_Movement_Locked);
 		}
         
 		MoveComp->MaxWalkSpeed = NormalWalkSpeed;

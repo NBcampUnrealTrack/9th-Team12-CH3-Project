@@ -15,7 +15,7 @@ class CH3_TEAM12_API UPlayerLocomotionComponent : public UActorComponent
 
 public:	
 	UPlayerLocomotionComponent();
-
+	
 	virtual void BeginPlay() override;
 	
 public:
