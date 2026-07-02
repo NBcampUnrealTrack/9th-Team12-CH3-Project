@@ -1,4 +1,4 @@
-﻿#include "CombatGameplayTags.h"
+﻿#include "GameplayTags/CombatGameplayTags.h"
 
 namespace CombatTags
 {
@@ -40,5 +40,15 @@ namespace CombatTags
 	UE_DEFINE_GAMEPLAY_TAG(
 		State_Movement_Locked,
 		"State.Movement.Locked"
+	);
+
+	UE_DEFINE_GAMEPLAY_TAG(
+		CombatTags::State_Hit_PostureBroken,
+		TEXT("State.Hit.PostureBroken")
+	);
+
+	UE_DEFINE_GAMEPLAY_TAG(
+		CombatTags::State_Hit_Dead,
+		TEXT("State.Hit.Dead")
 	);
 }
