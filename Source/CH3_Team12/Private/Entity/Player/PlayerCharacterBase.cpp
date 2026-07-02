@@ -2,6 +2,8 @@
 
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/StateTagComponent.h"
+#include "EnhancedInputComponent.h"
+#include "Entity/Player/PlayerControllerBase.h"
 
 // Sets default values
 APlayerCharacterBase::APlayerCharacterBase()
@@ -9,14 +11,12 @@ APlayerCharacterBase::APlayerCharacterBase()
 
 	PrimaryActorTick.bCanEverTick = true;
 
-	StateComponent = CreateDefaultSubobject<UStateTagComponent>(
-		TEXT("StateComponent")
-	);
+	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateComponent"));
 }
 
-UStateTagComponent* APlayerCharacterBase::GetStateComponent() const
+UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
 {
-	return StateComponent;
+	return StateTagComponent;
 }
 
 // Called when the game starts or when spawned
@@ -34,9 +34,22 @@ void APlayerCharacterBase::Tick(float DeltaTime)
 }
 
 // Called to bind functionality to input
-void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void APlayerCharacterBase::SetupPlayerInputComponent(
+	UInputComponent* PlayerInputComponent
+)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	UEnhancedInputComponent* EnhancedInputComponent =
+		Cast<UEnhancedInputComponent>(PlayerInputComponent);
+
+	if (!EnhancedInputComponent)
+	{
+		return;
+	}
+
+	APlayerControllerBase* PlayerControllerBase = Cast<APlayerControllerBase>(GetController());
+	if (!PlayerControllerBase) return;
 
 }
 
