@@ -7,6 +7,7 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Entity/Enemy/EnemyCharacterBase.h"
+#include "Kismet/GameplayStatics.h"
 
 AEnemyAIController::AEnemyAIController()
 {
@@ -53,6 +54,13 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 
 
 	BlackboardComponent->SetValueAsVector(HomeLocationKeyName, InPawn->GetActorLocation());
+
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (PlayerPawn)
+	{
+		BlackboardComponent->SetValueAsObject(TargetActorKeyName, PlayerPawn);
+	}
+
 	BehaviorTreeComponent->StartTree(*EnemyBehaviorTreeAsset);
 }
 
