@@ -1,4 +1,5 @@
 #include "Entity/Player/PlayerCombatComponent.h"
+#include "InputActionValue.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -9,7 +10,6 @@ UPlayerCombatComponent::UPlayerCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	
-	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 }
 
 
@@ -17,10 +17,10 @@ void UPlayerCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
+	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 }
 
-void UPlayerCombatComponent::Attack()
+void UPlayerCombatComponent::Attack(const FInputActionValue& value)
 {
 	if (IsBusy())
 	{
@@ -35,7 +35,7 @@ void UPlayerCombatComponent::Attack()
 	StartAttack(EAttackType::Light);
 }
 
-void UPlayerCombatComponent::HeavyAttack()
+void UPlayerCombatComponent::HeavyAttack(const FInputActionValue& value)
 {
 	if (!CanAttack())
 	{
@@ -43,6 +43,23 @@ void UPlayerCombatComponent::HeavyAttack()
 	}
 
 	StartAttack(EAttackType::Heavy);
+}
+
+void UPlayerCombatComponent::Dodge(const FInputActionValue& value)
+{
+	if (!CanDodge())
+	{
+		return;
+	}
+
+	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Dodging);
+
+	OwnerCharacter->PlayAnimMontage(DodgeMontage);
+}
+
+void UPlayerCombatComponent::LockOn(const FInputActionValue& value)
+{
+	
 }
 
 void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
@@ -140,18 +157,6 @@ void UPlayerCombatComponent::DisableInvincible()
 	bInvincible = false;
 
 	// Status.Invincible 제거
-}
-
-void UPlayerCombatComponent::Dodge()
-{
-	if (!CanDodge())
-	{
-		return;
-	}
-
-	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Dodging);
-
-	OwnerCharacter->PlayAnimMontage(DodgeMontage);
 }
 
 void UPlayerCombatComponent::EndDodge()
