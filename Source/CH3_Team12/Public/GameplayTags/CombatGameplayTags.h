@@ -15,4 +15,7 @@ namespace CombatTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_Sprinting);
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_Locked);
+	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hit_PostureBroken);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hit_Dead);
 }
