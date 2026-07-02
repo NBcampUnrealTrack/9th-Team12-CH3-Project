@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "EnemyCharacterBase.generated.h"
 
+class UBehaviorTree;
+
 UCLASS()
 class CH3_TEAM12_API AEnemyCharacterBase : public ACharacter
 {
@@ -18,6 +20,9 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
 
 public:	
 	// Called every frame
@@ -25,5 +30,7 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 
 };
