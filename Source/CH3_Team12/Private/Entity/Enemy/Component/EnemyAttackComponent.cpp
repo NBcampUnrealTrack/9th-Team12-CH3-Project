@@ -5,7 +5,6 @@
 
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
-#include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 
@@ -74,16 +73,6 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor)
 		0,
 		2.f
 	);
-
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			1.f,
-			FColor::Red,
-			TEXT("EnemyAttack Execute")
-		);
-	}
 
 	GetWorld()->GetTimerManager().SetTimer(
 		AttackCooldownTimerHandle,
