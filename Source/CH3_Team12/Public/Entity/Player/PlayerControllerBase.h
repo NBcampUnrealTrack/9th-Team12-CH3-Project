@@ -16,24 +16,36 @@ public:
 	APlayerControllerBase();
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputMappingContext* InputMappingContext;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* MoveAction;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* JumpAction;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* LookAction;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* SprintAction;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* AttackAction;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* LockOnAction;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* DodgeAction;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* ParryingAction;
 	
 	virtual void BeginPlay() override;
+	
+public:
+	// getter
+	FORCEINLINE UInputMappingContext* GetInputMappingContext() const { return InputMappingContext; }
+	FORCEINLINE UInputAction* GetMoveAction() const { return MoveAction; }
+	FORCEINLINE UInputAction* GetJumpAction() const { return JumpAction; }
+	FORCEINLINE UInputAction* GetLookAction() const { return LookAction; }
+	FORCEINLINE UInputAction* GetSprintAction() const { return SprintAction; }
+	FORCEINLINE UInputAction* GetAttackAction() const { return AttackAction; }
+	FORCEINLINE UInputAction* GetLockOnAction() const { return LockOnAction; }
+	FORCEINLINE UInputAction* GetDodgeAction() const { return DodgeAction; }
+	FORCEINLINE UInputAction* GetParryingAction() const { return ParryingAction; }
 };
