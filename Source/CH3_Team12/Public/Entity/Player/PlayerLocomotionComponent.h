@@ -20,9 +20,11 @@ public:
 	virtual void BeginPlay() override;
 	
 public:
-	void DoJump(bool bStartJump) const;
+	void DoStartJump(const FInputActionValue& value);
+	void DoStopJump(const FInputActionValue& value);
+	void DoStartSprint(const FInputActionValue& value);
+	void DoStopSprint(const FInputActionValue& value);
 	void DoMove(const FInputActionValue& value);
-	void DoSprint(bool bStartSprint);
 	void Look(const FInputActionValue& value);
 	
 	// getter
