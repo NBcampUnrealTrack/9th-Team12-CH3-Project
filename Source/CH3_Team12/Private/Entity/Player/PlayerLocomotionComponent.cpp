@@ -1,6 +1,5 @@
 #include "Entity/Player/PlayerLocomotionComponent.h"
-
-#include "CombatGameplayTags.h"
+#include "GameplayTags/CombatGameplayTags.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
