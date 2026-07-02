@@ -60,6 +60,7 @@ Plugins/**/Saved/
 *.out
 *.app
 *.ipa
+Content/ParagonRampage/
 
 # ------------------------------------------------------------
 # Logs / temporary files
