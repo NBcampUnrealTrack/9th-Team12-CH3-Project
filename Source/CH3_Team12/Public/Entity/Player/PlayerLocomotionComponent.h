@@ -7,6 +7,7 @@
 class ACharacter;
 class UAnimMontage;
 class APlayerCharacterBase;
+struct FInputActionValue;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CH3_TEAM12_API UPlayerLocomotionComponent : public UActorComponent
@@ -15,13 +16,16 @@ class CH3_TEAM12_API UPlayerLocomotionComponent : public UActorComponent
 
 public:	
 	UPlayerLocomotionComponent();
-
+	
 	virtual void BeginPlay() override;
 	
 public:
-	void DoJump(bool bStartJump) const;
-	void DoMove(const FVector2D& MovementVector);
-	void DoSprint(bool bStartSprint);
+	void DoStartJump(const FInputActionValue& value);
+	void DoStopJump(const FInputActionValue& value);
+	void DoStartSprint(const FInputActionValue& value);
+	void DoStopSprint(const FInputActionValue& value);
+	void DoMove(const FInputActionValue& value);
+	void Look(const FInputActionValue& value);
 	
 	// getter
 	FORCEINLINE float GetNormalWalkSpeed() const { return NormalWalkSpeed; }
