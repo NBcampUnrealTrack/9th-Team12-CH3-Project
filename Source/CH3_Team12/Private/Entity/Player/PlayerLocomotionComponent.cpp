@@ -26,23 +26,25 @@ void UPlayerLocomotionComponent::Look(const FInputActionValue& value)
 	OwnerCharacter->AddControllerPitchInput(LookInput.Y);
 }
 
-void UPlayerLocomotionComponent::DoJump(bool bStartJump) const
+void UPlayerLocomotionComponent::DoStartJump(const FInputActionValue& value)
 {
 	if (!OwnerCharacter) return;
 	
-	if (bStartJump)	// 점프 시작
+	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
+	
+	if (StateComp && StateComp->HasStateTag(CombatTags::State_Movement_Locked))
 	{
-		UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
-		if (StateComp && StateComp->HasStateTag(CombatTags::State_Movement_Locked))
-		{
-			return;	// 이동 불가 시
-		}
-		OwnerCharacter->Jump();
+		return;	// 이동 불가 시
 	}
-	else	// 점프 끝
-	{
-		OwnerCharacter->StopJumping();
-	}
+	
+	OwnerCharacter->Jump();
+}
+
+void UPlayerLocomotionComponent::DoStopJump(const FInputActionValue& value)
+{
+	if (!OwnerCharacter) return;
+	
+	OwnerCharacter->StopJumping();
 }
 
 void UPlayerLocomotionComponent::DoMove(const FInputActionValue& value)
@@ -69,7 +71,7 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& value)
 }
 
 // bStateSprint 가 true 일 때 달리기 false 면 걷기
-void UPlayerLocomotionComponent::DoSprint(bool bStartSprint)
+void UPlayerLocomotionComponent::DoStartSprint(const FInputActionValue& value)
 {
 	if (!OwnerCharacter || !OwnerCharacter->GetStateTagComponent()) return;
     
@@ -78,25 +80,30 @@ void UPlayerLocomotionComponent::DoSprint(bool bStartSprint)
 	
 	if (!MoveComp) return;
 
-	if (bStartSprint)	// 달리기 시작
+	if (StateComp->HasStateTag(CombatTags::State_Movement_Locked) || 
+		MoveComp->Velocity.IsNearlyZero())
 	{
-		if (StateComp->HasStateTag(CombatTags::State_Movement_Locked) || 
-			MoveComp->Velocity.IsNearlyZero())
-		{
-			return;
-		}
+		return;
+	}
 
-		StateComp->AddStateTag(CombatTags::State_Movement_Sprinting);
+	StateComp->AddStateTag(CombatTags::State_Movement_Sprinting);
         
-		MoveComp->MaxWalkSpeed = SprintSpeed;
-	}
-	else
+	MoveComp->MaxWalkSpeed = SprintSpeed;
+}
+
+void UPlayerLocomotionComponent::DoStopSprint(const FInputActionValue& value)
+{
+	if (!OwnerCharacter || !OwnerCharacter->GetStateTagComponent()) return;
+	
+	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
+	UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
+	
+	if (!MoveComp) return;
+	
+	if (StateComp->HasStateTag(CombatTags::State_Movement_Locked))
 	{
-		if (StateComp->HasStateTag(CombatTags::State_Movement_Locked))
-		{
-			StateComp->RemoveStateTag(CombatTags::State_Movement_Locked);
-		}
-        
-		MoveComp->MaxWalkSpeed = NormalWalkSpeed;
+		StateComp->RemoveStateTag(CombatTags::State_Movement_Locked);
 	}
+        
+	MoveComp->MaxWalkSpeed = NormalWalkSpeed;
 }
