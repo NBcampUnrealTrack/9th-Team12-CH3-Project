@@ -17,35 +17,35 @@ public:
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputMappingContext* InputMappingContext;
+	TObjectPtr<UInputMappingContext> InputMappingContext;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* MoveAction;
+	TObjectPtr<UInputAction> MoveAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* JumpAction;
+	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* LookAction;
+	TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* SprintAction;
+	TObjectPtr<UInputAction> SprintAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* AttackAction;
+	TObjectPtr<UInputAction> AttackAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* LockOnAction;
+	TObjectPtr<UInputAction> LockOnAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* DodgeAction;
+	TObjectPtr<UInputAction> DodgeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* ParryingAction;
+	TObjectPtr<UInputAction> ParryingAction;
 	
 	virtual void BeginPlay() override;
 	
 public:
 	// getter
-	FORCEINLINE UInputMappingContext* GetInputMappingContext() const { return InputMappingContext; }
-	FORCEINLINE UInputAction* GetMoveAction() const { return MoveAction; }
-	FORCEINLINE UInputAction* GetJumpAction() const { return JumpAction; }
-	FORCEINLINE UInputAction* GetLookAction() const { return LookAction; }
-	FORCEINLINE UInputAction* GetSprintAction() const { return SprintAction; }
-	FORCEINLINE UInputAction* GetAttackAction() const { return AttackAction; }
-	FORCEINLINE UInputAction* GetLockOnAction() const { return LockOnAction; }
-	FORCEINLINE UInputAction* GetDodgeAction() const { return DodgeAction; }
-	FORCEINLINE UInputAction* GetParryingAction() const { return ParryingAction; }
+	FORCEINLINE TObjectPtr<UInputMappingContext> GetInputMappingContext() const { return InputMappingContext; }
+	FORCEINLINE TObjectPtr<UInputAction> GetMoveAction() const { return MoveAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetJumpAction() const { return JumpAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetLookAction() const { return LookAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetSprintAction() const { return SprintAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetAttackAction() const { return AttackAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetLockOnAction() const { return LockOnAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetDodgeAction() const { return DodgeAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetParryingAction() const { return ParryingAction; }
 };
