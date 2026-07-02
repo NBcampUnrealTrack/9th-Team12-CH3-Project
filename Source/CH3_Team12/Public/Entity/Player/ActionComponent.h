@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "ActionComponent.generated.h"
 
+class ACharacter;
 class UAnimMontage;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -19,10 +20,14 @@ protected:
 	
 public:
 	void DoJump();
-	void DoDodge();
+	void DoMove();
+	void DoSprint();
 	
 protected:
 	UPROPERTY(EditAnywhere, Category = "Action|Montages")
 	TObjectPtr<UAnimMontage> DodgeMontage;
 	
+private:
+	UPROPERTY()
+	TObjectPtr<ACharacter> OwnerCharacter;
 };
