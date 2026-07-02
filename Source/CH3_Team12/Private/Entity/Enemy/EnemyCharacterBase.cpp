@@ -3,7 +3,9 @@
 
 #include "Entity/Enemy/EnemyCharacterBase.h"
 
+#include "Engine/Engine.h"
 #include "Entity/Enemy/AI/EnemyAIController.h"
+#include "Entity/Enemy/Component/EnemyAttackComponent.h"
 
 // Sets default values
 AEnemyCharacterBase::AEnemyCharacterBase()
@@ -13,12 +15,18 @@ AEnemyCharacterBase::AEnemyCharacterBase()
 
 	AIControllerClass = AEnemyAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	EnemyAttackComponent = CreateDefaultSubobject<UEnemyAttackComponent>(TEXT("EnemyAttackComponent"));
 }
 
 // Called when the game starts or when spawned
 void AEnemyCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, TEXT("EnemyCharacterBase BeginPlay"));
+	}
 }
 
 // Called every frame
