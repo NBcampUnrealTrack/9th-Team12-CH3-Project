@@ -60,6 +60,7 @@ Plugins/**/Saved/
 *.out
 *.app
 *.ipa
+Content/ParagonRampage/
 
 # ------------------------------------------------------------
 # Logs / temporary files
@@ -98,3 +99,9 @@ desktop.ini
 !Config/**
 !Content/**
 !Plugins/**
+
+# ------------------------------------------------------------
+# Marketplace/sample assets kept local only
+# ------------------------------------------------------------
+Content/ParagonRampage/
+Content/ParagonRampage/**
