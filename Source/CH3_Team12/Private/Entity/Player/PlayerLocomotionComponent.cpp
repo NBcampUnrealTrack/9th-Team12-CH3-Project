@@ -18,6 +18,14 @@ void UPlayerLocomotionComponent::BeginPlay()
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 }
 
+void UPlayerLocomotionComponent::Look(const FInputActionValue& value)
+{
+	FVector2D LookInput = value.Get<FVector2D>();
+
+	OwnerCharacter->AddControllerYawInput(LookInput.X);
+	OwnerCharacter->AddControllerPitchInput(LookInput.Y);
+}
+
 void UPlayerLocomotionComponent::DoJump(bool bStartJump) const
 {
 	if (!OwnerCharacter) return;
