@@ -6,6 +6,7 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Entity/Enemy/EnemyCharacterBase.h"
 
 AEnemyAIController::AEnemyAIController()
 {
@@ -18,7 +19,19 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	if (!BehaviorTreeComponent)
+	if (!BehaviorTreeComponent || !BlackboardComponent)
+	{
+		return;
+	}
+
+	AEnemyCharacterBase* EnemyCharacter = Cast<AEnemyCharacterBase>(InPawn);
+	if (!EnemyCharacter)
+	{
+		return;
+	}
+
+	UBehaviorTree* EnemyBehaviorTree = EnemyCharacter->GetBehaviorTreeAsset();
+	if (!EnemyBehaviorTree)
 	{
 		return;
 	}
@@ -38,10 +51,8 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 		return;
 	}
 
-	if (InPawn)
-	{
-		BlackboardComponent->SetValueAsVector(HomeLocationKeyName, InPawn->GetActorLocation());
-	}
+
+	BlackboardComponent->SetValueAsVector(HomeLocationKeyName, InPawn->GetActorLocation());
 
 	BehaviorTreeComponent->StartTree(*BehaviorTreeAsset);
 }
