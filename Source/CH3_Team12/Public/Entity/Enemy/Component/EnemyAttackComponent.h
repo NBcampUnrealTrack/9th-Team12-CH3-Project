@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "EnemyAttackComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackFinished);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UEnemyAttackComponent : public UActorComponent
@@ -18,6 +19,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Attack")
 	bool ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern);
+
+
+	UPROPERTY(BlueprintAssignable, Category="Attack")
+	FOnAttackFinished OnAttackFinished;
 
 protected:
 	virtual void BeginPlay() override;

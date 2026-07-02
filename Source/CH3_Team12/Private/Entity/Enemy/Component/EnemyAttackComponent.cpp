@@ -44,11 +44,13 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 	if (SelectedAction == 1)
 	{
 		// TODO: 일반공격
+		// NOTE: 공격Montage 끝나면 OnAttackFinished.Broadcast() 호출
 		UE_LOG(LogTemp, Log, TEXT("Execute Normal Attack Pattern: %d"), SelectedPattern);
 	}
 	else if (SelectedAction == 2)
 	{
 		// TODO: 강공격
+		// NOTE: 공격Montage 끝나면 OnAttackFinished.Broadcast() 호출
 		UE_LOG(LogTemp, Log, TEXT("Execute Strong Attack Pattern: %d"), SelectedPattern);
 	}
 
