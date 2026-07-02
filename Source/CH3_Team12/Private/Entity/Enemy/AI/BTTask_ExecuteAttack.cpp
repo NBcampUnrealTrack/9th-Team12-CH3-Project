@@ -8,8 +8,6 @@
 #include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Entity/Enemy/Component/EnemyAttackComponent.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogBTTaskRotateToTarget, Log, All);
-
 UBTTask_ExecuteAttack::UBTTask_ExecuteAttack()
 {
 	NodeName = TEXT("Execute Attack");
@@ -17,8 +15,6 @@ UBTTask_ExecuteAttack::UBTTask_ExecuteAttack()
 
 EBTNodeResult::Type UBTTask_ExecuteAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	UE_LOG(LogBTTaskRotateToTarget, Log, TEXT("ExecuteTask: Attack"));
-
 	UBlackboardComponent* BlackboardComponent = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComponent)
 	{
