@@ -3,6 +3,7 @@
 
 #include "Entity/Enemy/AI/EnemyAIController.h"
 
+#include "TimerManager.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -55,11 +56,15 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 
 	BlackboardComponent->SetValueAsVector(HomeLocationKeyName, InPawn->GetActorLocation());
 
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (PlayerPawn)
-	{
-		BlackboardComponent->SetValueAsObject(TargetActorKeyName, PlayerPawn);
-	}
+	UpdateTargetActor();
+
+	GetWorldTimerManager().SetTimer(
+		TargetActorTimerHandle,
+		this,
+		&AEnemyAIController::UpdateTargetActor,
+		0.2f,
+		true
+	);
 
 	BehaviorTreeComponent->StartTree(*EnemyBehaviorTreeAsset);
 }
@@ -72,4 +77,23 @@ void AEnemyAIController::OnUnPossess()
 	}
 
 	Super::OnUnPossess();
+}
+
+
+void AEnemyAIController::UpdateTargetActor()
+{
+	if (!BlackboardComponent)
+	{
+		return;
+	}
+
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!PlayerPawn)
+	{
+		return;
+	}
+
+	BlackboardComponent->SetValueAsObject(TargetActorKeyName, PlayerPawn);
+
+	GetWorldTimerManager().ClearTimer(TargetActorTimerHandle);
 }

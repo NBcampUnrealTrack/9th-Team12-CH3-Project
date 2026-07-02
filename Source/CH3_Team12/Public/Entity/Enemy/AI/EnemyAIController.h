@@ -33,4 +33,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	FName HomeLocationKeyName = TEXT("HomeLocation");
+
+	FTimerHandle TargetActorTimerHandle;
+	void UpdateTargetActor();
 };
