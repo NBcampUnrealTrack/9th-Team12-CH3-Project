@@ -3,7 +3,6 @@
 
 #include "Entity/Enemy/EnemyCharacterBase.h"
 
-#include "Engine/Engine.h"
 #include "Entity/Enemy/AI/EnemyAIController.h"
 #include "Entity/Enemy/Component/EnemyAttackComponent.h"
 
@@ -22,11 +21,6 @@ AEnemyCharacterBase::AEnemyCharacterBase()
 void AEnemyCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, TEXT("EnemyCharacterBase BeginPlay"));
-	}
 }
 
 // Called every frame
