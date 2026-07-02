@@ -6,8 +6,10 @@
 #include "GameFramework/Character.h"
 #include "PlayerCharacterBase.generated.h"
 
-class UStateTagComponent;
 class APlayerControllerBase;
+class UStateTagComponent;
+class UPlayerLocomotionComponent;
+class UPlayerAttributeComponent;
 
 UCLASS()
 class CH3_TEAM12_API APlayerCharacterBase : public ACharacter
@@ -18,6 +20,8 @@ public:
 	// Sets default values for this character's properties
 	APlayerCharacterBase();
     UStateTagComponent* GetStateTagComponent() const;
+	UPlayerLocomotionComponent* GetLocomotionComponent() const;
+	UPlayerAttributeComponent* GetAttributeComponent() const;
 
 protected:
 	// Called when the game starts or when spawned
@@ -25,6 +29,10 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UStateTagComponent> StateTagComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UPlayerLocomotionComponent> LocomotionComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UPlayerAttributeComponent> AttributeComponent;
 
 public:	
 	// Called every frame
