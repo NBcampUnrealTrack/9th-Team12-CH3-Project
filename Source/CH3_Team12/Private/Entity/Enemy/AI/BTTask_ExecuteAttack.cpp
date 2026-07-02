@@ -11,6 +11,7 @@
 UBTTask_ExecuteAttack::UBTTask_ExecuteAttack()
 {
 	NodeName = TEXT("Execute Attack");
+	bCreateNodeInstance = true;
 }
 
 EBTNodeResult::Type UBTTask_ExecuteAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -26,6 +27,9 @@ EBTNodeResult::Type UBTTask_ExecuteAttack::ExecuteTask(UBehaviorTreeComponent& O
 	{
 		return EBTNodeResult::Failed;
 	}
+
+	const int32 SelectedAction = BlackboardComponent->GetValueAsInt(SelectedActionKeyName);
+	const int32 SelectedPattern = BlackboardComponent->GetValueAsInt(SelectedPatternKeyName);
 
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	if (!AIController)
@@ -44,7 +48,49 @@ EBTNodeResult::Type UBTTask_ExecuteAttack::ExecuteTask(UBehaviorTreeComponent& O
 	{
 		return EBTNodeResult::Failed;
 	}
+	EnemyAttackComponent->OnAttackFinished.AddDynamic(this, &UBTTask_ExecuteAttack::HandleAttackFinished);
+	const bool bAttackStarted = EnemyAttackComponent->ExecuteAttack(TargetActor, SelectedAction, SelectedPattern);
 
-	const bool bAttackStarted = EnemyAttackComponent->ExecuteAttack(TargetActor);
-	return bAttackStarted ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
+	if (!bAttackStarted)
+	{
+		EnemyAttackComponent->OnAttackFinished.RemoveDynamic(
+			this,
+			&UBTTask_ExecuteAttack::HandleAttackFinished
+		);
+
+		CachedOwnerComp = nullptr;
+		CachedEnemyAttackComponent = nullptr;
+
+		return EBTNodeResult::Failed;
+	}
+
+	return EBTNodeResult::InProgress;
+}
+
+
+void UBTTask_ExecuteAttack::HandleAttackFinished()
+{
+	if (!CachedOwnerComp)
+	{
+		return;
+	}
+
+	return FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
+}
+
+void UBTTask_ExecuteAttack::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory
+                                           , EBTNodeResult::Type TaskResult)
+{
+	if (CachedEnemyAttackComponent)
+	{
+		CachedEnemyAttackComponent->OnAttackFinished.RemoveDynamic(
+			this,
+			&UBTTask_ExecuteAttack::HandleAttackFinished
+		);
+	}
+
+	CachedOwnerComp = nullptr;
+	CachedEnemyAttackComponent = nullptr;
+
+	Super::OnTaskFinished(OwnerComp, NodeMemory, TaskResult);
 }

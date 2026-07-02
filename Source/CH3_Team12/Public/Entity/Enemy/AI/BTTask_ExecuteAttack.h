@@ -6,6 +6,7 @@
 #include "BehaviorTree/BTTaskNode.h"
 #include "BTTask_ExecuteAttack.generated.h"
 
+class UEnemyAttackComponent;
 /**
  * 
  */
@@ -17,9 +18,28 @@ class CH3_TEAM12_API UBTTask_ExecuteAttack : public UBTTaskNode
 public:
 	UBTTask_ExecuteAttack();
 
+	virtual void OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory
+	                            , EBTNodeResult::Type TaskResult) override;
+
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	FName TargetActorKeyName = TEXT("TargetActor");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName SelectedActionKeyName = TEXT("SelectedAction");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName SelectedPatternKeyName = TEXT("SelectedPattern");
+
+private:
+	UPROPERTY()
+	TObjectPtr<UBehaviorTreeComponent> CachedOwnerComp;
+
+	UPROPERTY()
+	TObjectPtr<UEnemyAttackComponent> CachedEnemyAttackComponent;
+
+	UFUNCTION()
+	void HandleAttackFinished();
 };
