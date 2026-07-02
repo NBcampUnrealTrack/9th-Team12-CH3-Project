@@ -20,7 +20,7 @@ public:
 	
 public:
 	void DoJump(bool bStartJump) const;
-	void DoMove(const FVector2D& MovementVector);
+	void DoMove(const FInputActionValue& value);
 	void DoSprint(bool bStartSprint);
 	
 	// getter

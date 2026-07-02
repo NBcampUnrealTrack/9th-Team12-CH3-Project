@@ -1,4 +1,5 @@
 #include "Entity/Player/PlayerLocomotionComponent.h"
+#include "InputActionValue.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
@@ -36,8 +37,10 @@ void UPlayerLocomotionComponent::DoJump(bool bStartJump) const
 	}
 }
 
-void UPlayerLocomotionComponent::DoMove(const FVector2D& MovementVector)
+void UPlayerLocomotionComponent::DoMove(const FInputActionValue& value)
 {
+	const FVector2D& MovementVector = value.Get<FVector2D>();
+	
 	if (!OwnerCharacter || !OwnerCharacter->GetStateTagComponent()) return;
 
 	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
@@ -49,11 +52,9 @@ void UPlayerLocomotionComponent::DoMove(const FVector2D& MovementVector)
 	
 	const FRotator Rotation = OwnerCharacter->GetControlRotation();
 	const FRotator YawRotation(0, Rotation.Yaw, 0);
-
 	
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 	OwnerCharacter->AddMovementInput(ForwardDirection, MovementVector.X);
-
 	
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 	OwnerCharacter->AddMovementInput(RightDirection, MovementVector.Y);
