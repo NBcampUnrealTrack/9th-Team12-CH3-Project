@@ -37,19 +37,26 @@ public:
 	void Attack(const FInputActionValue& value);
 	void HeavyAttack(const FInputActionValue& value);
 	void Dodge(const FInputActionValue& value);
+	void StartGuard(const FInputActionValue& value);
+	void StopGuard(const FInputActionValue& value);
 	//
 	
 	// Notify
 	void StartComboWindow();
+	UFUNCTION(BlueprintCallable)
 	void EndComboWindow();
 	
 	void StartWeaponHitCheck();
+	UFUNCTION(BlueprintCallable)
 	void EndWeaponHitCheck();
 	
 	void EnableInvincible();
+	UFUNCTION(BlueprintCallable)
 	void DisableInvincible();
 	
+	UFUNCTION(BlueprintCallable)
 	void EndAttack();
+	UFUNCTION(BlueprintCallable)
 	void EndDodge();
 	//
 	
@@ -75,16 +82,16 @@ private:
 	
 public:
 	void WeaponTrace();
-private:
-	// Animation
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UAnimMontage> LightAttackMontage;
-
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UAnimMontage> HeavyAttackMontage;
-
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UAnimMontage> DodgeMontage;
+// private:
+// 	// Animation
+// 	UPROPERTY(EditAnywhere)
+// 	TObjectPtr<UAnimMontage> LightAttackMontage;
+//
+// 	UPROPERTY(EditAnywhere)
+// 	TObjectPtr<UAnimMontage> HeavyAttackMontage;
+//
+// 	UPROPERTY(EditAnywhere)
+// 	TObjectPtr<UAnimMontage> DodgeMontage;
 	
 private:
 	UPROPERTY()
