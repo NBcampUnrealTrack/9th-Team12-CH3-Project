@@ -57,11 +57,6 @@ void UPlayerCombatComponent::Dodge(const FInputActionValue& value)
 	OwnerCharacter->PlayAnimMontage(DodgeMontage);
 }
 
-void UPlayerCombatComponent::LockOn(const FInputActionValue& value)
-{
-	
-}
-
 void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 {
 	ComboIndex = 0;
@@ -98,7 +93,7 @@ void UPlayerCombatComponent::ContinueCombo()
 
 	ComboIndex++;
 
-	if (ComboIndex >= MaxComboCount)
+	if (ComboIndex >= ComboSectionNames.Num())
 	{
 		return;
 	}

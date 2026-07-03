@@ -29,7 +29,6 @@ public:
 	void Attack(const FInputActionValue& value);
 	void HeavyAttack(const FInputActionValue& value);
 	void Dodge(const FInputActionValue& value);
-	void LockOn(const FInputActionValue& value);
 	//
 	
 	// Notify
@@ -74,9 +73,6 @@ private:
 	
 	int32 ComboIndex = 0;
 
-	UPROPERTY(EditAnywhere)
-	int32 MaxComboCount = 4;
-	
 	bool bComboWindow = false;
 	bool bComboBuffered = false;
 
