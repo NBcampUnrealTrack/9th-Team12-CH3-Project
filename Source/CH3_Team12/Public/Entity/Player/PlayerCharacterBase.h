@@ -7,9 +7,14 @@
 #include "PlayerCharacterBase.generated.h"
 
 class APlayerControllerBase;
+class USpringArmComponent;
+class UCameraComponent;
+class UCharacterMovementComponent;
+
 class UStateTagComponent;
 class UPlayerLocomotionComponent;
 class UPlayerAttributeComponent;
+class UPlayerCameraComponent;
 
 UCLASS()
 class CH3_TEAM12_API APlayerCharacterBase : public ACharacter
@@ -27,13 +32,21 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<USpringArmComponent> CameraBoom;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UCameraComponent> FollowCamera;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UStateTagComponent> StateTagComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerLocomotionComponent> LocomotionComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerAttributeComponent> AttributeComponent;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UPlayerCameraComponent> CameraComponent;
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
