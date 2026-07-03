@@ -15,6 +15,7 @@ class UStateTagComponent;
 class UPlayerLocomotionComponent;
 class UPlayerAttributeComponent;
 class UPlayerCameraComponent;
+class UPlayerCombatComponent;
 
 UCLASS()
 class CH3_TEAM12_API APlayerCharacterBase : public ACharacter
@@ -27,6 +28,7 @@ public:
     UStateTagComponent* GetStateTagComponent() const;
 	UPlayerLocomotionComponent* GetLocomotionComponent() const;
 	UPlayerAttributeComponent* GetAttributeComponent() const;
+	UPlayerCombatComponent* GetCombatComponent() const;
 
 protected:
 	// Called when the game starts or when spawned
@@ -46,6 +48,8 @@ protected:
 	TObjectPtr<UPlayerAttributeComponent> AttributeComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerCameraComponent> CameraComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UPlayerCombatComponent> CombatComponent;
 	
 public:	
 	// Called every frame
