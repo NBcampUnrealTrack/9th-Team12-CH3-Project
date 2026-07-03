@@ -17,8 +17,6 @@ void UPlayerLocomotionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	NormalWalkSpeed = 200.0f;
-	SprintSpeed = 400.0f;
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 	StateComp = OwnerCharacter->GetStateTagComponent();
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
