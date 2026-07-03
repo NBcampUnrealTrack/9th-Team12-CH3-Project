@@ -27,5 +27,5 @@ protected:
 	FName DistanceToTargetKeyName = TEXT("DistanceToTarget");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
-	float RotationInterpSpeed = 8.f;
+	float RotationInterpSpeed = 25.f;
 };

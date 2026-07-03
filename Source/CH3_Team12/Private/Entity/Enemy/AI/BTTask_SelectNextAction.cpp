@@ -3,6 +3,7 @@
 
 #include "Entity/Enemy/AI/BTTask_SelectNextAction.h"
 
+#include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 UBTTask_SelectNextAction::UBTTask_SelectNextAction()
@@ -18,30 +19,56 @@ EBTNodeResult::Type UBTTask_SelectNextAction::ExecuteTask(UBehaviorTreeComponent
 		return EBTNodeResult::Failed;
 	}
 
-	const int32 TotalWeight = MoveWeight + NormalAttackWeight + StrongAttackWeight;
-	if (TotalWeight <= 0)
+	float DistanceToTarget = BlackboardComponent->GetValueAsFloat(DistanceToTargetKeyName);
+
+	AAIController* AIController = OwnerComp.GetAIOwner();
+	if (!AIController)
 	{
 		return EBTNodeResult::Failed;
 	}
 
-	const int32 RandomValue = FMath::RandRange(1, TotalWeight);
-
-	int32 SelectedAction = 0;
-
-	if (RandomValue <= MoveWeight)
+	APawn* ControlledPawn = AIController->GetPawn();
+	AActor* TargetActor = Cast<AActor>(BlackboardComponent->GetValueAsObject(TargetActorKeyName));
+	if (ControlledPawn && TargetActor)
 	{
-		SelectedAction = 0;
+		DistanceToTarget = FVector::Dist(ControlledPawn->GetActorLocation(), TargetActor->GetActorLocation());
+		BlackboardComponent->SetValueAsFloat(DistanceToTargetKeyName, DistanceToTarget);
 	}
-	else if (RandomValue <= MoveWeight + NormalAttackWeight)
+
+	int32 SelectedAction = 1;
+	int32 SelectedPattern = 0;
+
+	if (DistanceToTarget >= FarSpecialAttackDistance)
 	{
-		SelectedAction = 1;
+		SelectedAction = 2;
+		SelectedPattern = 1;
 	}
 	else
 	{
-		SelectedAction = 2;
-	}
+		const int32 TotalWeight = NormalAttack0Weight + NormalAttack1Weight + StrongAttack0Weight;
+		if (TotalWeight <= 0)
+		{
+			return EBTNodeResult::Failed;
+		}
 
-	const int32 SelectedPattern = FMath::RandRange(0, 1);
+		const int32 RandomValue = FMath::RandRange(1, TotalWeight);
+
+		if (RandomValue <= NormalAttack0Weight)
+		{
+			SelectedAction = 1;
+			SelectedPattern = 0;
+		}
+		else if (RandomValue <= NormalAttack0Weight + NormalAttack1Weight)
+		{
+			SelectedAction = 1;
+			SelectedPattern = 1;
+		}
+		else
+		{
+			SelectedAction = 2;
+			SelectedPattern = 0;
+		}
+	}
 
 	BlackboardComponent->SetValueAsInt(SelectedActionKeyName, SelectedAction);
 	BlackboardComponent->SetValueAsInt(SelectedPatternKeyName, SelectedPattern);

@@ -27,11 +27,20 @@ protected:
 	FName SelectedPatternKeyName = TEXT("SelectedPattern");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
-	int32 MoveWeight = 30;
+	FName DistanceToTargetKeyName = TEXT("DistanceToTarget");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
-	int32 NormalAttackWeight = 50;
+	FName TargetActorKeyName = TEXT("TargetActor");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
-	int32 StrongAttackWeight = 20;
+	float FarSpecialAttackDistance = 2400.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	int32 NormalAttack0Weight = 40;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	int32 NormalAttack1Weight = 40;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	int32 StrongAttack0Weight = 20;
 };

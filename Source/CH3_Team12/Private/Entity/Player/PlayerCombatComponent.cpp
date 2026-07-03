@@ -5,8 +5,6 @@
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
-#include "DrawDebugHelpers.h"
-#include "InputActionValue.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
@@ -219,7 +217,20 @@ void UPlayerCombatComponent::Dodge(const FInputActionValue& value)
 
 	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Dodging);
 
-	OwnerCharacter->PlayAnimMontage(DodgeMontage);
+	//OwnerCharacter->PlayAnimMontage(DodgeMontage);
+}
+
+void UPlayerCombatComponent::StartGuard(const FInputActionValue& value)
+{
+	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Guarding);
+}
+
+void UPlayerCombatComponent::StopGuard(const FInputActionValue& value)
+{
+	if (OwnerCharacter->GetStateTagComponent()->HasStateTag(CombatTags::State_Combat_Guarding))
+	{
+		OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Guarding);
+	}
 }
 
 void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
@@ -227,15 +238,17 @@ void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 	ComboIndex = 0;
 	bComboBuffered = false;
 	
-	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking_Light);
+	//OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking);
 	
 	switch (AttackType)
 	{
 	case EAttackType::Light:
-		OwnerCharacter->PlayAnimMontage(LightAttackMontage);
+		OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking_Light);
+		//OwnerCharacter->PlayAnimMontage(LightAttackMontage);
 		break;
 	case EAttackType::Heavy:
-		OwnerCharacter->PlayAnimMontage(HeavyAttackMontage);
+		OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking_Heavy);
+		//OwnerCharacter->PlayAnimMontage(HeavyAttackMontage);
 		break;
 	}
 }

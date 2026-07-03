@@ -19,6 +19,18 @@
 
 ---
 
+## 혹시 에디터키고 푸시날려서 수정하지않은 파일이 수정사항으로 뜨시나요?
+
+저런! 그렇다면 아래 지침을 확인하십시오.
+
+```bash
+git reset --hard HEAD
+
+git fetch origin
+
+git reset --hard origin/dev
+```
+
 ## 커밋 규칙
 
 커밋 메시지는 아래 형식을 사용합니다.
