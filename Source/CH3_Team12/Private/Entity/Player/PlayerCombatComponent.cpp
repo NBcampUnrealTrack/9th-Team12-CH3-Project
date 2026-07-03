@@ -13,7 +13,6 @@ UPlayerCombatComponent::UPlayerCombatComponent()
 	
 }
 
-
 void UPlayerCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();

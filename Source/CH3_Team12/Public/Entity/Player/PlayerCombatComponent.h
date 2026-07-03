@@ -56,6 +56,7 @@ private:
 	
 	bool IsBusy() const;
 	
+	void WeaponTrace();
 private:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> LightAttackMontage;
@@ -69,7 +70,21 @@ private:
 private:
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
+	UPROPERTY(EditAnywhere, Category="Combat|Trace")
+	TArray<FName> TraceSocketNames =
+	{
+		"BladeStart",
+		"BladeEnd"
+	};
 	
+	UPROPERTY(EditAnywhere, Category="Combat|Trace")
+	float TraceRadius = 8.0f;
+	
+	UPROPERTY(EditAnywhere, Category="Combat|Trace")
+	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
+	
+	TArray<FVector> PreviousSocketLocations;
+	TSet<TWeakObjectPtr<AActor>> HitActors;
 	
 	int32 ComboIndex = 0;
 
