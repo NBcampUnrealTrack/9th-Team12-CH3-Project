@@ -7,6 +7,7 @@
 #include "UObject/ScriptInterface.h"
 #include "KatanaUIManagerSubsystem.generated.h"
 
+class UKatanaLevelSubsystem;
 class UPlayerAttributeComponent;
 class IPresenterInterface;
 class UUIDataAsset;
@@ -25,11 +26,15 @@ public:
 	void ShowMainMenuWidget();
 	void HideMainMenuWidget();
 
+	void ShowLoadingWidget(UKatanaLevelSubsystem* InSubsystem);
+	void HideLoadingWidget();
+
 	void ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent);
 	void HidePlayerWidget();
 
 private:
 	const FName MainMenuWidgetName = FName("MainMenuWidget");
+	const FName LoadingWidgetName = FName("LoadingWidget");
 	const FName PlayerWidgetName = FName("PlayerWidget");
 
 	UPROPERTY()

@@ -4,14 +4,14 @@
 #include "Components/ProgressBar.h"
 #include "UI/Widget/DelayedProgressBar.h"
 
-void UKatanaPlayerWidget::UpdateHealthBar(float Percent)
+void UKatanaPlayerWidget::UpdateHealthBar(const float Percent)
 {
 	if (!HealthBar)
 		return;
 	HealthBar->SetPercent(Percent);
 }
 
-void UKatanaPlayerWidget::UpdatePostureBar(float Percent)
+void UKatanaPlayerWidget::UpdatePostureBar(const float Percent)
 {
 	if (!PostureBar)
 		return;

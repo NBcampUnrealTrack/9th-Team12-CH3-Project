@@ -2,6 +2,8 @@
 
 #include "Framework/KatanaSystemSettings.h"
 #include "Framework/PresenterInterface.h"
+#include "UI/KatanaLoadingPresenter.h"
+#include "UI/KatanaLoadingWidget.h"
 #include "UI/KatanaMainMenuPresenter.h"
 #include "UI/KatanaMainMenuWidget.h"
 #include "UI/KatanaPlayerUIPresenter.h"
@@ -28,7 +30,11 @@ void UKatanaUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 void UKatanaUIManagerSubsystem::ShowMainMenuWidget()
 {
 	UKatanaMainMenuWidget* ActiveView = OpShowUI<UKatanaMainMenuWidget>(MainMenuWidgetName);
-	if (!ActiveView) return;
+	if (!ActiveView)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *MainMenuWidgetName.ToString());
+		return;
+	}
 
 	UKatanaMainMenuPresenter* NewPresenter = NewObject<UKatanaMainMenuPresenter>(this);
 	if (!NewPresenter)
@@ -44,6 +50,31 @@ void UKatanaUIManagerSubsystem::ShowMainMenuWidget()
 void UKatanaUIManagerSubsystem::HideMainMenuWidget()
 {
 	OpHideUI(MainMenuWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::ShowLoadingWidget(UKatanaLevelSubsystem* InSubsystem)
+{
+	UKatanaLoadingWidget* ActiveView = OpShowUI<UKatanaLoadingWidget>(LoadingWidgetName);
+	if (!ActiveView)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *LoadingWidgetName.ToString());
+		return;
+	}
+
+	UKatanaLoadingPresenter* NewPresenter = NewObject<UKatanaLoadingPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *LoadingWidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(InSubsystem, ActiveView);
+	ActivePresenters.Add(LoadingWidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::HideLoadingWidget()
+{
+	OpHideUI(LoadingWidgetName);
 }
 
 void UKatanaUIManagerSubsystem::ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent)

@@ -67,6 +67,8 @@ void UKatanaLevelSubsystem::OnLoadingProgressTimer()
 
 	UE_LOG(LogTemp, Warning, TEXT("UKatanaLevelSubsystem : LoadingProgress: %f"), GetLoadingProgress());
 
+	OnLoadingProgressUpdated.Broadcast(GetLoadingProgress());
+
 	if (GetLoadingProgress() < 1.0f)
 		return;
 

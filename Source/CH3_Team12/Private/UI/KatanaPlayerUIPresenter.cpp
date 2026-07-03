@@ -1,4 +1,3 @@
-// ReSharper disable CppMemberFunctionMayBeConst
 #include "UI/KatanaPlayerUIPresenter.h"
 
 #include "Entity/Player/PlayerAttributeComponent.h"
@@ -35,7 +34,7 @@ void UKatanaPlayerUIPresenter::Dispose()
 	AttributeComponent->OnDeath.RemoveDynamic(this, &UKatanaPlayerUIPresenter::OnModelDeath);
 }
 
-void UKatanaPlayerUIPresenter::OnModelHealthChanged(const float CurrentHealth, const float MaxHealth)
+void UKatanaPlayerUIPresenter::OnModelHealthChanged(const float CurrentHealth, const float MaxHealth) const
 {
 	if (PlayerWidget.IsValid() && MaxHealth > 0.0f)
 	{
@@ -44,7 +43,7 @@ void UKatanaPlayerUIPresenter::OnModelHealthChanged(const float CurrentHealth, c
 	}
 }
 
-void UKatanaPlayerUIPresenter::OnModelPostureChanged(const float CurrentPosture, const float MaxPosture)
+void UKatanaPlayerUIPresenter::OnModelPostureChanged(const float CurrentPosture, const float MaxPosture) const
 {
 	if (PlayerWidget.IsValid() && MaxPosture > 0.0f)
 	{
@@ -53,17 +52,17 @@ void UKatanaPlayerUIPresenter::OnModelPostureChanged(const float CurrentPosture,
 	}
 }
 
-void UKatanaPlayerUIPresenter::OnModelPostureBroken()
+void UKatanaPlayerUIPresenter::OnModelPostureBroken() const
 {
 
 }
 
-void UKatanaPlayerUIPresenter::OnModelPostureRecovered()
+void UKatanaPlayerUIPresenter::OnModelPostureRecovered() const
 {
 
 }
 
-void UKatanaPlayerUIPresenter::OnModelDeath()
+void UKatanaPlayerUIPresenter::OnModelDeath() const
 {
 
 }
