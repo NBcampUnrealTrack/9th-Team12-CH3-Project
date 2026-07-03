@@ -20,13 +20,19 @@ EBTNodeResult::Type UBTTask_SetMovementSpeed::ExecuteTask(UBehaviorTreeComponent
 		return EBTNodeResult::Failed;
 	}
 
-	ACharacter* EnemyCharacter = Cast<ACharacter>(AIController->GetPawn());
-	if (!EnemyCharacter)
+	APawn* ControlledPawn = AIController->GetPawn();
+	if (!ControlledPawn)
 	{
 		return EBTNodeResult::Failed;
 	}
 
-	UCharacterMovementComponent* MovementComponent = EnemyCharacter->GetCharacterMovement();
+	ACharacter* ControlledCharacter = Cast<ACharacter>(ControlledPawn);
+	if (!ControlledCharacter)
+	{
+		return EBTNodeResult::Failed;
+	}
+
+	UCharacterMovementComponent* MovementComponent = ControlledCharacter->GetCharacterMovement();
 	if (!MovementComponent)
 	{
 		return EBTNodeResult::Failed;

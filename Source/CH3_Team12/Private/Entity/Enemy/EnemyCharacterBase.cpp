@@ -5,6 +5,8 @@
 
 #include "Entity/Enemy/AI/EnemyAIController.h"
 #include "Entity/Enemy/Component/EnemyAttackComponent.h"
+#include "Engine/Engine.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AEnemyCharacterBase::AEnemyCharacterBase()
@@ -27,6 +29,20 @@ void AEnemyCharacterBase::BeginPlay()
 void AEnemyCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!PlayerPawn || !GEngine)
+	{
+		return;
+	}
+
+	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerPawn->GetActorLocation());
+	GEngine->AddOnScreenDebugMessage(
+		1,
+		0.f,
+		FColor::Green,
+		FString::Printf(TEXT("Enemy Distance To Player: %.2f"), DistanceToPlayer)
+	);
 }
 
 // Called to bind functionality to input
