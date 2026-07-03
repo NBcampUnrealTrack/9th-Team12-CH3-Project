@@ -43,7 +43,7 @@ void UPlayerCombatComponent::TickComponent(
 	if (!bWeaponHitCheck)
 		return;
 
-	WeaponTrace();
+	// WeaponTrace();
 }
 
 void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
