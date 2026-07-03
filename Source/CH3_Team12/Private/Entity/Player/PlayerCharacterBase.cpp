@@ -11,6 +11,8 @@
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "Entity/Player/PlayerAttributeComponent.h"
+#include "Entity/Player/PlayerCameraComponent.h"
+#include "Entity/Player/PlayerCombatComponent.h"
 
 // Sets default values
 APlayerCharacterBase::APlayerCharacterBase()
@@ -69,6 +71,11 @@ UPlayerAttributeComponent* APlayerCharacterBase::GetAttributeComponent() const
 	return AttributeComponent;
 }
 
+UPlayerCombatComponent* APlayerCharacterBase::GetCombatComponent() const
+{
+	return CombatComponent;
+}
+
 // Called when the game starts or when spawned
 void APlayerCharacterBase::BeginPlay()
 {
@@ -98,6 +105,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	APlayerControllerBase* PlayerControllerBase = Cast<APlayerControllerBase>(GetController());
 	if (!PlayerControllerBase) return;
 
+	// Locomotion
 	if (UInputAction* LookAction = PlayerControllerBase->GetLookAction())
 	{
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, LocomotionComponent.Get(), &UPlayerLocomotionComponent::Look);
@@ -113,8 +121,27 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 	if (UInputAction* SprintAction = PlayerControllerBase->GetSprintAction())
 	{
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStartSprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStartSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopSprint);
 	}
+	
+	// Combat
+	if (UInputAction* AttackAction = PlayerControllerBase->GetAttackAction())
+	{
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Attack);
+	}
+	if (UInputAction* DodgeAction = PlayerControllerBase->GetDodgeAction())
+	{
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Dodge);
+	}
+	if (UInputAction* LockOnAction = PlayerControllerBase->GetLockOnAction())
+	{
+		// EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, CameraComponent.Get(), &UPlayerCameraComponent::LockOn);
+	}
+	if (UInputAction* ParryAction = PlayerControllerBase->GetParryingAction())
+	{
+		// EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Parry);
+	}
 }
+
 
