@@ -34,9 +34,9 @@ public:
 	// Notify
 	void StartComboWindow();
 	void EndComboWindow();
-
-	void EnableWeaponCollision();
-	void DisableWeaponCollision();
+	
+	void StartWeaponHitCheck();
+	void EndWeaponHitCheck();
 	
 	void EnableInvincible();
 	void DisableInvincible();
@@ -76,6 +76,6 @@ private:
 	bool bComboWindow = false;
 	bool bComboBuffered = false;
 
-	bool bWeaponCollision = false;
+	bool bWeaponHitCheck = false;
 	bool bInvincible = false;
 };

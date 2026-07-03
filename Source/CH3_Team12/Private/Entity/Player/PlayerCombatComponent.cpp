@@ -8,7 +8,8 @@
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.SetTickFunctionEnable(false);
 	
 }
 
@@ -81,7 +82,7 @@ void UPlayerCombatComponent::EndAttack()
 	bComboBuffered = false;
 	bComboWindow = false;
 
-	DisableWeaponCollision();
+	EndWeaponHitCheck();
 	
 	OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Attacking);
 	
@@ -126,24 +127,20 @@ void UPlayerCombatComponent::EndComboWindow()
 	}
 }
 
-void UPlayerCombatComponent::EnableWeaponCollision()
+void UPlayerCombatComponent::StartWeaponHitCheck()
 {
-	bWeaponCollision = true;
-
-	// 무기 Collision ON
+	bWeaponHitCheck = true;
 }
 
-void UPlayerCombatComponent::DisableWeaponCollision()
+void UPlayerCombatComponent::EndWeaponHitCheck()
 {
-	bWeaponCollision = false;
-
-	// 무기 Collision OFF
+	bWeaponHitCheck = false;
 }
 
 void UPlayerCombatComponent::EnableInvincible()
 {
 	bInvincible = true;
-
+	
 	// Status.Invincible 추가
 }
 
