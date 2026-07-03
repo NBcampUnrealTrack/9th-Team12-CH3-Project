@@ -5,8 +5,6 @@
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
-#include "DrawDebugHelpers.h"
-#include "InputActionValue.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
@@ -219,7 +217,7 @@ void UPlayerCombatComponent::Dodge(const FInputActionValue& value)
 
 	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Dodging);
 
-	OwnerCharacter->PlayAnimMontage(DodgeMontage);
+	//OwnerCharacter->PlayAnimMontage(DodgeMontage);
 }
 
 void UPlayerCombatComponent::StartGuard(const FInputActionValue& value)
@@ -240,20 +238,16 @@ void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 	ComboIndex = 0;
 	bComboBuffered = false;
 	
-<<<<<<< Updated upstream
-	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking_Light);
-=======
 	//OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking);
->>>>>>> Stashed changes
 	
 	switch (AttackType)
 	{
 	case EAttackType::Light:
-		OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking);
+		OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking_Light);
 		//OwnerCharacter->PlayAnimMontage(LightAttackMontage);
 		break;
 	case EAttackType::Heavy:
-		OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking);
+		OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking_Heavy);
 		//OwnerCharacter->PlayAnimMontage(HeavyAttackMontage);
 		break;
 	}
