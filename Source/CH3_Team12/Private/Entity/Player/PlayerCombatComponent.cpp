@@ -1,25 +1,189 @@
 #include "Entity/Player/PlayerCombatComponent.h"
-#include "InputActionValue.h"
+#include "Entity/Player/PlayerCharacterBase.h"
+#include "Entity/Player/StateTagComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Entity/Player/PlayerCharacterBase.h"
-#include "Entity/Player/StateTagComponent.h"
+#include "Entity/Weapon/WeaponBase.h"
+#include "DrawDebugHelpers.h"
+#include "InputActionValue.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.SetTickFunctionEnable(false);
 	
 }
-
 
 void UPlayerCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
+	
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : OwnerCharacter is nullptr"));
+		return;
+	}
+	
+	EquipWeapon(DefaultWeaponClass);
 }
 
+void UPlayerCombatComponent::TickComponent(
+	float DeltaTime,
+	ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(
+		DeltaTime,
+		TickType,
+		ThisTickFunction);
+
+	if (!bWeaponHitCheck)
+		return;
+
+	WeaponTrace();
+}
+
+void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
+{
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+
+	if (!WeaponClass)
+	{
+		return;
+	}
+
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Destroy();
+		EquippedWeapon = nullptr;
+	}
+
+	EquippedWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass);
+
+	if (!EquippedWeapon)
+	{
+		return;
+	}
+
+	EquippedWeapon->AttachToComponent(
+		OwnerCharacter->GetMesh(),
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		WeaponSocketName);
+}
+
+void UPlayerCombatComponent::CacheWeaponTraceLocation()
+{
+	if (!EquippedWeapon)
+	{
+		return;
+	}
+
+	PreviousBladeStart = EquippedWeapon->GetBladeStartLocation();
+	PreviousBladeEnd = EquippedWeapon->GetBladeEndLocation();
+}
+
+void UPlayerCombatComponent::StartWeaponHitCheck()
+{
+	if (!EquippedWeapon)
+	{
+		return;
+	}
+
+	HitActors.Empty();
+	CacheWeaponTraceLocation();
+	bWeaponHitCheck = true;
+	SetComponentTickEnabled(true);
+}
+
+void UPlayerCombatComponent::EndWeaponHitCheck()
+{
+	bWeaponHitCheck = false;
+	SetComponentTickEnabled(false);
+}
+
+void UPlayerCombatComponent::ProcessHit(const FHitResult& Hit)
+{
+	AActor* HitActor = Hit.GetActor();
+
+	if (!HitActor)
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Hit : %s"), *HitActor->GetName());
+
+	// TODO
+	// 데미지 주고받기
+}
+
+void UPlayerCombatComponent::WeaponTrace()
+{
+	if (!EquippedWeapon)
+	{
+		return;
+	}
+
+	FVector CurrentBladeStart =
+		EquippedWeapon->GetBladeStartLocation();
+
+	FVector CurrentBladeEnd =
+		EquippedWeapon->GetBladeEndLocation();
+
+	FCollisionShape CollisionShape =
+		FCollisionShape::MakeSphere(TraceRadius);
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(OwnerCharacter);
+	Params.AddIgnoredActor(EquippedWeapon);
+
+	TArray<FHitResult> HitResults;
+	
+	GetWorld()->SweepMultiByChannel(
+		HitResults,
+		PreviousBladeStart,
+		CurrentBladeStart,
+		FQuat::Identity,
+		TraceChannel,
+		CollisionShape,
+		Params);
+	
+	GetWorld()->SweepMultiByChannel(
+		HitResults,
+		PreviousBladeEnd,
+		CurrentBladeEnd,
+		FQuat::Identity,
+		TraceChannel,
+		CollisionShape,
+		Params);
+	
+	for (const FHitResult& Hit : HitResults)
+	{
+		AActor* HitActor = Hit.GetActor();
+
+		if (!HitActor)
+		{
+			continue;
+		}
+
+		if (HitActors.Contains(HitActor))
+		{
+			continue;
+		}
+
+		HitActors.Add(HitActor);
+
+		ProcessHit(Hit);
+	}
+	
+	PreviousBladeStart = CurrentBladeStart;
+	PreviousBladeEnd = CurrentBladeEnd;
+}
 void UPlayerCombatComponent::Attack(const FInputActionValue& value)
 {
 	if (IsBusy())
@@ -81,7 +245,7 @@ void UPlayerCombatComponent::EndAttack()
 	bComboBuffered = false;
 	bComboWindow = false;
 
-	DisableWeaponCollision();
+	EndWeaponHitCheck();
 	
 	OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Attacking);
 	
@@ -91,7 +255,7 @@ void UPlayerCombatComponent::ContinueCombo()
 {
 	bComboBuffered = false;
 
-	ComboIndex++;
+	++ComboIndex;
 
 	if (ComboIndex >= ComboSectionNames.Num())
 	{
@@ -126,32 +290,21 @@ void UPlayerCombatComponent::EndComboWindow()
 	}
 }
 
-void UPlayerCombatComponent::EnableWeaponCollision()
-{
-	bWeaponCollision = true;
-
-	// 무기 Collision ON
-}
-
-void UPlayerCombatComponent::DisableWeaponCollision()
-{
-	bWeaponCollision = false;
-
-	// 무기 Collision OFF
-}
-
 void UPlayerCombatComponent::EnableInvincible()
 {
 	bInvincible = true;
-
-	// Status.Invincible 추가
+	
+	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Invincible);
 }
 
 void UPlayerCombatComponent::DisableInvincible()
 {
 	bInvincible = false;
 
-	// Status.Invincible 제거
+	if (OwnerCharacter->GetStateTagComponent()->HasStateTag(CombatTags::State_Combat_Invincible))
+	{
+		OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Invincible);
+	}
 }
 
 void UPlayerCombatComponent::EndDodge()
