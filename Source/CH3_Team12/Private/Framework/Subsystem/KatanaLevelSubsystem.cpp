@@ -1,10 +1,10 @@
-#include "Framework/KatanaLevelSubsystem.h"
+#include "Framework/Subsystem/KatanaLevelSubsystem.h"
 
 #include "TimerManager.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Framework/KatanaSystemSettings.h"
-#include "Framework/LevelDataAsset.h"
+#include "Framework/DataAsset/LevelDataAsset.h"
 #include "Kismet/GameplayStatics.h"
 
 void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName)

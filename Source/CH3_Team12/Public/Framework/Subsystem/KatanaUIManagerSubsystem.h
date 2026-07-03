@@ -26,6 +26,8 @@ public:
 	void HidePlayerWidget();
 
 private:
+	const FName PlayerWidgetName = FName("PlayerWidget");
+
 	UPROPERTY()
 	TSoftObjectPtr<UUIDataAsset> UIDataAsset = nullptr;
 
