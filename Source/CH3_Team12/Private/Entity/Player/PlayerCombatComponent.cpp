@@ -184,6 +184,7 @@ void UPlayerCombatComponent::WeaponTrace()
 	PreviousBladeStart = CurrentBladeStart;
 	PreviousBladeEnd = CurrentBladeEnd;
 }
+
 void UPlayerCombatComponent::Attack(const FInputActionValue& value)
 {
 	if (IsBusy())

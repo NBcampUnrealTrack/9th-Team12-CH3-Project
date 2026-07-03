@@ -70,9 +70,11 @@ private:
 private:
 	// Trace
 	void CacheWeaponTraceLocation();
-	void WeaponTrace();
+	
 	void ProcessHit(const FHitResult& Hit);
 	
+public:
+	void WeaponTrace();
 private:
 	// Animation
 	UPROPERTY(EditAnywhere)
@@ -97,11 +99,11 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WeaponSocketName = TEXT("katana3");
-	
-private:
-	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
-public:
 
+public:
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
+	
 	FORCEINLINE AWeaponBase* GetEquippedWeapon() const
 	{
 		return EquippedWeapon;
