@@ -3,6 +3,10 @@
 #include "Entity/Player/PlayerCharacterBase.h"
 
 #include "EnhancedInputComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
 #include "Entity/Player/PlayerControllerBase.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
@@ -13,6 +17,38 @@ APlayerCharacterBase::APlayerCharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	// 아래는 임시 설정 이후에 컴포넌트에서 각자 알아서 조절해야함
+	{
+		bUseControllerRotationPitch = false;
+		bUseControllerRotationYaw = false;
+		bUseControllerRotationRoll = false;
+	
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+		GetCharacterMovement()->RotationRate = FRotator(0.0f, 1000.0f, 0.0f); // 회전 속도
+		// GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+		GetCharacterMovement()->MaxAcceleration = 4096.0f;
+		GetCharacterMovement()->GroundFriction = 4.0f;
+		GetCharacterMovement()->BrakingDecelerationWalking = 200.0f;
+		GetCharacterMovement()->GravityScale = 1.0f;
+	
+		CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+		CameraBoom->SetupAttachment(RootComponent);
+		CameraBoom->TargetArmLength = 400.0f;
+		CameraBoom->bUsePawnControlRotation = true;
+		CameraBoom->bEnableCameraLag = true;
+		CameraBoom->CameraLagSpeed = 4.0f;
+		CameraBoom->CameraLagMaxDistance = 200.0f;
+		CameraBoom->bEnableCameraRotationLag = true;
+		CameraBoom->CameraRotationLagSpeed = 12.0f;
+		CameraBoom->bDoCollisionTest = false;
+
+		FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+		FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+		FollowCamera->bUsePawnControlRotation = false; // 카메라는 암의 회전을 따라가기만 함
+		
+	}
+	
 	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateComponent"));
 	LocomotionComponent = CreateDefaultSubobject<UPlayerLocomotionComponent>(TEXT("LocomotionComponent"));
 	AttributeComponent = CreateDefaultSubobject<UPlayerAttributeComponent>(TEXT("AttributeComponent"));
@@ -37,7 +73,7 @@ UPlayerAttributeComponent* APlayerCharacterBase::GetAttributeComponent() const
 void APlayerCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 // Called every frame
@@ -62,14 +98,23 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	APlayerControllerBase* PlayerControllerBase = Cast<APlayerControllerBase>(GetController());
 	if (!PlayerControllerBase) return;
 
-	// if (UInputAction* MoveAction = PlayerControllerBase->GetMoveAction())
-	// {
-	// 	EnhancedInputComponent->BindAction(
-	// 		MoveAction,
-	// 		ETriggerEvent::Triggered,
-	// 		LocomotionComponent,
-	// 		&UPlayerLocomotionComponent::DoMove
-	// 	);
-	// }
+	if (UInputAction* LookAction = PlayerControllerBase->GetLookAction())
+	{
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, LocomotionComponent.Get(), &UPlayerLocomotionComponent::Look);
+	}
+	if (UInputAction* MoveAction = PlayerControllerBase->GetMoveAction())
+	{
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoMove);
+	}
+	if (UInputAction* JumpAction = PlayerControllerBase->GetJumpAction())
+	{
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStartJump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopJump);
+	}
+	if (UInputAction* SprintAction = PlayerControllerBase->GetSprintAction())
+	{
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStartSprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopSprint);
+	}
 }
 
