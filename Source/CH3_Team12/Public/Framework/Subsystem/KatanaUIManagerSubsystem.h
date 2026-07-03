@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UIDataAsset.h"
+#include "../DataAsset/UIDataAsset.h"
 #include "Blueprint/UserWidget.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "UObject/ScriptInterface.h"
