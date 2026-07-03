@@ -82,16 +82,16 @@ private:
 	
 public:
 	void WeaponTrace();
-// private:
-// 	// Animation
-// 	UPROPERTY(EditAnywhere)
-// 	TObjectPtr<UAnimMontage> LightAttackMontage;
-//
-// 	UPROPERTY(EditAnywhere)
-// 	TObjectPtr<UAnimMontage> HeavyAttackMontage;
-//
-// 	UPROPERTY(EditAnywhere)
-// 	TObjectPtr<UAnimMontage> DodgeMontage;
+private:
+ 	// Animation
+ 	UPROPERTY(EditAnywhere)
+ 	TObjectPtr<UAnimMontage> LightAttackMontage;
+
+ 	UPROPERTY(EditAnywhere)
+ 	TObjectPtr<UAnimMontage> HeavyAttackMontage;
+
+ 	UPROPERTY(EditAnywhere)
+	TObjectPtr<UAnimMontage> DodgeMontage;
 	
 private:
 	UPROPERTY()
