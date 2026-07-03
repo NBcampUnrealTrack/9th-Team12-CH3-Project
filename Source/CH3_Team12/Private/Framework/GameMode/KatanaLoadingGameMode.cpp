@@ -1,14 +1,14 @@
-#include "Framework/GameMode/LoadingGameMode.h"
+#include "Framework/GameMode/KatanaLoadingGameMode.h"
 
 #include "Engine/GameInstance.h"
 #include "Framework/Subsystem/KatanaLevelSubsystem.h"
 
-ALoadingGameMode::ALoadingGameMode()
+AKatanaLoadingGameMode::AKatanaLoadingGameMode()
 {
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-void ALoadingGameMode::BeginPlay()
+void AKatanaLoadingGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 

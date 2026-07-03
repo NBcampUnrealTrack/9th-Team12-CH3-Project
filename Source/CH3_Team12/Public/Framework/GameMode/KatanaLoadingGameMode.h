@@ -2,17 +2,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "LoadingGameMode.generated.h"
+#include "KatanaLoadingGameMode.generated.h"
 
 /**
  *
  */
 UCLASS()
-class CH3_TEAM12_API ALoadingGameMode : public AGameModeBase
+class CH3_TEAM12_API AKatanaLoadingGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
 protected:
-	ALoadingGameMode();
+	AKatanaLoadingGameMode();
 	virtual void BeginPlay() override;
 };
