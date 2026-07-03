@@ -120,20 +120,17 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStartJump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopJump);
 	}
-	if (UInputAction* SprintAction = PlayerControllerBase->GetSprintAction())
+	if (UInputAction* SprintDodgeAction = PlayerControllerBase->GetSprintDodgeAction())
 	{
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStartSprint);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopSprint);
+		EnhancedInputComponent->BindAction(SprintDodgeAction, ETriggerEvent::Triggered, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStartSprint);
+		EnhancedInputComponent->BindAction(SprintDodgeAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopSprint);
+		EnhancedInputComponent->BindAction(SprintDodgeAction, ETriggerEvent::Canceled, CombatComponent.Get(), &UPlayerCombatComponent::Dodge);
 	}
 	
 	// Combat
 	if (UInputAction* AttackAction = PlayerControllerBase->GetAttackAction())
 	{
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Attack);
-	}
-	if (UInputAction* DodgeAction = PlayerControllerBase->GetDodgeAction())
-	{
-		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Dodge);
 	}
 	if (UInputAction* LockOnAction = PlayerControllerBase->GetLockOnAction())
 	{
