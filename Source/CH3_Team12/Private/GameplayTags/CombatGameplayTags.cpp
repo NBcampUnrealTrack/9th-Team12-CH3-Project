@@ -3,8 +3,13 @@
 namespace CombatTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(
-		State_Combat_Attacking,
-		"State.Action.Attacking"
+		State_Combat_Attacking_Light,
+		"State.Action.Attacking.Light"
+	);
+	
+	UE_DEFINE_GAMEPLAY_TAG(
+		State_Combat_Attacking_Heavy,
+		"State.Action.Attacking.Heavy"
 	);
 
 	UE_DEFINE_GAMEPLAY_TAG(

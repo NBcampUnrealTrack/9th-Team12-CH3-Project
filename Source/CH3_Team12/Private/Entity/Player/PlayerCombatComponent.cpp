@@ -227,7 +227,7 @@ void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 	ComboIndex = 0;
 	bComboBuffered = false;
 	
-	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking);
+	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking_Light);
 	
 	switch (AttackType)
 	{
@@ -248,7 +248,7 @@ void UPlayerCombatComponent::EndAttack()
 
 	EndWeaponHitCheck();
 	
-	OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Attacking);
+	OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Attacking_Light);
 	
 }
 
@@ -337,7 +337,7 @@ bool UPlayerCombatComponent::IsBusy() const
 	if (!StateComp) return true;
 	
 	FGameplayTagContainer BusyTags;
-	BusyTags.AddTag(CombatTags::State_Combat_Attacking);
+	BusyTags.AddTag(CombatTags::State_Combat_Attacking_Light);
 	BusyTags.AddTag(CombatTags::State_Combat_Dodging);
 	BusyTags.AddTag(CombatTags::State_Combat_Parry);
 
