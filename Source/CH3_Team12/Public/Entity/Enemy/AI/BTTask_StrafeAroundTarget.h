@@ -26,7 +26,7 @@ protected:
 	FName TargetActorKeyName = TEXT("TargetActor");
 
 	UPROPERTY(EditAnywhere, Category="AI")
-	float StrafeDuration = 2.f;
+	float StrafeDuration = 5.f;
 
 	UPROPERTY(EditAnywhere, Category="AI")
 	float RepathInterval = 0.5f;
@@ -35,7 +35,7 @@ protected:
 	float DesiredDistance = 500.f;
 
 	UPROPERTY(EditAnywhere, Category="AI")
-	float StrafeOffset = 800.f;
+	float StrafeOffset = 800.f;2
 
 	UPROPERTY(EditAnywhere, Category="AI")
 	float StrafeMoveSpeed = 300.f;
