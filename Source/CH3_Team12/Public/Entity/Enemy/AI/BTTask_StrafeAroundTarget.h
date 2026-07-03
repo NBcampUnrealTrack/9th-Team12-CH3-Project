@@ -35,7 +35,7 @@ protected:
 	float DesiredDistance = 500.f;
 
 	UPROPERTY(EditAnywhere, Category="AI")
-	float StrafeOffset = 800.f;2
+	float StrafeOffset = 800.f;
 
 	UPROPERTY(EditAnywhere, Category="AI")
 	float StrafeMoveSpeed = 300.f;
