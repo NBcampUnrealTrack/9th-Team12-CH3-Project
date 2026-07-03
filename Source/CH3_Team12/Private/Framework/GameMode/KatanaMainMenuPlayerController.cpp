@@ -7,6 +7,13 @@ void AKatanaMainMenuPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	bShowMouseCursor = true;
+	const FInputModeUIOnly InputMode;
+	SetInputMode(InputMode);
+
 	UKatanaUIManagerSubsystem* UIManager = GetLocalPlayer()->GetSubsystem<UKatanaUIManagerSubsystem>();
+	if (!UIManager)
+		return;
+
 	UIManager->ShowMainMenuWidget();
 }

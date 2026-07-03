@@ -23,7 +23,11 @@ void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName)
 		return;
 	}
 
-	if (!LevelDataAsset->LevelInfoMap.Contains(TargetLevelName)) return;
+	if (!LevelDataAsset->LevelInfoMap.Contains(TargetLevelName))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem : TargetLevelName is not found in LevelDataAsset"));
+		return;
+	}
 
 	TargetMap = LevelDataAsset->LevelInfoMap[TargetLevelName].LevelMap;
 	DelayLoadTime = 0.0f;
