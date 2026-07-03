@@ -26,6 +26,11 @@ namespace CombatTags
 		State_Combat_Parry,
 		"State.Combat.Parry"
 	);
+	
+	UE_DEFINE_GAMEPLAY_TAG(
+		State_Combat_Invincible,
+		"State.Combat.Invincible"
+	);
 
 	UE_DEFINE_GAMEPLAY_TAG(
 		State_Movement_LockOn,
