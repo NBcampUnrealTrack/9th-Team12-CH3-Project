@@ -4,7 +4,8 @@
 
 namespace CombatTags
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Attacking);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Attacking_Light);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Attacking_Heavy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Dodging);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Armed);
