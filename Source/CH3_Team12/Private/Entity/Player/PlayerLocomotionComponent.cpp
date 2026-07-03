@@ -15,12 +15,18 @@ void UPlayerLocomotionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	NormalWalkSpeed = 200.0f;
+	SprintSpeed = 400.0f;
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
+	StateComp = OwnerCharacter->GetStateTagComponent();
+	MovementComponent = OwnerCharacter->GetCharacterMovement();
 }
 
 void UPlayerLocomotionComponent::Look(const FInputActionValue& value)
 {
-	FVector2D LookInput = value.Get<FVector2D>();
+	if (!OwnerCharacter) return;
+	
+	const FVector2D LookInput = value.Get<FVector2D>();
 
 	OwnerCharacter->AddControllerYawInput(LookInput.X);
 	OwnerCharacter->AddControllerPitchInput(LookInput.Y);
@@ -29,8 +35,6 @@ void UPlayerLocomotionComponent::Look(const FInputActionValue& value)
 void UPlayerLocomotionComponent::DoStartJump(const FInputActionValue& value)
 {
 	if (!OwnerCharacter) return;
-	
-	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
 	
 	if (StateComp && StateComp->HasStateTag(CombatTags::State_Movement_Locked))
 	{
@@ -49,11 +53,9 @@ void UPlayerLocomotionComponent::DoStopJump(const FInputActionValue& value)
 
 void UPlayerLocomotionComponent::DoMove(const FInputActionValue& value)
 {
-	const FVector2D& MovementVector = value.Get<FVector2D>();
+	const FVector2D MovementVector = value.Get<FVector2D>();
 	
-	if (!OwnerCharacter || !OwnerCharacter->GetStateTagComponent()) return;
-
-	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
+	if (!OwnerCharacter || !StateComp) return;
 	
 	if (StateComp && StateComp->HasStateTag(CombatTags::State_Movement_Locked))
 	{
@@ -70,40 +72,33 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& value)
 	OwnerCharacter->AddMovementInput(RightDirection, MovementVector.Y);
 }
 
-// bStateSprint 가 true 일 때 달리기 false 면 걷기
 void UPlayerLocomotionComponent::DoStartSprint(const FInputActionValue& value)
 {
-	if (!OwnerCharacter || !OwnerCharacter->GetStateTagComponent()) return;
-    
-	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
-	UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
+	if (!OwnerCharacter || !StateComp) return;
 	
-	if (!MoveComp) return;
+	if (!MovementComponent) return;
 
 	if (StateComp->HasStateTag(CombatTags::State_Movement_Locked) || 
-		MoveComp->Velocity.IsNearlyZero())
+		MovementComponent->Velocity.IsNearlyZero())
 	{
 		return;
 	}
 
 	StateComp->AddStateTag(CombatTags::State_Movement_Sprinting);
         
-	MoveComp->MaxWalkSpeed = SprintSpeed;
+	MovementComponent->MaxWalkSpeed = SprintSpeed;
 }
 
 void UPlayerLocomotionComponent::DoStopSprint(const FInputActionValue& value)
 {
-	if (!OwnerCharacter || !OwnerCharacter->GetStateTagComponent()) return;
+	if (!OwnerCharacter || !StateComp) return;
 	
-	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
-	UCharacterMovementComponent* MoveComp = OwnerCharacter->GetCharacterMovement();
+	if (!MovementComponent) return;
 	
-	if (!MoveComp) return;
-	
-	if (StateComp->HasStateTag(CombatTags::State_Movement_Locked))
+	if (StateComp->HasStateTag(CombatTags::State_Movement_Sprinting))
 	{
-		StateComp->RemoveStateTag(CombatTags::State_Movement_Locked);
+		StateComp->RemoveStateTag(CombatTags::State_Movement_Sprinting);
 	}
         
-	MoveComp->MaxWalkSpeed = NormalWalkSpeed;
+	MovementComponent->MaxWalkSpeed = NormalWalkSpeed;
 }

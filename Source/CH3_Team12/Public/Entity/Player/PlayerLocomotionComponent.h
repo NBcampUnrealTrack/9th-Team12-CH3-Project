@@ -7,6 +7,8 @@
 class ACharacter;
 class UAnimMontage;
 class APlayerCharacterBase;
+class UStateTagComponent;
+class UCharacterMovementComponent;
 struct FInputActionValue;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -39,4 +41,8 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
+	UPROPERTY()
+	TObjectPtr<UStateTagComponent> StateComp;
+	UPROPERTY()
+	TObjectPtr<UCharacterMovementComponent> MovementComponent;
 };
