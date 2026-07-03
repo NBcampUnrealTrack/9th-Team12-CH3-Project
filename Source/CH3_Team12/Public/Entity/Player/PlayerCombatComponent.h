@@ -5,6 +5,8 @@
 #include "PlayerCombatComponent.generated.h"
 
 class UAnimMontage;
+class APlayerCharacterBase;
+struct FInputActionValue;
 
 UENUM(BlueprintType)
 enum class EAttackType : uint8
@@ -24,9 +26,10 @@ public:
 	virtual void BeginPlay() override;
 		
 	// Input
-	void Attack();
-	void HeavyAttack();
-	void Dodge();
+	void Attack(const FInputActionValue& value);
+	void HeavyAttack(const FInputActionValue& value);
+	void Dodge(const FInputActionValue& value);
+	void LockOn(const FInputActionValue& value);
 	//
 	
 	// Notify
