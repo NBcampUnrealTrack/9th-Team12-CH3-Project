@@ -2,6 +2,8 @@
 
 #include "Framework/KatanaSystemSettings.h"
 #include "Framework/PresenterInterface.h"
+#include "UI/KatanaMainMenuPresenter.h"
+#include "UI/KatanaMainMenuWidget.h"
 #include "UI/KatanaPlayerUIPresenter.h"
 #include "UI/KatanaPlayerWidget.h"
 
@@ -21,6 +23,27 @@ void UKatanaUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UKatanaUIManagerSubsystem: UIDataAsset is null"));
 	}
+}
+
+void UKatanaUIManagerSubsystem::ShowMainMenuWidget()
+{
+	UKatanaMainMenuWidget* ActiveView = OpShowUI<UKatanaMainMenuWidget>(MainMenuWidgetName);
+	if (!ActiveView) return;
+
+	UKatanaMainMenuPresenter* NewPresenter = NewObject<UKatanaMainMenuPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *MainMenuWidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(ActiveView);
+	ActivePresenters.Add(MainMenuWidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::HideMainMenuWidget()
+{
+	OpHideUI(MainMenuWidgetName);
 }
 
 void UKatanaUIManagerSubsystem::ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent)
