@@ -28,8 +28,8 @@ protected:
 	TObjectPtr<UStaticMeshComponent> WeaponMesh;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Socket")
-	FName BladeStartSocketName = TEXT("Start");
+	FName BladeStartSocketName = TEXT("BladeStart");
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Socket")
-	FName BladeEndSocketName = TEXT("End");
+	FName BladeEndSocketName = TEXT("BladeEnd");
 };

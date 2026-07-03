@@ -70,9 +70,9 @@ private:
 private:
 	// Trace
 	void CacheWeaponTraceLocation();
-	void WeaponTrace();
 	void ProcessHit(const FHitResult& Hit);
-	
+public:
+	void WeaponTrace();
 private:
 	// Animation
 	UPROPERTY(EditAnywhere)
