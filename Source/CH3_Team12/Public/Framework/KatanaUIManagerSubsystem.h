@@ -7,6 +7,7 @@
 #include "UObject/ScriptInterface.h"
 #include "KatanaUIManagerSubsystem.generated.h"
 
+class UPlayerAttributeComponent;
 class IPresenterInterface;
 class UUIDataAsset;
 class UUserWidget;
@@ -21,8 +22,8 @@ class CH3_TEAM12_API UKatanaUIManagerSubsystem : public ULocalPlayerSubsystem
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	// void ShowPlayerHUD(const TScriptInterface<IExampleModelInterface>& InModel);
-	// void HidePlayerHUD();
+	void ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent);
+	void HidePlayerWidget();
 
 private:
 	UPROPERTY()

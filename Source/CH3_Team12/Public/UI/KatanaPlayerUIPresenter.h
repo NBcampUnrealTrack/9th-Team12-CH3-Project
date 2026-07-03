@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,6 +5,7 @@
 #include "UObject/Object.h"
 #include "KatanaPlayerUIPresenter.generated.h"
 
+class UPlayerAttributeComponent;
 class UKatanaPlayerWidget;
 /**
  *
@@ -17,16 +16,28 @@ class CH3_TEAM12_API UKatanaPlayerUIPresenter : public UObject, public IPresente
 	GENERATED_BODY()
 
 public:
-	void Initialize(TScriptInterface<IExampleModelInterface> InModel, UKatanaPlayerWidget* InView);
+	void Initialize(UPlayerAttributeComponent* InAttributeComponent, UKatanaPlayerWidget* InWidget);
 	virtual void Dispose() override;
 
 private:
 	UPROPERTY()
-	TScriptInterface<IExampleModelInterface> Model;
+	TWeakObjectPtr<UPlayerAttributeComponent> AttributeComponent; //Model
 
-	TWeakObjectPtr<UKatanaPlayerWidget> View;
+	UPROPERTY()
+	TWeakObjectPtr<UKatanaPlayerWidget> PlayerWidget; //View
 
 	UFUNCTION()
 	void OnModelHealthChanged(float CurrentHealth, float MaxHealth);
 
+	UFUNCTION()
+	void OnModelPostureChanged(float CurrentPosture, float MaxPosture);
+
+	UFUNCTION()
+	void OnModelPostureBroken();
+
+	UFUNCTION()
+	void OnModelPostureRecovered();
+
+	UFUNCTION()
+	void OnModelDeath();
 };
