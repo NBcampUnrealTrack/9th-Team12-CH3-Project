@@ -8,6 +8,8 @@
 UPlayerLocomotionComponent::UPlayerLocomotionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	NormalWalkSpeed = 200.0f;
+	SprintSpeed = 400.0f;
 	
 }
 
@@ -20,6 +22,11 @@ void UPlayerLocomotionComponent::BeginPlay()
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 	StateComp = OwnerCharacter->GetStateTagComponent();
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
+	
+	if (MovementComponent)
+	{
+		MovementComponent->MaxWalkSpeed = NormalWalkSpeed;
+	}
 }
 
 void UPlayerLocomotionComponent::Look(const FInputActionValue& value)
