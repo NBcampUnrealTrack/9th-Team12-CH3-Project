@@ -9,7 +9,7 @@
 UBTService_UpdateTargetInfo::UBTService_UpdateTargetInfo()
 {
 	NodeName = TEXT("Update Target Info");
-	Interval = 0.1f;
+	Interval = 0.01f;
 	RandomDeviation = 0.f;
 }
 
