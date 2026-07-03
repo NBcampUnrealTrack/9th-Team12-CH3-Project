@@ -43,7 +43,7 @@ void UPlayerCombatComponent::TickComponent(
 	if (!bWeaponHitCheck)
 		return;
 
-	WeaponTrace();
+	// WeaponTrace();
 }
 
 void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
@@ -184,6 +184,7 @@ void UPlayerCombatComponent::WeaponTrace()
 	PreviousBladeStart = CurrentBladeStart;
 	PreviousBladeEnd = CurrentBladeEnd;
 }
+
 void UPlayerCombatComponent::Attack(const FInputActionValue& value)
 {
 	if (IsBusy())
