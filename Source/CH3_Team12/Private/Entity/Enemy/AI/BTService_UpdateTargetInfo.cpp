@@ -37,7 +37,7 @@ void UBTService_UpdateTargetInfo::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	}
 
 	APawn* ControlledPawn = AIController->GetPawn();
-	if (ControlledPawn)
+	if (!ControlledPawn)
 	{
 		return;
 	}
