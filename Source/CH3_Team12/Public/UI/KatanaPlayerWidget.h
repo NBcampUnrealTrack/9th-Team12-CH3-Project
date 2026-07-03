@@ -23,5 +23,5 @@ protected:
 	TObjectPtr<UDelayedProgressBar> HealthBar;
 
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UProgressBar> PostureBar;
+	TObjectPtr<UDelayedProgressBar> PostureBar;
 };

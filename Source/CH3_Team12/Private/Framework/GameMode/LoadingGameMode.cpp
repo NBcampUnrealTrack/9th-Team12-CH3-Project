@@ -1,7 +1,7 @@
-#include "Framework/LoadingGameMode.h"
+#include "Framework/GameMode/LoadingGameMode.h"
 
 #include "Engine/GameInstance.h"
-#include "Framework/KatanaLevelSubsystem.h"
+#include "Framework/Subsystem/KatanaLevelSubsystem.h"
 
 ALoadingGameMode::ALoadingGameMode()
 {

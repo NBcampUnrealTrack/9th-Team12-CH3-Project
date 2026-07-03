@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UIDataAsset.h"
+#include "../DataAsset/UIDataAsset.h"
 #include "Blueprint/UserWidget.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "UObject/ScriptInterface.h"
@@ -22,10 +22,16 @@ class CH3_TEAM12_API UKatanaUIManagerSubsystem : public ULocalPlayerSubsystem
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
+	void ShowMainMenuWidget();
+	void HideMainMenuWidget();
+
 	void ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent);
 	void HidePlayerWidget();
 
 private:
+	const FName MainMenuWidgetName = FName("MainMenuWidget");
+	const FName PlayerWidgetName = FName("PlayerWidget");
+
 	UPROPERTY()
 	TSoftObjectPtr<UUIDataAsset> UIDataAsset = nullptr;
 

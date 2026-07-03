@@ -1,10 +1,10 @@
-#include "Framework/KatanaLevelSubsystem.h"
+#include "Framework/Subsystem/KatanaLevelSubsystem.h"
 
 #include "TimerManager.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Framework/KatanaSystemSettings.h"
-#include "Framework/LevelDataAsset.h"
+#include "Framework/DataAsset/LevelDataAsset.h"
 #include "Kismet/GameplayStatics.h"
 
 void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName)
@@ -23,7 +23,11 @@ void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName)
 		return;
 	}
 
-	if (!LevelDataAsset->LevelInfoMap.Contains(TargetLevelName)) return;
+	if (!LevelDataAsset->LevelInfoMap.Contains(TargetLevelName))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem : TargetLevelName is not found in LevelDataAsset"));
+		return;
+	}
 
 	TargetMap = LevelDataAsset->LevelInfoMap[TargetLevelName].LevelMap;
 	DelayLoadTime = 0.0f;

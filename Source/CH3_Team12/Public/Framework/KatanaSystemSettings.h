@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LevelDataAsset.h"
+#include "DataAsset/LevelDataAsset.h"
 #include "Engine/DeveloperSettings.h"
 #include "UObject/SoftObjectPtr.h"
 #include "KatanaSystemSettings.generated.h"
