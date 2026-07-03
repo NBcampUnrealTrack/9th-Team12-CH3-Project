@@ -54,6 +54,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateComponent"));
 	LocomotionComponent = CreateDefaultSubobject<UPlayerLocomotionComponent>(TEXT("LocomotionComponent"));
 	AttributeComponent = CreateDefaultSubobject<UPlayerAttributeComponent>(TEXT("AttributeComponent"));
+	CombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("CombatComponent"));
 }
 
 UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
