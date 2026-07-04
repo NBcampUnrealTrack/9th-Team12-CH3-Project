@@ -29,6 +29,8 @@ void AKatanaPlayerController::OnPossess(APawn* InPawn)
 		return;
 
 	UIManager->ShowPlayerWidget(AttributeComponent);
+
+	//TODO 여기서 록온 이벤트를 받아오도록 설정
 }
 
 // void AKatanaPlayerController::Tick(float DeltaSeconds)

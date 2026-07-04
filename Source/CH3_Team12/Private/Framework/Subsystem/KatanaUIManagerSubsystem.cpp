@@ -6,7 +6,7 @@
 #include "UI/KatanaLoadingWidget.h"
 #include "UI/KatanaMainMenuPresenter.h"
 #include "UI/KatanaMainMenuWidget.h"
-#include "UI/KatanaPlayerUIPresenter.h"
+#include "UI/KatanaPlayerPresenter.h"
 #include "UI/KatanaPlayerWidget.h"
 
 void UKatanaUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -82,7 +82,7 @@ void UKatanaUIManagerSubsystem::ShowPlayerWidget(UPlayerAttributeComponent* InAt
 	UKatanaPlayerWidget* ActiveView = OpShowUI<UKatanaPlayerWidget>(PlayerWidgetName);
 	if (!ActiveView) return;
 
-	UKatanaPlayerUIPresenter* NewPresenter = NewObject<UKatanaPlayerUIPresenter>(this);
+	UKatanaPlayerPresenter* NewPresenter = NewObject<UKatanaPlayerPresenter>(this);
 	if (!NewPresenter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *PlayerWidgetName.ToString());
