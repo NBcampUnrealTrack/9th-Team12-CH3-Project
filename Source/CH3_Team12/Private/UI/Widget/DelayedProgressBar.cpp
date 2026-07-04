@@ -14,7 +14,6 @@ void UDelayedProgressBar::NativeConstruct()
 		if (DamageDelayedMat)
 		{
 			DamageDelayedMat->SetScalarParameterValue(TEXT("Progress"), DamageDelayedPercent);
-			DamageDelayedMat->SetScalarParameterValue(TEXT("IsCentered"), IsCentered);
 		}
 	}
 
@@ -24,7 +23,6 @@ void UDelayedProgressBar::NativeConstruct()
 		if (RecoveryDelayedMat)
 		{
 			RecoveryDelayedMat->SetScalarParameterValue(TEXT("Progress"), RecoveryDelayedPercent);
-			RecoveryDelayedMat->SetScalarParameterValue(TEXT("IsCentered"), IsCentered);
 		}
 	}
 
@@ -34,7 +32,6 @@ void UDelayedProgressBar::NativeConstruct()
 		if (CurrentMat)
 		{
 			CurrentMat->SetScalarParameterValue(TEXT("Progress"), CurrentPercent);
-			CurrentMat->SetScalarParameterValue(TEXT("IsCentered"), IsCentered);
 		}
 	}
 }
