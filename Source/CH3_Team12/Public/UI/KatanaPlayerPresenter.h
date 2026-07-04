@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Framework/PresenterInterface.h"
 #include "UObject/Object.h"
-#include "KatanaPlayerUIPresenter.generated.h"
+#include "KatanaPlayerPresenter.generated.h"
 
 class UPlayerAttributeComponent;
 class UKatanaPlayerWidget;
@@ -11,7 +11,7 @@ class UKatanaPlayerWidget;
  *
  */
 UCLASS()
-class CH3_TEAM12_API UKatanaPlayerUIPresenter : public UObject, public IPresenterInterface
+class CH3_TEAM12_API UKatanaPlayerPresenter : public UObject, public IPresenterInterface
 {
 	GENERATED_BODY()
 
