@@ -27,7 +27,7 @@ public:
 	void StartLoadingTargetMapAsync();
 
 private:
-	const float LoopRate = 0.1f;
+	const float LoopRate = 0.05f;
 
 	FTimerHandle LoopTimerHandle;
 	FTimerHandle DelayLoadTimerHandle;

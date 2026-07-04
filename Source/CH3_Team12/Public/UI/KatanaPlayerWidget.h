@@ -4,8 +4,8 @@
 #include "Blueprint/UserWidget.h"
 #include "KatanaPlayerWidget.generated.h"
 
+class UImage;
 class UCenterProgressBar;
-class UProgressBar;
 class UDelayedProgressBar;
 /**
  *
@@ -16,13 +16,28 @@ class CH3_TEAM12_API UKatanaPlayerWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void UpdateHealthBar(float Percent) const;
-	void UpdatePostureBar(float Percent) const;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	FLinearColor DamagePostureColor;
+
+	void UpdateHealthBar(float Percent);
+	void UpdatePostureBar(float Percent);
 
 protected:
+	virtual void NativeConstruct() override;
+
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UDelayedProgressBar> HealthBar;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UCenterProgressBar> PostureBar;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UImage> PostureCenterImage;
+
+private:
+	float HealthPercent;
+	bool bTakeDamageHealth = false;
+
+	FLinearColor OriginPostureColor;
+	FLinearColor OriginPostureCenterColor;
 };

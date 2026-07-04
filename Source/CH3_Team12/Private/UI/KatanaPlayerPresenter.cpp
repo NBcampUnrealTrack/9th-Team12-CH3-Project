@@ -54,12 +54,12 @@ void UKatanaPlayerPresenter::OnModelPostureChanged(const float CurrentPosture, c
 
 void UKatanaPlayerPresenter::OnModelPostureBroken() const
 {
-
+	// UE_LOG(LogTemp, Warning, TEXT("Posture Broken"));
 }
 
 void UKatanaPlayerPresenter::OnModelPostureRecovered() const
 {
-
+	// UE_LOG(LogTemp, Warning, TEXT("Posture Recovered"));
 }
 
 void UKatanaPlayerPresenter::OnModelDeath() const
