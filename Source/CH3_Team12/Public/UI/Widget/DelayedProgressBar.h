@@ -26,23 +26,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProgressBar")
 	bool IsCumulative = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProgressBar")
-	bool IsCentered = false;
-
 	UFUNCTION(BlueprintCallable, Category = "ProgressBar")
 	void SetPercent(float InPercent);
 
 protected:
-	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Img_Background;
 
-	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Img_DamageDelayed;
 
-	UPROPERTY(meta=(BindWidget, AllowPrivateAccess = "true"))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Img_RecoveryDelayed;
 
-	UPROPERTY(meta = (BindWidget, AllowPrivateAccess = "true"))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Img_Current;
 
 	virtual void NativeConstruct() override;
