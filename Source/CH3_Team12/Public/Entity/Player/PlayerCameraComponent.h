@@ -87,16 +87,19 @@ private:
 	// 노말 카메라
 	// =========================
 	UPROPERTY(EditAnywhere, Category = "Camera|Normal")
-	float NormalTargetArmLength = 300.0f;
+	float NormalTargetArmLength = 350.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Camera|Normal")
 	bool bNormalUsePawnControlRotation = true;
 
 	UPROPERTY(EditAnywhere, Category = "Camera|Normal")
-	FVector NormalCameraBoomRelativeLocation = FVector::ZeroVector;
+	FVector NormalCameraBoomRelativeLocation = FVector(0.0f, 0.0f, 50.0f);
 
 	UPROPERTY(EditAnywhere, Category = "Camera|Normal")
-	FVector NormalSocketOffset = FVector(0.0f, 0.0f, 30.0f);
+	FRotator NormalCameraBoomRelativeRotation = FRotator(-10.0f, 0.0f, 0.0f);
+
+	UPROPERTY(EditAnywhere, Category = "Camera|Normal")
+	FVector NormalSocketOffset = FVector(0.0f, 0.0f, 40.0f);
 
 	UPROPERTY(EditAnywhere, Category = "Camera|Normal")
 	FVector NormalTargetOffset = FVector::ZeroVector;
@@ -114,6 +117,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Trace")
 	float LockOnTraceHalfHeight = 1500.0f;
 
+	// 적에 대한 네임태그
 	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Trace")
 	FName EnemyTagName = TEXT("Enemy");
 
@@ -129,77 +133,33 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera|Interp")
 	float CameraInterpSpeed = 6.0f;
 
+	// 데이터 커브를 사용한 카메라 전환
+	// X = LocationZ, Y = RotationY, Z = SocketZ
+	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Curve|CameraOffset")
+	TObjectPtr<class UCurveVector> LockOnSmallMonsterCameraOffsetByDistanceCurve;
 
-	// =========================
-	// 거리 기준
-	// =========================
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Distance")
-	float LockOnHeightCorrectionNearDistance = 200.0f;
+	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Curve|CameraOffset")
+	TObjectPtr<class UCurveVector> LockOnMediumMonsterCameraOffsetByDistanceCurve;
 
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Distance")
-	float LockOnHeightCorrectionFarDistance = 600.0f;
+	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Curve|CameraOffset")
+	TObjectPtr<class UCurveVector> LockOnLargeMonsterCameraOffsetByDistanceCurve;
+
+	// 암길이 전용
+	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Curve|ArmLength")
+	TObjectPtr<class UCurveFloat> LockOnSmallMonsterArmLengthByDistanceCurve;
+
+	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Curve|ArmLength")
+	TObjectPtr<class UCurveFloat> LockOnMediumMonsterArmLengthByDistanceCurve;
+
+	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Curve|ArmLength")
+	TObjectPtr<class UCurveFloat> LockOnLargeMonsterArmLengthByDistanceCurve;
 
 
-	// =========================
-	// 크기 판단
-	// =========================
-	// 키 차이 허용값
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|Height")
-	float LockOnTargetHeightDeadZone = 60.0f;
+	// 카메라 암 길이 자연스러운 조절 변수
+	UPROPERTY(EditAnywhere, Category = "Camera|LockOn")
+	float LockOnCameraInterpSpeed = 4.0f;
 
-
-	// =========================
-	// 큰 타겟 보정
-	// =========================
-	// 멀리 있을 때 카메라 높이 보정
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|LargeTarget")
-	float LockOnLargeTargetFarSocketZOffset = 0.0f;
-	// 가까이 있을 때 카메라 높이 보정
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|LargeTarget")
-	float LockOnLargeTargetCloseSocketZOffset = -15.0f;
-	// 가까이 있을 때 스프링암 시작 위치 보정
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|LargeTarget")
-	FVector LockOnLargeTargetCloseRelativeLocation = FVector(0.0f, 0.0f, 10.0f);
-
-	// 타겟을 바라볼 높이 비율
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|LargeTarget")
-	float LockOnLargeTargetViewHeightRatio = 0.60f;
-	
-	// Pitch 보정 강도
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|LargeTarget")
-	float LockOnLargeTargetPitchAlphaScale = 0.9f;
-	
-	// 큰 보스 락온 시 거리에 따른 스프링암 길이
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|LargeTarget")
-	float LockOnLargeTargetArmLengthFar = 350.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|LargeTarget")
-	float LockOnLargeTargetArmLengthClose = 280.0f;
-	
-	
-	// =========================
-	// 작은 타겟 보정
-	// =========================
-	// 멀리 있을 때 카메라 높이 보정
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|SmallTarget")
-	float LockOnSmallTargetFarSocketZOffset = 0.0f;
-	// 가까이 있을 때 카메라 높이 보정
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|SmallTarget")
-	float LockOnSmallTargetCloseSocketZOffset = 0.0f;
-	// 가까이 있을 때 스프링암 시작 위치 보정
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|SmallTarget")
-	FVector LockOnSmallTargetCloseRelativeLocation = FVector(0.0f, 0.0f, 0.0f);
-
-	// 타겟을 바라볼 높이 비율
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|SmallTarget")
-	float LockOnSmallTargetViewHeightRatio = 0.35f;
-	// Pitch 보정 강도
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|SmallTarget")
-	float LockOnSmallTargetPitchAlphaScale = 0.8f;
-	
-	// 작은 몬스터 락온 시 거리에 따른 스프링암 길이.
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|SmallTarget")
-	float LockOnSmallTargetArmLengthFar = 350.0f;
-	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|SmallTarget")
-	float LockOnSmallTargetArmLengthClose = 300.0f;
+	// 키 차이 허용 범위
+	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|TargetSize")
+	float LockOnTargetHeightDiff = 30.0f;
 };

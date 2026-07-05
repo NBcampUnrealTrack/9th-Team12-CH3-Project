@@ -8,6 +8,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
+#include "Curves/CurveFloat.h"
+#include "Curves/CurveVector.h"
 
 UPlayerCameraComponent::UPlayerCameraComponent()
 {
@@ -57,7 +59,14 @@ void UPlayerCameraComponent::SetupNormalCamera()
 	
 	CurrentLockOnTarget = nullptr;
 	
-	CameraBoom->bUsePawnControlRotation = bNormalUsePawnControlRotation;
+	// Normal 카메라 기본 값 적용
+	CameraBoom->TargetArmLength = NormalTargetArmLength;
+	CameraBoom->SetRelativeLocation(NormalCameraBoomRelativeLocation);
+	CameraBoom->SetRelativeRotation(NormalCameraBoomRelativeRotation);
+	CameraBoom->SocketOffset = NormalSocketOffset;
+	CameraBoom->TargetOffset = NormalTargetOffset;
+
+	CameraBoom->bUsePawnControlRotation = true;
 
 	CameraBoom->bInheritPitch = true;
 	CameraBoom->bInheritYaw = true;
@@ -314,9 +323,6 @@ void UPlayerCameraComponent::UpdateNormalCamera(float DeltaTime)
 	);
 }
 
-
-
-// 락온 대상의 거리와 크기에 따라 카메라 위치, 회전, 캐릭터 방향 갱신
 void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 {
 	if (OwnerActor == nullptr || CurrentLockOnTarget == nullptr)
@@ -341,17 +347,12 @@ void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 		return;
 	}
 
-	// =========================
-	// 1. 위치 정보
-	// =========================
+	// 거리 계산
 	const FVector OwnerLocation = OwnerActor->GetActorLocation();
 	const FVector TargetLocation = CurrentLockOnTarget->GetActorLocation();
-
 	const float Distance = FVector::Dist2D(OwnerLocation, TargetLocation);
 
-	// =========================
-	// 2. 캐릭터 / 타겟 Bounds 정보
-	// =========================
+	// 크기 계산
 	FVector OwnerOrigin;
 	FVector OwnerExtent;
 	OwnerActor->GetActorBounds(true, OwnerOrigin, OwnerExtent);
@@ -362,235 +363,161 @@ void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 
 	const float OwnerHeight = OwnerExtent.Z * 2.0f;
 	const float TargetHeight = TargetExtent.Z * 2.0f;
-
 	const float HeightDifference = TargetHeight - OwnerHeight;
 
-	// 큰 보스인지 판단
-	// 큰 보스가 아니면 전부 SmallTarget 세팅을 사용한다.
-	const bool bIsLargeTarget = HeightDifference > LockOnTargetHeightDeadZone;
+	// 기본값
+	float TargetArmLength = CameraBoom->TargetArmLength;
 
-	// =========================
-	// 3. 거리 기반 보정 비율 계산
-	// =========================
-	// 가까우면 1.0
-	// 멀면 0.0
-	const float DistanceAlpha = FMath::GetMappedRangeValueClamped(
-		FVector2D(LockOnHeightCorrectionFarDistance, LockOnHeightCorrectionNearDistance),
-		FVector2D(0.0f, 1.0f),
-		Distance
-	);
+	// CurveVector의 RotationY 값을 Controller Pitch에 적용하기 위한 변수
+	float TargetPitch = OwnerController->GetControlRotation().Pitch;
 
-	// =========================
-	// 4. SpringArm Length 보정
-	// =========================
-	float TargetArmLength = NormalTargetArmLength;
-
-	if (bIsLargeTarget)
+	// 크기에 따른 스프링암 길이 / 카메라 보정 조절
+	if (HeightDifference > LockOnTargetHeightDiff)
 	{
-		TargetArmLength = FMath::Lerp(
-			LockOnLargeTargetArmLengthFar,
-			LockOnLargeTargetArmLengthClose,
-			DistanceAlpha
-		);
+		// 큰 몬스터용 LocationZ / RotationY / SocketZ Curve
+		if (LockOnLargeMonsterCameraOffsetByDistanceCurve)
+		{
+			const FVector CameraOffsetValue =
+				LockOnLargeMonsterCameraOffsetByDistanceCurve->GetVectorValue(Distance);
+
+			const float TargetLocationZ = CameraOffsetValue.X;
+			const float TargetRotationY = CameraOffsetValue.Y;
+			const float TargetSocketZ = CameraOffsetValue.Z;
+
+			// RotationY는 SpringArm에 직접 넣지 않고 Controller Pitch에 넣기 위해 저장
+			TargetPitch = TargetRotationY;
+
+			// SpringArm 위치 Z 적용
+			FVector NewRelativeLocation = CameraBoom->GetRelativeLocation();
+			NewRelativeLocation.Z = FMath::FInterpTo(
+				NewRelativeLocation.Z,
+				TargetLocationZ,
+				DeltaTime,
+				LockOnCameraInterpSpeed
+			);
+			CameraBoom->SetRelativeLocation(NewRelativeLocation);
+
+			// SocketOffset Z 적용
+			FVector NewSocketOffset = CameraBoom->SocketOffset;
+			NewSocketOffset.Z = FMath::FInterpTo(
+				NewSocketOffset.Z,
+				TargetSocketZ,
+				DeltaTime,
+				LockOnCameraInterpSpeed
+			);
+			CameraBoom->SocketOffset = NewSocketOffset;
+
+			UE_LOG(LogTemp, Error,
+				TEXT("Distance : %f, TargetArmLength : %f, HeightDifference : %f, LocationZ : %f, RotationY : %f, SocketZ : %f"),
+				Distance,
+				TargetArmLength,
+				HeightDifference,
+				TargetLocationZ,
+				TargetRotationY,
+				TargetSocketZ
+			);
+		}
+
+		// 큰 몬스터용 ArmLength Curve
+		if (LockOnLargeMonsterArmLengthByDistanceCurve)
+		{
+			TargetArmLength = LockOnLargeMonsterArmLengthByDistanceCurve->GetFloatValue(Distance);
+		}
+	}
+	else if (HeightDifference > -LockOnTargetHeightDiff)
+	{
+		// 중간 몬스터용 CameraOffset Curve
+		if (LockOnMediumMonsterCameraOffsetByDistanceCurve)
+		{
+			const FVector CameraOffsetValue =
+				LockOnMediumMonsterCameraOffsetByDistanceCurve->GetVectorValue(Distance);
+
+			const float TargetLocationZ = CameraOffsetValue.X;
+			const float TargetRotationY = CameraOffsetValue.Y;
+			const float TargetSocketZ = CameraOffsetValue.Z;
+
+			// RotationY는 SpringArm에 직접 넣지 않고 Controller Pitch에 넣기 위해 저장
+			TargetPitch = TargetRotationY;
+
+			// SpringArm 위치 Z 적용
+			FVector NewRelativeLocation = CameraBoom->GetRelativeLocation();
+			NewRelativeLocation.Z = FMath::FInterpTo(
+				NewRelativeLocation.Z,
+				TargetLocationZ,
+				DeltaTime,
+				LockOnCameraInterpSpeed
+			);
+			CameraBoom->SetRelativeLocation(NewRelativeLocation);
+
+			// SocketOffset Z 적용
+			FVector NewSocketOffset = CameraBoom->SocketOffset;
+			NewSocketOffset.Z = FMath::FInterpTo(
+				NewSocketOffset.Z,
+				TargetSocketZ,
+				DeltaTime,
+				LockOnCameraInterpSpeed
+			);
+			CameraBoom->SocketOffset = NewSocketOffset;
+		}
+
+		// 중간 몬스터용 ArmLength Curve
+		if (LockOnMediumMonsterArmLengthByDistanceCurve)
+		{
+			TargetArmLength = LockOnMediumMonsterArmLengthByDistanceCurve->GetFloatValue(Distance);
+		}
 	}
 	else
 	{
-		TargetArmLength = FMath::Lerp(
-			LockOnSmallTargetArmLengthFar,
-			LockOnSmallTargetArmLengthClose,
-			DistanceAlpha
-		);
+		// 작은 몬스터용 CameraOffset Curve
+		if (LockOnSmallMonsterCameraOffsetByDistanceCurve)
+		{
+			const FVector CameraOffsetValue =
+				LockOnSmallMonsterCameraOffsetByDistanceCurve->GetVectorValue(Distance);
+
+			const float TargetLocationZ = CameraOffsetValue.X;
+			const float TargetRotationY = CameraOffsetValue.Y;
+			const float TargetSocketZ = CameraOffsetValue.Z;
+
+			// RotationY는 SpringArm에 직접 넣지 않고 Controller Pitch에 넣기 위해 저장
+			TargetPitch = TargetRotationY;
+
+			// SpringArm 위치 Z 적용
+			FVector NewRelativeLocation = CameraBoom->GetRelativeLocation();
+			NewRelativeLocation.Z = FMath::FInterpTo(
+				NewRelativeLocation.Z,
+				TargetLocationZ,
+				DeltaTime,
+				LockOnCameraInterpSpeed
+			);
+			CameraBoom->SetRelativeLocation(NewRelativeLocation);
+
+			// SocketOffset Z 적용
+			FVector NewSocketOffset = CameraBoom->SocketOffset;
+			NewSocketOffset.Z = FMath::FInterpTo(
+				NewSocketOffset.Z,
+				TargetSocketZ,
+				DeltaTime,
+				LockOnCameraInterpSpeed
+			);
+			CameraBoom->SocketOffset = NewSocketOffset;
+		}
+
+		// 작은 몬스터용 ArmLength Curve
+		if (LockOnSmallMonsterArmLengthByDistanceCurve)
+		{
+			TargetArmLength = LockOnSmallMonsterArmLengthByDistanceCurve->GetFloatValue(Distance);
+		}
 	}
 
+	// 스프링암 길이 적용
 	CameraBoom->TargetArmLength = FMath::FInterpTo(
 		CameraBoom->TargetArmLength,
 		TargetArmLength,
 		DeltaTime,
-		CameraInterpSpeed
+		LockOnCameraInterpSpeed
 	);
 
-	// =========================
-	// 5. RelativeLocation 보정
-	// =========================
-	// 멀 때는 NormalCameraBoomRelativeLocation.
-	// 가까울 때만 LockOn 전용 RelativeLocation을 사용한다.
-	FVector TargetRelativeLocation = NormalCameraBoomRelativeLocation;
-
-	if (bIsLargeTarget)
-	{
-		TargetRelativeLocation = FMath::Lerp(
-			NormalCameraBoomRelativeLocation,
-			LockOnLargeTargetCloseRelativeLocation,
-			DistanceAlpha
-		);
-	}
-	else
-	{
-		TargetRelativeLocation = FMath::Lerp(
-			NormalCameraBoomRelativeLocation,
-			LockOnSmallTargetCloseRelativeLocation,
-			DistanceAlpha
-		);
-	}
-
-	FVector NewRelativeLocation = FMath::VInterpTo(
-		CameraBoom->GetRelativeLocation(),
-		TargetRelativeLocation,
-		DeltaTime,
-		CameraInterpSpeed
-	);
-
-	if (FVector::DistSquared(NewRelativeLocation, TargetRelativeLocation) < 1.0f)
-	{
-		NewRelativeLocation = TargetRelativeLocation;
-	}
-
-	CameraBoom->SetRelativeLocation(NewRelativeLocation);
-
-	// =========================
-	// 6. SocketOffset.Z 보정
-	// =========================
-	float HeightCorrection = 0.0f;
-
-	if (bIsLargeTarget)
-	{
-		HeightCorrection = FMath::Lerp(
-			LockOnLargeTargetFarSocketZOffset,
-			LockOnLargeTargetCloseSocketZOffset,
-			DistanceAlpha
-		);
-	}
-	else
-	{
-		HeightCorrection = FMath::Lerp(
-			LockOnSmallTargetFarSocketZOffset,
-			LockOnSmallTargetCloseSocketZOffset,
-			DistanceAlpha
-		);
-	}
-
-	FVector TargetSocketOffset = NormalSocketOffset;
-	TargetSocketOffset.Z += HeightCorrection;
-
-	CameraBoom->SocketOffset = FMath::VInterpTo(
-		CameraBoom->SocketOffset,
-		TargetSocketOffset,
-		DeltaTime,
-		CameraInterpSpeed
-	);
-	
-// =========================
-// 7. 카메라 회전 보정
-// =========================
-// Yaw는 기본적으로 타겟을 바라본다.
-// 단, 작은 타겟이 가까울 때는 타겟 위치를 캐릭터 쪽으로 더 당겨서
-// 캐릭터와 타겟이 화면 중앙에 더 잘 들어오도록 보정한다.
-
-FVector CameraLookTargetLocation = TargetLocation;
-
-if (!bIsLargeTarget)
-{
-	// 작은 몬스터일 때만 가까운 거리 보정 적용
-	// DistanceAlpha는 가까우면 1.0, 멀면 0.0
-
-	// 기존 MidLocation은 0.5f 지점이었다.
-	// 0.65f는 중간보다 조금 더 캐릭터 쪽으로 당긴 지점이다.
-	const FVector CenterCorrectionLocation = FMath::Lerp(
-		TargetLocation,
-		OwnerLocation,
-		0.85f//0.65
-	);
-
-	// 가까울수록 보정 위치 쪽으로 당긴다.
-	const float SmallTargetCenterCorrectionAlpha = DistanceAlpha * 0.85f;
-
-	CameraLookTargetLocation = FMath::Lerp(
-		TargetLocation,
-		CenterCorrectionLocation,
-		SmallTargetCenterCorrectionAlpha
-	);
-}
-
-FVector YawDirection = CameraLookTargetLocation - OwnerLocation;
-YawDirection.Z = 0.0f;
-
-if (!YawDirection.IsNearlyZero())
-{
-	const FRotator TargetYawRotation = YawDirection.Rotation();
-	const FRotator CurrentCameraRotation = OwnerController->GetControlRotation();
-
-	float TargetViewHeightRatio = 0.5f;
-	float PitchAlphaScale = 0.5f;
-
-	if (bIsLargeTarget)
-	{
-		TargetViewHeightRatio = LockOnLargeTargetViewHeightRatio;
-		PitchAlphaScale = LockOnLargeTargetPitchAlphaScale;
-	}
-	else
-	{
-		TargetViewHeightRatio = LockOnSmallTargetViewHeightRatio;
-		PitchAlphaScale = LockOnSmallTargetPitchAlphaScale;
-	}
-
-	const float TargetBottomZ = TargetOrigin.Z - TargetExtent.Z;
-	const float TargetViewZ = TargetBottomZ + TargetHeight * TargetViewHeightRatio;
-
-	const FVector TargetViewLocation(
-		CameraLookTargetLocation.X,
-		CameraLookTargetLocation.Y,
-		TargetViewZ
-	);
-
-	const FVector CameraLocation = FollowCamera->GetComponentLocation();
-	const FVector PitchDirection = TargetViewLocation - CameraLocation;
-
-	float DesiredPitch = LockOnEnterControlRotation.Pitch;
-
-	const float PitchAlpha = FMath::Clamp(
-		DistanceAlpha * PitchAlphaScale,
-		0.0f,
-		1.0f
-	);
-
-	if (!PitchDirection.IsNearlyZero())
-	{
-		const FRotator TargetLookRotation = PitchDirection.Rotation();
-
-		const float TargetPitch = FMath::Clamp(
-			TargetLookRotation.Pitch,
-			-35.0f,
-			35.0f
-		);
-
-		DesiredPitch = FMath::Lerp(
-			LockOnEnterControlRotation.Pitch,
-			TargetPitch,
-			PitchAlpha
-		);
-	}
-
-	const FRotator DesiredCameraRotation(
-		DesiredPitch,
-		TargetYawRotation.Yaw,
-		0.0f
-	);
-
-	const FRotator NewCameraRotation = FMath::RInterpTo(
-		CurrentCameraRotation,
-		DesiredCameraRotation,
-		DeltaTime,
-		LockOnCameraRotationInterpSpeed
-	);
-
-	OwnerController->SetControlRotation(NewCameraRotation);
-}
-	
-	/*// =========================
-	// 7. 카메라 회전 보정
-	// =========================
-	// Yaw는 항상 타겟을 바라본다.
-	// Pitch는 Large / Small 세팅에 따라 다르게 적용한다.
+	// 카메라가 항상 락온 대상을 바라보도록 회전
 	FVector YawDirection = TargetLocation - OwnerLocation;
 	YawDirection.Z = 0.0f;
 
@@ -599,59 +526,8 @@ if (!YawDirection.IsNearlyZero())
 		const FRotator TargetYawRotation = YawDirection.Rotation();
 		const FRotator CurrentCameraRotation = OwnerController->GetControlRotation();
 
-		float TargetViewHeightRatio = 0.5f;
-		float PitchAlphaScale = 0.5f;
-
-		if (bIsLargeTarget)
-		{
-			TargetViewHeightRatio = LockOnLargeTargetViewHeightRatio;
-			PitchAlphaScale = LockOnLargeTargetPitchAlphaScale;
-		}
-		else
-		{
-			TargetViewHeightRatio = LockOnSmallTargetViewHeightRatio;
-			PitchAlphaScale = LockOnSmallTargetPitchAlphaScale;
-		}
-
-		const float TargetBottomZ = TargetOrigin.Z - TargetExtent.Z;
-		const float TargetViewZ = TargetBottomZ + TargetHeight * TargetViewHeightRatio;
-
-		const FVector TargetViewLocation(
-			TargetOrigin.X,
-			TargetOrigin.Y,
-			TargetViewZ
-		);
-
-		const FVector CameraLocation = FollowCamera->GetComponentLocation();
-		const FVector PitchDirection = TargetViewLocation - CameraLocation;
-
-		float DesiredPitch = LockOnEnterControlRotation.Pitch;
-
-		const float PitchAlpha = FMath::Clamp(
-			DistanceAlpha * PitchAlphaScale,
-			0.0f,
-			1.0f
-		);
-
-		if (!PitchDirection.IsNearlyZero())
-		{
-			const FRotator TargetLookRotation = PitchDirection.Rotation();
-
-			const float TargetPitch = FMath::Clamp(
-				TargetLookRotation.Pitch,
-				-35.0f,
-				35.0f
-			);
-
-			DesiredPitch = FMath::Lerp(
-				LockOnEnterControlRotation.Pitch,
-				TargetPitch,
-				PitchAlpha
-			);
-		}
-
 		const FRotator DesiredCameraRotation(
-			DesiredPitch,
+			TargetPitch,
 			TargetYawRotation.Yaw,
 			0.0f
 		);
@@ -664,11 +540,9 @@ if (!YawDirection.IsNearlyZero())
 		);
 
 		OwnerController->SetControlRotation(NewCameraRotation);
-	}*/
+	}
 
-	// =========================
-	// 8. 캐릭터 몸 방향 보정
-	// =========================
+	// 캐릭터 몸 방향도 락온 대상을 바라보도록 회전
 	FVector BodyDirection = TargetLocation - OwnerLocation;
 	BodyDirection.Z = 0.0f;
 
@@ -686,10 +560,4 @@ if (!YawDirection.IsNearlyZero())
 
 		OwnerActor->SetActorRotation(NewBodyRotation);
 	}
-
-	// =========================
-	// Debug
-	// =========================
-	const FRotator ControlRotation = OwnerController->GetControlRotation();
-	const FRotator BoomRotation = CameraBoom->GetComponentRotation();
 }
