@@ -160,4 +160,44 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 }
 
+void APlayerCharacterBase::AttackAnimationEnd()
+{
+	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	
+	if (CombatComponent)
+	{
+		CombatComponent->EndAttack();
+	}	
+}
+
+void APlayerCharacterBase::AttackHitCheckStart()
+{
+	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	
+	if (CombatComponent)
+	{
+		CombatComponent->StartWeaponHitCheck();
+	}
+}
+
+void APlayerCharacterBase::AttackHitCheckTick()
+{
+	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	
+	if (CombatComponent)
+	{
+		CombatComponent->WeaponTrace();
+	}
+}
+
+void APlayerCharacterBase::AttackHitCheckEnd()
+{
+	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	
+	if (CombatComponent)
+	{
+		CombatComponent->EndWeaponHitCheck();
+	}
+}
+
 

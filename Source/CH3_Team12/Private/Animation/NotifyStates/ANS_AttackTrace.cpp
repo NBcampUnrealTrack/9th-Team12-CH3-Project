@@ -1,8 +1,7 @@
 #include "Animation/NotifyStates/ANS_AttackTrace.h"
 
 #include "Components/SkeletalMeshComponent.h"
-#include "Entity/Player/PlayerCharacterBase.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Interface/AnimationAttackInterface.h"
 
 void UANS_AttackTrace::NotifyBegin(
 	USkeletalMeshComponent* MeshComp,
@@ -17,18 +16,10 @@ void UANS_AttackTrace::NotifyBegin(
 	{
 		return;
 	}
-
-	APlayerCharacterBase* PlayerCharacter =
-		Cast<APlayerCharacterBase>(MeshComp->GetOwner());
-
-	if (!PlayerCharacter)
+	
+	if (IAnimationAttackInterface* AttackPawn = Cast<IAnimationAttackInterface>(MeshComp->GetOwner()))
 	{
-		return;
-	}
-
-	if (UPlayerCombatComponent* CombatComponent = PlayerCharacter->GetCombatComponent())
-	{
-		CombatComponent->StartWeaponHitCheck();
+		AttackPawn->AttackHitCheckStart();
 	}
 }
 
@@ -46,17 +37,9 @@ void UANS_AttackTrace::NotifyTick(
 		return;
 	}
 
-	APlayerCharacterBase* PlayerCharacter =
-		Cast<APlayerCharacterBase>(MeshComp->GetOwner());
-
-	if (!PlayerCharacter)
+	if (IAnimationAttackInterface* AttackPawn = Cast<IAnimationAttackInterface>(MeshComp->GetOwner()))
 	{
-		return;
-	}
-
-	if (UPlayerCombatComponent* CombatComponent = PlayerCharacter->GetCombatComponent())
-	{
-		CombatComponent->WeaponTrace();
+		AttackPawn->AttackHitCheckTick();
 	}
 }
 
@@ -73,16 +56,8 @@ void UANS_AttackTrace::NotifyEnd(
 		return;
 	}
 
-	APlayerCharacterBase* PlayerCharacter =
-		Cast<APlayerCharacterBase>(MeshComp->GetOwner());
-
-	if (!PlayerCharacter)
+	if (IAnimationAttackInterface* AttackPawn = Cast<IAnimationAttackInterface>(MeshComp->GetOwner()))
 	{
-		return;
-	}
-
-	if (UPlayerCombatComponent* CombatComponent = PlayerCharacter->GetCombatComponent())
-	{
-		CombatComponent->EndWeaponHitCheck();
+		AttackPawn->AttackHitCheckEnd();
 	}
 }
