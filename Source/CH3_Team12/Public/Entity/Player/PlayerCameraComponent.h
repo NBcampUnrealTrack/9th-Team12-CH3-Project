@@ -31,6 +31,7 @@ public:
 	virtual void BeginPlay() override;
 	
 	void Look(const FInputActionValue& Value);
+	AActor* GetCurrentLockOnTarget() const { return CurrentLockOnTarget; }
 	
 	void SetupNormalCamera();
 	void SetupLockOnCamera();
