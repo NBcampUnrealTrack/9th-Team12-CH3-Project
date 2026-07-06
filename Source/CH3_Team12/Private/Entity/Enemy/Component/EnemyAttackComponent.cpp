@@ -5,8 +5,11 @@
 
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
+#include "Animation/AnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 
 // Sets default values for this component's properties
 UEnemyAttackComponent::UEnemyAttackComponent()
@@ -29,10 +32,18 @@ void UEnemyAttackComponent::BeginPlay()
 
 bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern)
 {
+	UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack: Action=%d Pattern=%d"), SelectedAction, SelectedPattern);
 	AActor* OwnerActor = GetOwner();
 
 	if (!OwnerActor || !TargetActor)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: OwnerActor or TargetActor is null"));
+		return false;
+	}
+	const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: OwnerCharacter is null"));
 		return false;
 	}
 
@@ -41,18 +52,48 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		return false;
 	}
 
-	if (SelectedAction == 1)
+	UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (!AnimInstance)
 	{
-		// TODO: 일반공격
-		// NOTE: 공격Montage 끝나면 OnAttackFinished.Broadcast() 호출
-		UE_LOG(LogTemp, Log, TEXT("Execute Normal Attack Pattern: %d"), SelectedPattern);
+		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: Animinstance"));
+		return false;
 	}
-	else if (SelectedAction == 2)
+
+	// if (SelectedAction == 1)
+	// {
+	// 	// TODO: 일반공격
+	// 	// NOTE: 공격Montage 끝나면 OnAttackFinished.Broadcast() 호출
+	// 	UE_LOG(LogTemp, Log, TEXT("Execute Normal Attack Pattern: %d"), SelectedPattern);
+	// }
+	// else if (SelectedAction == 2)
+	// {
+	// 	// TODO: 강공격
+	// 	// NOTE: 공격Montage 끝나면 OnAttackFinished.Broadcast() 호출
+	// 	UE_LOG(LogTemp, Log, TEXT("Execute Strong Attack Pattern: %d"), SelectedPattern);
+	// }
+	UAnimMontage* SelectedMontage = nullptr;
+
+	if (SelectedAction == 1 && SelectedPattern == 0)
 	{
-		// TODO: 강공격
-		// NOTE: 공격Montage 끝나면 OnAttackFinished.Broadcast() 호출
-		UE_LOG(LogTemp, Log, TEXT("Execute Strong Attack Pattern: %d"), SelectedPattern);
+		// NormalAttackMontage0 
+		SelectedMontage = NormalAttack0;
 	}
+	else if (SelectedAction == 1 && SelectedPattern == 1)
+	{
+		// NormalAttackMontage1 
+		SelectedMontage = NormalAttack0;
+	}
+	else if (SelectedAction == 2 && SelectedPattern == 0)
+	{
+		// StrongAttackMontage0 
+		SelectedMontage = NormalAttack0;
+	}
+	else if (SelectedAction == 2 && SelectedPattern == 1)
+	{
+		// FarStrongAttackMontage 재생
+		SelectedMontage = FarStrongAttack;
+	}
+
 
 	const float DistanceToTarget = FVector::Dist(
 		OwnerActor->GetActorLocation(),
@@ -61,31 +102,14 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 
 	if (DistanceToTarget > AttackRange)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: RangeShort"));
+		return false;
+	}
+	if (!SelectedMontage)
+	{
 		return false;
 	}
 
-	bCanAttack = false;
-
-	// NOTE: 디버그
-	DrawDebugSphere(
-		GetWorld(),
-		TargetActor->GetActorLocation(),
-		50.f,
-		16,
-		FColor::Red,
-		false,
-		1.f
-	);
-
-	DrawDebugLine(
-		GetWorld(),
-		OwnerActor->GetActorLocation(),
-		TargetActor->GetActorLocation(),
-		FColor::Red,
-		1.f,
-		0,
-		2.f
-	);
 
 	GetWorld()->GetTimerManager().SetTimer(
 		AttackCooldownTimerHandle,
@@ -95,10 +119,54 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		false
 	);
 
+	const float MontageLength = AnimInstance->Montage_Play(SelectedMontage);
+
+	AnimInstance->Montage_SetNextSection(
+		TEXT("Attack1"),
+		TEXT("Attack2"),
+		SelectedMontage
+	);
+	AnimInstance->Montage_SetNextSection(
+		TEXT("Attack2"),
+		TEXT("Attack3"),
+		SelectedMontage
+	);
+	UE_LOG(LogTemp, Warning, TEXT(" MontageLength: %f"), MontageLength);
+	if (MontageLength <= 0.f)
+	{
+		return false;
+	}
+
+
+	bCanAttack = false;
 	return true;
 }
 
 void UEnemyAttackComponent::ResetAttackCooldown()
 {
 	bCanAttack = true;
+}
+
+void UEnemyAttackComponent::FinishAttack()
+{
+	bCanAttack = true;
+	OnAttackFinished.Broadcast();
+}
+
+void UEnemyAttackComponent::StopAttackMontage()
+{
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (!AnimInstance)
+	{
+		return;
+	}
+
+	AnimInstance->Montage_Stop(0.15f);
+	FinishAttack();
 }

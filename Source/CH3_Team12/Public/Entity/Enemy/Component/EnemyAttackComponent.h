@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "EnemyAttackComponent.generated.h"
 
+
+class UAnimMontage;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackFinished);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -35,6 +37,24 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
 	bool bCanAttack = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
+	TObjectPtr<UAnimMontage> NormalAttack0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
+	TObjectPtr<UAnimMontage> NormalAttack1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
+	TObjectPtr<UAnimMontage> StrongAttack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
+	TObjectPtr<UAnimMontage> FarStrongAttack;
+
+	UFUNCTION()
+	void FinishAttack();
+
+	UFUNCTION()
+	void StopAttackMontage();
 
 private:
 	FTimerHandle AttackCooldownTimerHandle;

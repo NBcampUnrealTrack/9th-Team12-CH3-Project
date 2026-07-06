@@ -48,6 +48,9 @@ EBTNodeResult::Type UBTTask_ExecuteAttack::ExecuteTask(UBehaviorTreeComponent& O
 	{
 		return EBTNodeResult::Failed;
 	}
+
+	CachedOwnerComp = &OwnerComp;
+	CachedEnemyAttackComponent = EnemyAttackComponent;
 	EnemyAttackComponent->OnAttackFinished.AddDynamic(this, &UBTTask_ExecuteAttack::HandleAttackFinished);
 	const bool bAttackStarted = EnemyAttackComponent->ExecuteAttack(TargetActor, SelectedAction, SelectedPattern);
 
