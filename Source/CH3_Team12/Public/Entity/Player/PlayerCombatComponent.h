@@ -57,6 +57,8 @@ private:
 	bool IsAttacking() const;
 	bool IsBusy() const;
 
+	bool CanContinueCombo() const;
+
 	void StartAttack(EAttackType AttackType);
 	void ContinueCombo();
 
@@ -81,7 +83,6 @@ private:
 	TArray<FName> ComboSectionNames = {
 		TEXT("Attack0"),
 		TEXT("Attack1"),
-		TEXT("Attack2")
 	};
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Attack")
@@ -113,6 +114,9 @@ private:
 	TSet<TWeakObjectPtr<AActor>> HitActors;
 
 private:
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentAttackMontage;
+	
 	int32 ComboIndex = 0;
 
 	bool bComboWindow = false;
@@ -140,4 +144,8 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
 	float GuardMontageBlendOutTime = 0.1f;
+	
+public:
+	void OpenAttackRecovery();
+
 };

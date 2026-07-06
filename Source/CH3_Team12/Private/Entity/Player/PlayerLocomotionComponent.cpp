@@ -28,11 +28,8 @@ void UPlayerLocomotionComponent::BeginPlay()
 	StateComponent = OwnerCharacter->GetStateTagComponent();
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
 	CombatComponent = OwnerCharacter->GetCombatComponent();
-
-	if (MovementComponent)
-	{
-		MovementComponent->MaxWalkSpeed = NormalWalkSpeed;
-	}
+	
+	RefreshMovementSettings();
 }
 
 FVector UPlayerLocomotionComponent::GetDodgeWorldDirectionFromLastInput() const
@@ -97,7 +94,6 @@ FVector UPlayerLocomotionComponent::GetDodgeWorldDirectionFromLastInput() const
 
 	return DodgeDirection.GetSafeNormal();
 }
-
 void UPlayerLocomotionComponent::OpenDodgeRecovery()
 {
 	if (!OwnerCharacter || !StateComponent)
@@ -105,12 +101,12 @@ void UPlayerLocomotionComponent::OpenDodgeRecovery()
 		return;
 	}
 
-	// 이동 입력은 이 시점부터 허용
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Movement_Locked
 	);
 
-	// Root Motion이 더 이상 캐릭터를 끌고 가지 않게 몽타주를 빠르게 블렌드아웃
+	RefreshMovementSettings();
+
 	if (DodgeMontage)
 	{
 		if (UAnimInstance* AnimInstance =
@@ -123,7 +119,6 @@ void UPlayerLocomotionComponent::OpenDodgeRecovery()
 		}
 	}
 
-	// Montage_Stop 이후 뒤쪽 Notify가 안 불릴 수 있으므로 직접 정리 예약
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(DodgeEndTimerHandle);
@@ -136,6 +131,72 @@ void UPlayerLocomotionComponent::OpenDodgeRecovery()
 			false
 		);
 	}
+}
+
+void UPlayerLocomotionComponent::RefreshMovementSettings()
+{
+	if (!MovementComponent || !StateComponent)
+	{
+		return;
+	}
+
+	const bool bIsGuarding =
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Guarding
+		);
+
+	const bool bIsSprinting =
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Movement_Sprinting
+		);
+
+	const bool bIsLockedOn =
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Movement_LockOn
+		);
+
+	const bool bIsDodging =
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Dodging
+		);
+
+	const bool bIsMovementLocked =
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Movement_Locked
+		);
+
+	// =========================
+	// Speed
+	// =========================
+	if (bIsGuarding)
+	{
+		MovementComponent->MaxWalkSpeed = GuardWalkSpeed;
+	}
+	else if (bIsSprinting)
+	{
+		MovementComponent->MaxWalkSpeed = SprintSpeed;
+	}
+	else if (bIsLockedOn)
+	{
+		MovementComponent->MaxWalkSpeed = LockOnWalkSpeed;
+	}
+	else
+	{
+		MovementComponent->MaxWalkSpeed = NormalWalkSpeed;
+	}
+
+	// =========================
+	// Rotation
+	// =========================
+	// 락온/가드 중에는 기본적으로 컨트롤러 방향 기준 스트레이프.
+	// 단, Dodge 중에는 Root Motion 방향을 살려야 하므로 ControllerDesiredRotation 끔.
+	const bool bShouldStrafe =
+		(bIsLockedOn || bIsGuarding) &&
+		!bIsDodging &&
+		!bIsMovementLocked;
+
+	MovementComponent->bOrientRotationToMovement = !bShouldStrafe;
+	MovementComponent->bUseControllerDesiredRotation = bShouldStrafe;
 }
 
 bool UPlayerLocomotionComponent::CanSprint() const
@@ -257,8 +318,11 @@ void UPlayerLocomotionComponent::DoStartSprint()
 		return;
 	}
 
-	StateComponent->AddStateTag(CombatTags::State_Movement_Sprinting);
-	MovementComponent->MaxWalkSpeed = SprintSpeed;
+	StateComponent->AddStateTag(
+		CombatTags::State_Movement_Sprinting
+	);
+
+	RefreshMovementSettings();
 }
 
 void UPlayerLocomotionComponent::DoStopSprint()
@@ -268,8 +332,11 @@ void UPlayerLocomotionComponent::DoStopSprint()
 		return;
 	}
 
-	StateComponent->RemoveStateTag(CombatTags::State_Movement_Sprinting);
-	MovementComponent->MaxWalkSpeed = NormalWalkSpeed;
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Sprinting
+	);
+
+	RefreshMovementSettings();
 }
 
 void UPlayerLocomotionComponent::OnSprintDodgePressed(const FInputActionValue& Value)
@@ -338,7 +405,16 @@ void UPlayerLocomotionComponent::TryStartSprintByHold()
 
 void UPlayerLocomotionComponent::RequestDodge()
 {
-	if (CanDodge())
+	const bool bIsAttacking =
+		StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Attacking
+		);
+
+	const bool bCanDodgeFromAttackRecovery =
+		bIsAttacking && bDodgeBufferWindowOpen;
+
+	if (CanDodge() || bCanDodgeFromAttackRecovery)
 	{
 		StartDodge(GetDodgeWorldDirectionFromLastInput());
 		return;
@@ -350,7 +426,8 @@ void UPlayerLocomotionComponent::RequestDodge()
 	}
 
 	bDodgeBuffered = true;
-	BufferedDodgeDirection = GetDodgeWorldDirectionFromLastInput();
+	BufferedDodgeDirection =
+		GetDodgeWorldDirectionFromLastInput();
 
 	if (!GetWorld())
 	{
@@ -371,6 +448,12 @@ void UPlayerLocomotionComponent::RequestDodge()
 void UPlayerLocomotionComponent::OpenDodgeBufferWindow()
 {
 	bDodgeBufferWindowOpen = true;
+}
+
+void UPlayerLocomotionComponent::CloseDodgeBufferWindow()
+{
+	bDodgeBufferWindowOpen = false;
+	ClearDodgeBuffer();
 }
 
 void UPlayerLocomotionComponent::ConsumeDodgeBuffer()
@@ -395,8 +478,8 @@ void UPlayerLocomotionComponent::ClearDodgeBuffer()
 	bDodgeBuffered = false;
 	BufferedDodgeDirection = FVector::ZeroVector;
 }
-
-void UPlayerLocomotionComponent::StartDodge(const FVector& DodgeDirection)
+void UPlayerLocomotionComponent::StartDodge(
+	const FVector& DodgeDirection)
 {
 	if (!OwnerCharacter || !StateComponent || !DodgeMontage)
 	{
@@ -405,17 +488,26 @@ void UPlayerLocomotionComponent::StartDodge(const FVector& DodgeDirection)
 
 	DoStopSprint();
 
-	if (!DodgeDirection.IsNearlyZero())
-	{
-		FRotator DodgeRotation = DodgeDirection.Rotation();
-		DodgeRotation.Pitch = 0.0f;
-		DodgeRotation.Roll = 0.0f;
+	const FVector SafeDodgeDirection =
+		DodgeDirection.IsNearlyZero()
+			? OwnerCharacter->GetActorForwardVector()
+			: DodgeDirection.GetSafeNormal2D();
 
-		OwnerCharacter->SetActorRotation(DodgeRotation);
-	}
+	FRotator DodgeRotation = SafeDodgeDirection.Rotation();
+	DodgeRotation.Pitch = 0.0f;
+	DodgeRotation.Roll = 0.0f;
 
-	StateComponent->AddStateTag(CombatTags::State_Combat_Dodging);
-	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+	OwnerCharacter->SetActorRotation(DodgeRotation);
+
+	StateComponent->AddStateTag(
+		CombatTags::State_Combat_Dodging
+	);
+
+	StateComponent->AddStateTag(
+		CombatTags::State_Movement_Locked
+	);
+
+	RefreshMovementSettings();
 
 	const float Duration =
 		OwnerCharacter->PlayAnimMontage(DodgeMontage);
@@ -450,4 +542,6 @@ void UPlayerLocomotionComponent::EndDodge()
 	{
 		World->GetTimerManager().ClearTimer(DodgeEndTimerHandle);
 	}
+
+	RefreshMovementSettings();
 }
