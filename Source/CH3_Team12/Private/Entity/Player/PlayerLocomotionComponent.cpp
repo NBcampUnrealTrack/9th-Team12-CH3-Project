@@ -80,6 +80,46 @@ FVector UPlayerLocomotionComponent::GetDodgeWorldDirectionFromLastInput() const
 	return DodgeDirection.GetSafeNormal();
 }
 
+void UPlayerLocomotionComponent::OpenDodgeRecovery()
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return;
+	}
+
+	// 이동 입력은 이 시점부터 허용
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked
+	);
+
+	// Root Motion이 더 이상 캐릭터를 끌고 가지 않게 몽타주를 빠르게 블렌드아웃
+	if (DodgeMontage)
+	{
+		if (UAnimInstance* AnimInstance =
+			OwnerCharacter->GetMesh()->GetAnimInstance())
+		{
+			AnimInstance->Montage_Stop(
+				DodgeBlendOutTime,
+				DodgeMontage
+			);
+		}
+	}
+
+	// Montage_Stop 이후 뒤쪽 Notify가 안 불릴 수 있으므로 직접 정리 예약
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(DodgeEndTimerHandle);
+
+		World->GetTimerManager().SetTimer(
+			DodgeEndTimerHandle,
+			this,
+			&UPlayerLocomotionComponent::EndDodge,
+			DodgeBlendOutTime,
+			false
+		);
+	}
+}
+
 bool UPlayerLocomotionComponent::CanSprint() const
 {
 	if (!StateComponent || !MovementComponent)
@@ -183,6 +223,8 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 		RightDirection,
 		MovementVector.Y
 	);
+	
+	// UE_LOG(LogTemp, Warning, TEXT("Move Input Called"));
 }
 
 void UPlayerLocomotionComponent::DoStartSprint()
@@ -373,11 +415,21 @@ void UPlayerLocomotionComponent::EndDodge()
 		return;
 	}
 
-	StateComponent->RemoveStateTag(CombatTags::State_Combat_Dodging);
-	StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Dodging
+	);
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked
+	);
 
 	if (CombatComponent)
 	{
 		CombatComponent->DisableInvincible();
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(DodgeEndTimerHandle);
 	}
 }

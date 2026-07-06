@@ -52,6 +52,8 @@ public:
 
 	FVector GetDodgeWorldDirectionFromLastInput() const;
 
+	void OpenDodgeRecovery();
+	
 private:
 	bool CanSprint() const;
 	bool CanDodge() const;
@@ -105,4 +107,10 @@ private:
 	FVector BufferedDodgeDirection = FVector::ZeroVector;
 
 	FTimerHandle DodgeBufferTimerHandle;
+	
+	FTimerHandle DodgeEndTimerHandle;
+
+	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Dodge")
+	float DodgeBlendOutTime = 0.12f;
+
 };
