@@ -92,6 +92,7 @@ void UPlayerLocomotionComponent::DoStartSprint(const FInputActionValue& value)
 	StateComp->AddStateTag(CombatTags::State_Movement_Sprinting);
         
 	MovementComponent->MaxWalkSpeed = SprintSpeed;
+	
 }
 
 void UPlayerLocomotionComponent::DoStopSprint(const FInputActionValue& value)

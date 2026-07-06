@@ -37,5 +37,5 @@ void UAN_OpenComboWindow::Notify(
 		return;
 	}
 
-	CombatComponent->StartComboWindow();
+	CombatComponent->OpenComboWindow();
 }

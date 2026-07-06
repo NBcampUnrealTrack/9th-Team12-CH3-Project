@@ -5,11 +5,11 @@
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
+#include "Kismet/GameplayStatics.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.SetTickFunctionEnable(false);
+	PrimaryComponentTick.bCanEverTick = false;
 	
 }
 
@@ -18,40 +18,25 @@ void UPlayerCombatComponent::BeginPlay()
 	Super::BeginPlay();
 
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
-	
 	if (!OwnerCharacter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : OwnerCharacter is nullptr"));
 		return;
 	}
-	
-	EquipWeapon(DefaultWeaponClass);
-}
 
-void UPlayerCombatComponent::TickComponent(
-	float DeltaTime,
-	ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(
-		DeltaTime,
-		TickType,
-		ThisTickFunction);
-
-	if (!bWeaponHitCheck)
+	StateComponent = OwnerCharacter->GetStateTagComponent();
+	if (!StateComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : StateComponent is nullptr"));
 		return;
+	}
 
-	// WeaponTrace();
+	EquipWeapon(DefaultWeaponClass);
 }
 
 void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
 {
-	if (!OwnerCharacter)
-	{
-		return;
-	}
-
-	if (!WeaponClass)
+	if (!OwnerCharacter || !WeaponClass)
 	{
 		return;
 	}
@@ -62,7 +47,22 @@ void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
 		EquippedWeapon = nullptr;
 	}
 
-	EquippedWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass);
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = OwnerCharacter;
+	SpawnParams.Instigator = OwnerCharacter;
+
+	EquippedWeapon = World->SpawnActor<AWeaponBase>(
+		WeaponClass,
+		OwnerCharacter->GetActorLocation(),
+		OwnerCharacter->GetActorRotation(),
+		SpawnParams
+	);
 
 	if (!EquippedWeapon)
 	{
@@ -72,7 +72,13 @@ void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
 	EquippedWeapon->AttachToComponent(
 		OwnerCharacter->GetMesh(),
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-		WeaponSocketName);
+		WeaponSocketName
+	);
+
+	if (StateComponent)
+	{
+		StateComponent->AddStateTag(CombatTags::State_Combat_Armed);
+	}
 }
 
 void UPlayerCombatComponent::CacheWeaponTraceLocation()
@@ -86,6 +92,14 @@ void UPlayerCombatComponent::CacheWeaponTraceLocation()
 	PreviousBladeEnd = EquippedWeapon->GetBladeEndLocation();
 }
 
+void UPlayerCombatComponent::OnAttackMontageEnded(
+	UAnimMontage* Montage,
+	bool bInterrupted
+)
+{
+	EndAttack();
+}
+
 void UPlayerCombatComponent::StartWeaponHitCheck()
 {
 	if (!EquippedWeapon)
@@ -95,99 +109,191 @@ void UPlayerCombatComponent::StartWeaponHitCheck()
 
 	HitActors.Empty();
 	CacheWeaponTraceLocation();
+
 	bWeaponHitCheck = true;
-	SetComponentTickEnabled(true);
 }
 
 void UPlayerCombatComponent::EndWeaponHitCheck()
 {
 	bWeaponHitCheck = false;
-	SetComponentTickEnabled(false);
+
+	HitActors.Empty();
+
+	PreviousBladeStart = FVector::ZeroVector;
+	PreviousBladeEnd = FVector::ZeroVector;
+}
+
+void UPlayerCombatComponent::EnableInvincible()
+{
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	bInvincible = true;
+
+	StateComponent->AddStateTag(
+		CombatTags::State_Combat_Invincible
+	);
+}
+
+void UPlayerCombatComponent::DisableInvincible()
+{
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	bInvincible = false;
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Invincible
+	);
+}
+
+void UPlayerCombatComponent::EndDodge()
+{
+	DisableInvincible();
+
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Dodging
+	);
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked
+	);
+}
+
+bool UPlayerCombatComponent::CanDodge() const
+{
+	if (!StateComponent)
+	{
+		return false;
+	}
+
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+
+	return !StateComponent->HasAnyStateTags(BlockTags);
 }
 
 void UPlayerCombatComponent::ProcessHit(const FHitResult& Hit)
 {
 	AActor* HitActor = Hit.GetActor();
-
-	if (!HitActor)
+	if (!HitActor || !OwnerCharacter)
 	{
 		return;
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Hit : %s"), *HitActor->GetName());
 
-	// TODO
-	// 데미지 주고받기
+	UGameplayStatics::ApplyDamage(
+		HitActor,
+		25.0f,
+		OwnerCharacter->GetController(),
+		OwnerCharacter,
+		nullptr
+	);
 }
 
 void UPlayerCombatComponent::WeaponTrace()
 {
-	if (!EquippedWeapon)
+	if (!bWeaponHitCheck || !EquippedWeapon || !OwnerCharacter)
 	{
 		return;
 	}
 
-	FVector CurrentBladeStart =
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	const FVector CurrentBladeStart =
 		EquippedWeapon->GetBladeStartLocation();
 
-	FVector CurrentBladeEnd =
+	const FVector CurrentBladeEnd =
 		EquippedWeapon->GetBladeEndLocation();
-
-	FCollisionShape CollisionShape =
-		FCollisionShape::MakeSphere(TraceRadius);
 
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(OwnerCharacter);
 	Params.AddIgnoredActor(EquippedWeapon);
 
-	TArray<FHitResult> HitResults;
-	
-	GetWorld()->SweepMultiByChannel(
-		HitResults,
-		PreviousBladeStart,
-		CurrentBladeStart,
-		FQuat::Identity,
-		TraceChannel,
-		CollisionShape,
-		Params);
-	
-	GetWorld()->SweepMultiByChannel(
-		HitResults,
-		PreviousBladeEnd,
-		CurrentBladeEnd,
-		FQuat::Identity,
-		TraceChannel,
-		CollisionShape,
-		Params);
-	
-	for (const FHitResult& Hit : HitResults)
+	const FCollisionShape CollisionShape =
+		FCollisionShape::MakeSphere(TraceRadius);
+
+	const int32 SafeSampleCount = FMath::Max(TraceSampleCount, 2);
+
+	for (int32 Index = 0; Index < SafeSampleCount; ++Index)
 	{
-		AActor* HitActor = Hit.GetActor();
+		const float Alpha =
+			static_cast<float>(Index) /
+			static_cast<float>(SafeSampleCount - 1);
 
-		if (!HitActor)
+		const FVector PreviousPoint =
+			FMath::Lerp(PreviousBladeStart, PreviousBladeEnd, Alpha);
+
+		const FVector CurrentPoint =
+			FMath::Lerp(CurrentBladeStart, CurrentBladeEnd, Alpha);
+
+		TArray<FHitResult> HitResults;
+
+		const bool bHit = World->SweepMultiByChannel(
+			HitResults,
+			PreviousPoint,
+			CurrentPoint,
+			FQuat::Identity,
+			TraceChannel,
+			CollisionShape,
+			Params
+		);
+
+		if (!bHit)
 		{
 			continue;
 		}
 
-		if (HitActors.Contains(HitActor))
+		for (const FHitResult& Hit : HitResults)
 		{
-			continue;
+			AActor* HitActor = Hit.GetActor();
+
+			if (!HitActor || HitActor == OwnerCharacter)
+			{
+				continue;
+			}
+
+			if (HitActors.Contains(HitActor))
+			{
+				continue;
+			}
+
+			HitActors.Add(HitActor);
+			ProcessHit(Hit);
 		}
-
-		HitActors.Add(HitActor);
-
-		ProcessHit(Hit);
 	}
-	
+
 	PreviousBladeStart = CurrentBladeStart;
 	PreviousBladeEnd = CurrentBladeEnd;
 }
 
-void UPlayerCombatComponent::Attack(const FInputActionValue& value)
+void UPlayerCombatComponent::Attack(const FInputActionValue& Value)
 {
-	if (IsBusy())
+	if (IsAttacking())
 	{
 		if (bComboWindow)
+		{
+			ContinueCombo();
+		}
+		else
 		{
 			bComboBuffered = true;
 		}
@@ -195,10 +301,15 @@ void UPlayerCombatComponent::Attack(const FInputActionValue& value)
 		return;
 	}
 
+	if (!CanAttack())
+	{
+		return;
+	}
+
 	StartAttack(EAttackType::Light);
 }
 
-void UPlayerCombatComponent::HeavyAttack(const FInputActionValue& value)
+void UPlayerCombatComponent::HeavyAttack(const FInputActionValue& Value)
 {
 	if (!CanAttack())
 	{
@@ -208,95 +319,190 @@ void UPlayerCombatComponent::HeavyAttack(const FInputActionValue& value)
 	StartAttack(EAttackType::Heavy);
 }
 
-void UPlayerCombatComponent::Dodge(const FInputActionValue& value)
+void UPlayerCombatComponent::Dodge(const FInputActionValue& Value)
 {
 	if (!CanDodge())
 	{
 		return;
 	}
 
-	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Dodging);
-
-	//OwnerCharacter->PlayAnimMontage(DodgeMontage);
-}
-
-void UPlayerCombatComponent::StartGuard(const FInputActionValue& value)
-{
-	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Guarding);
-}
-
-void UPlayerCombatComponent::StopGuard(const FInputActionValue& value)
-{
-	if (OwnerCharacter->GetStateTagComponent()->HasStateTag(CombatTags::State_Combat_Guarding))
+	if (!OwnerCharacter || !StateComponent || !DodgeMontage)
 	{
-		OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Guarding);
+		return;
 	}
+
+	StateComponent->AddStateTag(
+		CombatTags::State_Combat_Dodging
+	);
+
+	StateComponent->AddStateTag(
+		CombatTags::State_Movement_Locked
+	);
+
+	const float Duration =
+		OwnerCharacter->PlayAnimMontage(DodgeMontage);
+
+	if (Duration <= 0.0f)
+	{
+		EndDodge();
+	}
+}
+
+bool UPlayerCombatComponent::CanAttack() const
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return false;
+	}
+
+	if (!EquippedWeapon)
+	{
+		return false;
+	}
+
+	if (!StateComponent->HasStateTagExact(CombatTags::State_Combat_Armed))
+	{
+		return false;
+	}
+
+	if (StateComponent->HasStateTagExact(CombatTags::State_Combat_Dodging))
+	{
+		return false;
+	}
+
+	if (StateComponent->HasStateTagExact(CombatTags::State_Combat_Guarding))
+	{
+		return false;
+	}
+
+	if (StateComponent->HasStateTagExact(CombatTags::State_Hit_Dead))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool UPlayerCombatComponent::IsAttacking() const
+{
+	if (!StateComponent)
+	{
+		return false;
+	}
+
+	return StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Attacking
+	);
+}
+
+bool UPlayerCombatComponent::IsBusy() const
+{
+	if (!StateComponent)
+	{
+		return true;
+	}
+
+	FGameplayTagContainer BusyTags;
+	BusyTags.AddTag(CombatTags::State_Combat_Attacking);
+	BusyTags.AddTag(CombatTags::State_Combat_Dodging);
+	BusyTags.AddTag(CombatTags::State_Combat_Guarding);
+	BusyTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BusyTags.AddTag(CombatTags::State_Hit_Dead);
+
+	return StateComponent->HasAnyStateTags(BusyTags);
 }
 
 void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 {
-	ComboIndex = 0;
-	bComboBuffered = false;
-	
-	//OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking);
-	
-	switch (AttackType)
-	{
-	case EAttackType::Light:
-		OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking_Light);
-		//OwnerCharacter->PlayAnimMontage(LightAttackMontage);
-		break;
-	case EAttackType::Heavy:
-		OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Attacking_Heavy);
-		//OwnerCharacter->PlayAnimMontage(HeavyAttackMontage);
-		break;
-	}
-}
-
-void UPlayerCombatComponent::EndAttack()
-{
-	ComboIndex = 0;
-	bComboBuffered = false;
-	bComboWindow = false;
-
-	EndWeaponHitCheck();
-	
-	OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Attacking_Light);
-	
-}
-
-void UPlayerCombatComponent::ContinueCombo()
-{
-	bComboBuffered = false;
-
-	++ComboIndex;
-
-	if (ComboIndex >= ComboSectionNames.Num())
+	if (!OwnerCharacter || !StateComponent)
 	{
 		return;
 	}
-	
+
+	UAnimMontage* AttackMontage = nullptr;
+
+	switch (AttackType)
+	{
+	case EAttackType::Light:
+		AttackMontage = LightAttackMontage;
+		break;
+
+	case EAttackType::Heavy:
+		AttackMontage = HeavyAttackMontage;
+		break;
+	}
+
+	if (!AttackMontage)
+	{
+		return;
+	}
+
 	UAnimInstance* AnimInstance =
-		OwnerCharacter->GetMesh()->GetAnimInstance();
+		OwnerCharacter->GetMesh()
+			? OwnerCharacter->GetMesh()->GetAnimInstance()
+			: nullptr;
 
 	if (!AnimInstance)
 	{
 		return;
 	}
-	
-	AnimInstance->Montage_JumpToSection(
-		ComboSectionNames[ComboIndex],
-		LightAttackMontage);
+
+	CurrentAttackType = AttackType;
+
+	ComboIndex = 0;
+	bComboWindow = false;
+	bComboBuffered = false;
+
+	StateComponent->AddStateTag(CombatTags::State_Combat_Attacking);
+	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+
+	const float Duration =
+		AnimInstance->Montage_Play(AttackMontage, AttackPlayRate);
+
+	if (Duration <= 0.0f)
+	{
+		EndAttack();
+		return;
+	}
+
+	if (ComboSectionNames.IsValidIndex(ComboIndex))
+	{
+		AnimInstance->Montage_JumpToSection(
+			ComboSectionNames[ComboIndex],
+			AttackMontage
+		);
+	}
+
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(
+		this,
+		&UPlayerCombatComponent::OnAttackMontageEnded
+	);
+
+	AnimInstance->Montage_SetEndDelegate(
+		EndDelegate,
+		AttackMontage
+	);
 }
 
-void UPlayerCombatComponent::StartComboWindow()
+void UPlayerCombatComponent::EndAttack()
+{
+	EndWeaponHitCheck();
+
+	ComboIndex = 0;
+	bComboWindow = false;
+	bComboBuffered = false;
+
+	if (StateComponent)
+	{
+		StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
+		StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
+	}
+}
+
+void UPlayerCombatComponent::OpenComboWindow()
 {
 	bComboWindow = true;
-}
-
-void UPlayerCombatComponent::EndComboWindow()
-{
-	bComboWindow = false;
 
 	if (bComboBuffered)
 	{
@@ -304,55 +510,45 @@ void UPlayerCombatComponent::EndComboWindow()
 	}
 }
 
-void UPlayerCombatComponent::EnableInvincible()
+void UPlayerCombatComponent::ContinueCombo()
 {
-	bInvincible = true;
-	
-	OwnerCharacter->GetStateTagComponent()->AddStateTag(CombatTags::State_Combat_Invincible);
-}
-
-void UPlayerCombatComponent::DisableInvincible()
-{
-	bInvincible = false;
-
-	if (OwnerCharacter->GetStateTagComponent()->HasStateTag(CombatTags::State_Combat_Invincible))
+	if (!OwnerCharacter || !StateComponent)
 	{
-		OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Invincible);
+		return;
 	}
-}
 
-void UPlayerCombatComponent::EndDodge()
-{
-	DisableInvincible();
+	bComboBuffered = false;
+	bComboWindow = false;
 
-	if (OwnerCharacter->GetStateTagComponent()->HasStateTag(CombatTags::State_Combat_Dodging))
+	++ComboIndex;
+
+	if (!ComboSectionNames.IsValidIndex(ComboIndex))
 	{
-		OwnerCharacter->GetStateTagComponent()->RemoveStateTag(CombatTags::State_Combat_Dodging);
+		return;
 	}
-}
 
-bool UPlayerCombatComponent::CanAttack() const
-{
-	return !IsBusy();
-}
+	UAnimMontage* CurrentMontage =
+		CurrentAttackType == EAttackType::Light
+			? LightAttackMontage
+			: HeavyAttackMontage;
 
-bool UPlayerCombatComponent::CanDodge() const
-{
-	return !IsBusy();
-}
+	if (!CurrentMontage)
+	{
+		return;
+	}
 
-bool UPlayerCombatComponent::IsBusy() const
-{
-	if (!OwnerCharacter) return true;
-	
-	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
-	
-	if (!StateComp) return true;
-	
-	FGameplayTagContainer BusyTags;
-	BusyTags.AddTag(CombatTags::State_Combat_Attacking_Light);
-	BusyTags.AddTag(CombatTags::State_Combat_Dodging);
-	BusyTags.AddTag(CombatTags::State_Combat_Parry);
+	UAnimInstance* AnimInstance =
+		OwnerCharacter->GetMesh()
+			? OwnerCharacter->GetMesh()->GetAnimInstance()
+			: nullptr;
 
-	return StateComp->HasAnyStateTags(BusyTags);
+	if (!AnimInstance)
+	{
+		return;
+	}
+
+	AnimInstance->Montage_JumpToSection(
+		ComboSectionNames[ComboIndex],
+		CurrentMontage
+	);
 }
