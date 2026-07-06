@@ -30,12 +30,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	// Input
 	void Attack(const FInputActionValue& Value);
 	void HeavyAttack(const FInputActionValue& Value);
-	void StartGuard(const FInputActionValue& Value);
-	void StopGuard(const FInputActionValue& Value);
-
+	
 	// Attack Notify / NotifyState
 	void OpenComboWindow();
 	void EndAttack();
@@ -126,4 +123,21 @@ private:
 	
 private:
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
+public:
+	void StartGuard(const FInputActionValue& Value);
+	void StopGuard(const FInputActionValue& Value);
+
+	void OpenParryWindow();
+	void CloseParryWindow();
+
+private:
+	bool CanGuard() const;
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
+	TObjectPtr<UAnimMontage> GuardStartMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
+	float GuardMontageBlendOutTime = 0.1f;
 };

@@ -3,7 +3,9 @@
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
+#include "InputActionValue.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -100,6 +102,108 @@ void UPlayerCombatComponent::OnAttackMontageEnded(
 )
 {
 	EndAttack();
+}
+
+void UPlayerCombatComponent::StartGuard(const FInputActionValue& Value)
+{
+	if (!CanGuard())
+	{
+		return;
+	}
+
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return;
+	}
+
+	// Sprint 중이었다면 속도까지 정상 복구해야 하므로 Locomotion에 맡김
+	if (UPlayerLocomotionComponent* LocomotionComponent =
+		OwnerCharacter->GetLocomotionComponent())
+	{
+		LocomotionComponent->DoStopSprint();
+	}
+
+	StateComponent->AddStateTag(CombatTags::State_Combat_Guarding);
+
+	if (GuardStartMontage)
+	{
+		OwnerCharacter->PlayAnimMontage(GuardStartMontage);
+	}
+}
+
+void UPlayerCombatComponent::StopGuard(const FInputActionValue& Value)
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
+
+	if (GuardStartMontage)
+	{
+		if (UAnimInstance* AnimInstance =
+			OwnerCharacter->GetMesh()->GetAnimInstance())
+		{
+			AnimInstance->Montage_Stop(
+				GuardMontageBlendOutTime,
+				GuardStartMontage
+			);
+		}
+	}
+}
+
+void UPlayerCombatComponent::OpenParryWindow()
+{
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	// 가드 상태가 아니면 패리도 열지 않음
+	if (!StateComponent->HasStateTagExact(CombatTags::State_Combat_Guarding))
+	{
+		return;
+	}
+
+	StateComponent->AddStateTag(CombatTags::State_Combat_Parry);
+}
+
+void UPlayerCombatComponent::CloseParryWindow()
+{
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
+}
+
+bool UPlayerCombatComponent::CanGuard() const
+{
+	if (!StateComponent)
+	{
+		return false;
+	}
+
+	if (!EquippedWeapon)
+	{
+		return false;
+	}
+
+	if (!StateComponent->HasStateTagExact(CombatTags::State_Combat_Armed))
+	{
+		return false;
+	}
+
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+
+	return !StateComponent->HasAnyStateTags(BlockTags);
 }
 
 void UPlayerCombatComponent::StartWeaponHitCheck()

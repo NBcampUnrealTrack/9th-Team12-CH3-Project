@@ -4,6 +4,7 @@
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerCombatComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
+#include "Entity/Player/PlayerCameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UPlayerLocomotionComponent::UPlayerLocomotionComponent()
@@ -46,14 +47,41 @@ FVector UPlayerLocomotionComponent::GetDodgeWorldDirectionFromLastInput() const
 		return OwnerCharacter->GetActorForwardVector();
 	}
 
-	const FRotator ControlRotation =
-		OwnerCharacter->GetControlRotation();
+	// LockOn 중이면 타겟 기준 방향 사용
+	if (StateComponent &&
+		StateComponent->HasStateTagExact(CombatTags::State_Movement_LockOn))
+	{
+		if (UPlayerCameraComponent* PlayerCameraComponent =
+			OwnerCharacter->GetPlayerCameraComponent())
+		{
+			if (AActor* LockOnTarget =
+				PlayerCameraComponent->GetCurrentLockOnTarget())
+			{
+				FVector ForwardToTarget =
+					LockOnTarget->GetActorLocation() -
+					OwnerCharacter->GetActorLocation();
 
-	const FRotator YawRotation(
-		0.0f,
-		ControlRotation.Yaw,
-		0.0f
-	);
+				ForwardToTarget.Z = 0.0f;
+				ForwardToTarget.Normalize();
+
+				const FVector Right =
+					FRotationMatrix(ForwardToTarget.Rotation())
+					.GetUnitAxis(EAxis::Y);
+
+				FVector DodgeDirection =
+					ForwardToTarget * LastMovementInput.X +
+					Right * LastMovementInput.Y;
+
+				DodgeDirection.Z = 0.0f;
+
+				return DodgeDirection.GetSafeNormal();
+			}
+		}
+	}
+
+	// Normal camera 기준 방향
+	const FRotator ControlRotation = OwnerCharacter->GetControlRotation();
+	const FRotator YawRotation(0.0f, ControlRotation.Yaw, 0.0f);
 
 	const FVector Forward =
 		FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
