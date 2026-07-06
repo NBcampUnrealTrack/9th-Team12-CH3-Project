@@ -166,5 +166,5 @@ private:
 
 	// 키 차이 허용 범위
 	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|TargetSize")
-	float LockOnTargetHeightDiff = 500.0f;
+	float LockOnTargetHeightDiff = 30.0f;
 };

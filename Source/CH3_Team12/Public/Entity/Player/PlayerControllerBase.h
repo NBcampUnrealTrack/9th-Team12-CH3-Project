@@ -33,7 +33,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> DodgeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> ParryingAction;
+	TObjectPtr<UInputAction> GuardAction;
 	
 	virtual void BeginPlay() override;
 	
@@ -47,5 +47,5 @@ public:
 	FORCEINLINE TObjectPtr<UInputAction> GetAttackAction() const { return AttackAction; }
 	FORCEINLINE TObjectPtr<UInputAction> GetLockOnAction() const { return LockOnAction; }
 	FORCEINLINE TObjectPtr<UInputAction> GetDodgeAction() const { return DodgeAction; }
-	FORCEINLINE TObjectPtr<UInputAction> GetParryingAction() const { return ParryingAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetGuardAction() const { return GuardAction; }
 };
