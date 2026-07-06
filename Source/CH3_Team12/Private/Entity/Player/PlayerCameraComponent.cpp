@@ -568,21 +568,29 @@ void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 	}
 
 	// 캐릭터 몸 방향도 락온 대상을 바라보도록 회전
-	FVector BodyDirection = TargetLocation - OwnerLocation;
-	BodyDirection.Z = 0.0f;
+	// LockOn 시에는 Dodge 방향 자유자재로 되도록
+	const bool bShouldRotateBodyToTarget =
+		StateTagComponent &&
+		!StateTagComponent->HasStateTagExact(CombatTags::State_Combat_Dodging);
 
-	if (!BodyDirection.IsNearlyZero())
+	if (bShouldRotateBodyToTarget)
 	{
-		const FRotator TargetBodyRotation = BodyDirection.Rotation();
-		const FRotator CurrentBodyRotation = OwnerActor->GetActorRotation();
+		FVector BodyDirection = TargetLocation - OwnerLocation;
+		BodyDirection.Z = 0.0f;
 
-		const FRotator NewBodyRotation = FMath::RInterpTo(
-			CurrentBodyRotation,
-			TargetBodyRotation,
-			DeltaTime,
-			LockOnBodyRotationInterpSpeed
-		);
+		if (!BodyDirection.IsNearlyZero())
+		{
+			const FRotator TargetBodyRotation = BodyDirection.Rotation();
+			const FRotator CurrentBodyRotation = OwnerActor->GetActorRotation();
 
-		OwnerActor->SetActorRotation(NewBodyRotation);
+			const FRotator NewBodyRotation = FMath::RInterpTo(
+				CurrentBodyRotation,
+				TargetBodyRotation,
+				DeltaTime,
+				LockOnBodyRotationInterpSpeed
+			);
+
+			OwnerActor->SetActorRotation(NewBodyRotation);
+		}
 	}
 }
