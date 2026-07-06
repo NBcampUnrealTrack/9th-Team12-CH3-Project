@@ -154,9 +154,11 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	{
 		EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, PlayerCameraComponent.Get(), &UPlayerCameraComponent::LockOn);
 	}
-	if (UInputAction* ParryAction = PlayerControllerBase->GetParryingAction())
+	if (UInputAction* GuardAction = PlayerControllerBase->GetGuardAction())
 	{
-		// EnhancedInputComponent->BindAction(ParryAction, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Parry);
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::StartGuard);
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Completed, CombatComponent.Get(), &UPlayerCombatComponent::StopGuard);
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Canceled, CombatComponent.Get(), &UPlayerCombatComponent::StopGuard);
 	}
 }
 

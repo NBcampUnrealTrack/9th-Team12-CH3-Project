@@ -11,7 +11,7 @@ APlayerControllerBase::APlayerControllerBase() :
 	AttackAction(nullptr),
 	LockOnAction(nullptr),
 	DodgeAction(nullptr),
-	ParryingAction(nullptr)
+	GuardAction(nullptr)
 {
 }
 
