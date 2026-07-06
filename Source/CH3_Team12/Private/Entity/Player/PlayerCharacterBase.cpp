@@ -55,6 +55,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	LocomotionComponent = CreateDefaultSubobject<UPlayerLocomotionComponent>(TEXT("LocomotionComponent"));
 	AttributeComponent = CreateDefaultSubobject<UPlayerAttributeComponent>(TEXT("AttributeComponent"));
 	CombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("CombatComponent"));
+	PlayerCameraComponent = CreateDefaultSubobject<UPlayerCameraComponent>(TEXT("PlayerCameraComponent"));
 }
 
 UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
@@ -75,6 +76,21 @@ UPlayerAttributeComponent* APlayerCharacterBase::GetAttributeComponent() const
 UPlayerCombatComponent* APlayerCharacterBase::GetCombatComponent() const
 {
 	return CombatComponent;
+}
+
+UPlayerCameraComponent* APlayerCharacterBase::GetPlayerCameraComponent() const
+{
+	return PlayerCameraComponent;
+}
+
+USpringArmComponent* APlayerCharacterBase::GetCameraBoom() const
+{
+	return CameraBoom;
+}
+
+UCameraComponent* APlayerCharacterBase::GetFollowCamera() const
+{
+	return FollowCamera;
 }
 
 // Called when the game starts or when spawned
@@ -109,7 +125,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	// Locomotion
 	if (UInputAction* LookAction = PlayerControllerBase->GetLookAction())
 	{
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, LocomotionComponent.Get(), &UPlayerLocomotionComponent::Look);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, PlayerCameraComponent.Get(), &UPlayerCameraComponent::Look);
 	}
 	if (UInputAction* MoveAction = PlayerControllerBase->GetMoveAction())
 	{
@@ -136,7 +152,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 	if (UInputAction* LockOnAction = PlayerControllerBase->GetLockOnAction())
 	{
-		// EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, CameraComponent.Get(), &UPlayerCameraComponent::LockOn);
+		EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, PlayerCameraComponent.Get(), &UPlayerCameraComponent::LockOn);
 	}
 	if (UInputAction* ParryAction = PlayerControllerBase->GetParryingAction())
 	{

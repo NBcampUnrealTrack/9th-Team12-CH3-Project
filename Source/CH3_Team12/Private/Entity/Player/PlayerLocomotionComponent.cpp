@@ -34,16 +34,6 @@ void UPlayerLocomotionComponent::BeginPlay()
 	}
 }
 
-void UPlayerLocomotionComponent::Look(const FInputActionValue& value)
-{
-	if (!OwnerCharacter) return;
-	
-	const FVector2D LookInput = value.Get<FVector2D>();
-
-	OwnerCharacter->AddControllerYawInput(LookInput.X);
-	OwnerCharacter->AddControllerPitchInput(LookInput.Y);
-}
-
 FVector UPlayerLocomotionComponent::GetDodgeWorldDirectionFromLastInput() const
 {
 	if (!OwnerCharacter)

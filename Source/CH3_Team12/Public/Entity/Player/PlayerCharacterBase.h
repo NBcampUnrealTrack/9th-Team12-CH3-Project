@@ -29,6 +29,9 @@ public:
 	UPlayerLocomotionComponent* GetLocomotionComponent() const;
 	UPlayerAttributeComponent* GetAttributeComponent() const;
 	UPlayerCombatComponent* GetCombatComponent() const;
+	UPlayerCameraComponent* GetPlayerCameraComponent() const;
+	USpringArmComponent* GetCameraBoom() const;
+	UCameraComponent* GetFollowCamera() const;
 
 protected:
 	// Called when the game starts or when spawned
@@ -47,7 +50,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerAttributeComponent> AttributeComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
-	TObjectPtr<UPlayerCameraComponent> CameraComponent;
+	TObjectPtr<UPlayerCameraComponent> PlayerCameraComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerCombatComponent> CombatComponent;
 	

@@ -10,6 +10,7 @@
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Curves/CurveFloat.h"
 #include "Curves/CurveVector.h"
+#include "InputActionValue.h"
 
 UPlayerCameraComponent::UPlayerCameraComponent()
 {
@@ -27,16 +28,28 @@ void UPlayerCameraComponent::BeginPlay()
 		return;
 	}
 	
-	CameraBoom = OwnerActor->FindComponentByClass<USpringArmComponent>();
-	FollowCamera = OwnerActor->FindComponentByClass<UCameraComponent>();
+	CameraBoom = OwnerActor->GetCameraBoom();
+	FollowCamera = OwnerActor->GetFollowCamera();
 	
 	StateTagComponent = OwnerActor->GetStateTagComponent();
 	
 	check(StateTagComponent);
 	
-	StateTagComponent->AddStateTag(CombatTags::State_Combat_Armed);
-	
 	SetupNormalCamera();
+}
+
+void UPlayerCameraComponent::Look(const FInputActionValue& Value)
+{
+	if (!OwnerActor)
+		return;
+
+	if (IsLockOnMode())
+		return;
+
+	const FVector2D LookInput = Value.Get<FVector2D>();
+
+	OwnerActor->AddControllerYawInput(LookInput.X);
+	OwnerActor->AddControllerPitchInput(LookInput.Y);
 }
 
 // 노말 카메라 상태로 전환하고 기본 카메라 설정 복구
@@ -83,6 +96,8 @@ void UPlayerCameraComponent::SetupNormalCamera()
 	}
 
 	OwnerActor->bUseControllerRotationYaw = false;
+	
+	OnLockOnStateChanged.Broadcast(false);
 }
 
 // 락온 카메라 상태로 전환하고 캐릭터 회전 방식을 락온용으로 변경
@@ -117,7 +132,8 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 	CameraBoom->bInheritPitch = true;
 	CameraBoom->bInheritYaw = true;
 	CameraBoom->bInheritRoll = false;
-	CameraBoom->bDoCollisionTest = true;
+	// CameraBoom->bDoCollisionTest = true;
+	CameraBoom->bDoCollisionTest = false; // 카메라 충돌 하는 부분 간단 처리. 이후에 적은 카메라 충돌 제외, 벽/지형만 카메라를 막게해야함
 
 	FollowCamera->bUsePawnControlRotation = false;
 
@@ -134,12 +150,21 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 	}
 
 	OwnerActor->bUseControllerRotationYaw = false;
+	
+	OnLockOnStateChanged.Broadcast(true);
 }
 
 // 현재 락온 모드인지 확인
 bool UPlayerCameraComponent::IsLockOnMode() const
 {
 	return StateTagComponent->HasStateTag(CombatTags::State_Movement_LockOn);
+}
+
+EPlayerCameraMode UPlayerCameraComponent::GetCameraMode() const
+{
+	return IsLockOnMode()
+		? EPlayerCameraMode::LockOn
+		: EPlayerCameraMode::Normal;
 }
 
 // 락온 상태면 해제, 아니면 락온 시도

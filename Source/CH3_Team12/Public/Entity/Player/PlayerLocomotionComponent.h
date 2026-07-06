@@ -30,8 +30,6 @@ public:
 	void DoMove(const FInputActionValue& Value);
 	void DoStopMove();
 
-	void Look(const FInputActionValue& Value);
-
 	// Sprint / Dodge shared input
 	void OnSprintDodgePressed(const FInputActionValue& Value);
 	void OnSprintDodgeReleased(const FInputActionValue& Value);
