@@ -7,6 +7,7 @@
 class UAnimMontage;
 class APlayerCharacterBase;
 class AWeaponBase;
+class UStateTagComponent;
 struct FInputActionValue;
 struct FHitResult;
 
@@ -17,126 +18,112 @@ enum class EAttackType : uint8
 	Heavy
 };
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UPlayerCombatComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UPlayerCombatComponent();
 
+protected:
 	virtual void BeginPlay() override;
-	
-	virtual void TickComponent(
-		float DeltaTime, 
-		enum ELevelTick TickType, 
-		FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
 	// Input
-	void Attack(const FInputActionValue& value);
-	void HeavyAttack(const FInputActionValue& value);
-	void Dodge(const FInputActionValue& value);
-	void StartGuard(const FInputActionValue& value);
-	void StopGuard(const FInputActionValue& value);
-	//
-	
-	// Notify
-	void StartComboWindow();
-	UFUNCTION(BlueprintCallable)
-	void EndComboWindow();
-	
+	void Attack(const FInputActionValue& Value);
+	void HeavyAttack(const FInputActionValue& Value);
+	void StartGuard(const FInputActionValue& Value);
+	void StopGuard(const FInputActionValue& Value);
+
+	// Attack Notify / NotifyState
+	void OpenComboWindow();
+	void EndAttack();
+
 	void StartWeaponHitCheck();
-	UFUNCTION(BlueprintCallable)
+	void WeaponTrace();
 	void EndWeaponHitCheck();
-	
+
+	// Dodge Notify / NotifyState
 	void EnableInvincible();
-	UFUNCTION(BlueprintCallable)
 	void DisableInvincible();
 	
-	UFUNCTION(BlueprintCallable)
-	void EndAttack();
-	UFUNCTION(BlueprintCallable)
-	void EndDodge();
-	//
+	bool bInvincible = false;
 	
-public:
-	UPROPERTY(EditDefaultsOnly, Category="Combat")
-	TArray<FName> ComboSectionNames;
-	
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
+
+	AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
+
 private:
-	// Combat
 	bool CanAttack() const;
-	bool CanDodge() const;
+	bool IsAttacking() const;
+	bool IsBusy() const;
 
 	void StartAttack(EAttackType AttackType);
 	void ContinueCombo();
-	
-	bool IsBusy() const;
-	
-private:
-	// Trace
-	void CacheWeaponTraceLocation();
-	
+
 	void ProcessHit(const FHitResult& Hit);
-	
-public:
-	void WeaponTrace();
-private:
- 	// Animation
- 	UPROPERTY(EditAnywhere)
- 	TObjectPtr<UAnimMontage> LightAttackMontage;
+	void CacheWeaponTraceLocation();
 
- 	UPROPERTY(EditAnywhere)
- 	TObjectPtr<UAnimMontage> HeavyAttackMontage;
-
- 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UAnimMontage> DodgeMontage;
-	
 private:
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
-	
-	// Weapon
+
+	UPROPERTY()
+	TObjectPtr<UStateTagComponent> StateComponent;
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Animation")
+	TObjectPtr<UAnimMontage> LightAttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Animation")
+	TObjectPtr<UAnimMontage> HeavyAttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Combo")
+	TArray<FName> ComboSectionNames = {
+		TEXT("Attack0"),
+		TEXT("Attack1"),
+		TEXT("Attack2")
+	};
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Attack")
+	float AttackPlayRate = 1.0f;
+
+private:
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	TSubclassOf<AWeaponBase> DefaultWeaponClass;
-	
-	UPROPERTY()
+
+	UPROPERTY(VisibleInstanceOnly, Category="Weapon")
 	TObjectPtr<AWeaponBase> EquippedWeapon;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WeaponSocketName = TEXT("katana3");
 
-public:
-	UFUNCTION(BlueprintCallable, Category="Weapon")
-	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
-	
-	FORCEINLINE AWeaponBase* GetEquippedWeapon() const
-	{
-		return EquippedWeapon;
-	}
 private:
-	// Trace
-	FVector PreviousBladeStart;
-	FVector PreviousBladeEnd;
-	
-	UPROPERTY(EditAnywhere, Category="Combat|Trace")
+	FVector PreviousBladeStart = FVector::ZeroVector;
+	FVector PreviousBladeEnd = FVector::ZeroVector;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
 	float TraceRadius = 8.0f;
-	UPROPERTY(EditAnywhere, Category="Combat|Trace")
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
+	int32 TraceSampleCount = 5;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
-	
-	TArray<FVector> PreviousSocketLocations;
+
 	TSet<TWeakObjectPtr<AActor>> HitActors;
-	
+
 private:
-	// Combo
 	int32 ComboIndex = 0;
 
 	bool bComboWindow = false;
 	bool bComboBuffered = false;
-
-private:
-	// State
 	bool bWeaponHitCheck = false;
-	bool bInvincible = false;
+
+	EAttackType CurrentAttackType = EAttackType::Light;
+	
+private:
+	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

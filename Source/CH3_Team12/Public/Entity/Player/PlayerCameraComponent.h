@@ -4,6 +4,8 @@
 #include "Components/ActorComponent.h"
 #include "PlayerCameraComponent.generated.h"
 
+struct FInputActionValue;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
 	FOnLockOnStateChanged,
 	bool,
@@ -27,6 +29,8 @@ public:
 	
 public:
 	virtual void BeginPlay() override;
+	
+	void Look(const FInputActionValue& Value);
 	
 	void SetupNormalCamera();
 	void SetupLockOnCamera();
@@ -161,5 +165,5 @@ private:
 
 	// 키 차이 허용 범위
 	UPROPERTY(EditAnywhere, Category = "Camera|LockOn|TargetSize")
-	float LockOnTargetHeightDiff = 30.0f;
+	float LockOnTargetHeightDiff = 500.0f;
 };
