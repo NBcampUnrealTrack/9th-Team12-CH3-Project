@@ -1,11 +1,13 @@
 #include "Entity/Player/PlayerCombatComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/StateTagComponent.h"
+#include "Entity/Player/PlayerLocomotionComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
+
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
@@ -329,6 +331,24 @@ void UPlayerCombatComponent::Dodge(const FInputActionValue& Value)
 	if (!OwnerCharacter || !StateComponent || !DodgeMontage)
 	{
 		return;
+	}
+
+	FVector DodgeDirection = OwnerCharacter->GetActorForwardVector();
+
+	if (UPlayerLocomotionComponent* LocomotionComponent =
+		OwnerCharacter->GetLocomotionComponent())
+	{
+		DodgeDirection =
+			LocomotionComponent->GetDodgeWorldDirectionFromLastInput();
+	}
+
+	if (!DodgeDirection.IsNearlyZero())
+	{
+		FRotator DodgeRotation = DodgeDirection.Rotation();
+		DodgeRotation.Pitch = 0.0f;
+		DodgeRotation.Roll = 0.0f;
+
+		OwnerCharacter->SetActorRotation(DodgeRotation);
 	}
 
 	StateComponent->AddStateTag(

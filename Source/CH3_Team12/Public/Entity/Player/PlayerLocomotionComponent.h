@@ -42,7 +42,17 @@ private:
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
 	UPROPERTY()
-	TObjectPtr<UStateTagComponent> StateComp;
+	TObjectPtr<UStateTagComponent> StateComponent;
 	UPROPERTY()
 	TObjectPtr<UCharacterMovementComponent> MovementComponent;
+	
+public:
+	FVector2D GetLastMovementInput() const { return LastMovementInput; }
+
+	FVector GetDodgeWorldDirectionFromLastInput() const;
+
+	void DoStopMove();
+
+private:
+	FVector2D LastMovementInput = FVector2D::ZeroVector;
 };
