@@ -1,10 +1,14 @@
-#include "Animation/Notifies/AN_OpenDodgeBufferWindow.h"
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Animation/Notifies/AN_OpenAttackRecovery.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
-#include "Entity/Player/PlayerLocomotionComponent.h"
+#include "Entity/Player/PlayerCombatComponent.h"
 
-void UAN_OpenDodgeBufferWindow::Notify(
+
+void UAN_OpenAttackRecovery::Notify(
 	USkeletalMeshComponent* MeshComp,
 	UAnimSequenceBase* Animation,
 	const FAnimNotifyEventReference& EventReference
@@ -29,13 +33,13 @@ void UAN_OpenDodgeBufferWindow::Notify(
 		return;
 	}
 
-	UPlayerLocomotionComponent* LocomotionComponent =
-		PlayerCharacter->GetLocomotionComponent();
+	UPlayerCombatComponent* CombatComponent =
+		PlayerCharacter->GetCombatComponent();
 
-	if (!LocomotionComponent)
+	if (!CombatComponent)
 	{
 		return;
 	}
 
-	LocomotionComponent->OpenDodgeBufferWindow();
+	CombatComponent->OpenAttackRecovery();
 }

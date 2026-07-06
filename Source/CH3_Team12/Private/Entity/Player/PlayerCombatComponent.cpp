@@ -101,6 +101,11 @@ void UPlayerCombatComponent::OnAttackMontageEnded(
 	bool bInterrupted
 )
 {
+	if (Montage != CurrentAttackMontage)
+	{
+		return;
+	}
+
 	EndAttack();
 }
 
@@ -124,7 +129,13 @@ void UPlayerCombatComponent::StartGuard(const FInputActionValue& Value)
 	}
 
 	StateComponent->AddStateTag(CombatTags::State_Combat_Guarding);
-
+	
+	if (UPlayerLocomotionComponent* LocomotionComponent =
+		OwnerCharacter->GetLocomotionComponent())
+	{
+		LocomotionComponent->RefreshMovementSettings();
+	}
+	
 	if (GuardStartMontage)
 	{
 		OwnerCharacter->PlayAnimMontage(GuardStartMontage);
@@ -140,7 +151,13 @@ void UPlayerCombatComponent::StopGuard(const FInputActionValue& Value)
 
 	StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
 	StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
-
+	
+	if (UPlayerLocomotionComponent* LocomotionComponent =
+		OwnerCharacter->GetLocomotionComponent())
+	{
+		LocomotionComponent->RefreshMovementSettings();
+	}
+	
 	if (GuardStartMontage)
 	{
 		if (UAnimInstance* AnimInstance =
@@ -204,6 +221,32 @@ bool UPlayerCombatComponent::CanGuard() const
 	BlockTags.AddTag(CombatTags::State_Hit_Dead);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
+}
+
+void UPlayerCombatComponent::OpenAttackRecovery()
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return;
+	}
+
+	if (!StateComponent->HasStateTagExact(CombatTags::State_Combat_Attacking))
+	{
+		return;
+	}
+
+	// 공격 상태는 유지.
+	// 이동 잠금만 해제.
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked
+	);
+
+	if (UPlayerLocomotionComponent* LocomotionComponent =
+		OwnerCharacter->GetLocomotionComponent())
+	{
+		LocomotionComponent->OpenDodgeBufferWindow();
+		LocomotionComponent->RefreshMovementSettings();
+	}
 }
 
 void UPlayerCombatComponent::StartWeaponHitCheck()
@@ -360,6 +403,11 @@ void UPlayerCombatComponent::Attack(const FInputActionValue& Value)
 {
 	if (IsAttacking())
 	{
+		if (!CanContinueCombo())
+		{
+			return;
+		}
+
 		if (bComboWindow)
 		{
 			ContinueCombo();
@@ -454,6 +502,12 @@ bool UPlayerCombatComponent::IsBusy() const
 	return StateComponent->HasAnyStateTags(BusyTags);
 }
 
+bool UPlayerCombatComponent::CanContinueCombo() const
+{
+	const int32 NextComboIndex = ComboIndex + 1;
+	return ComboSectionNames.IsValidIndex(NextComboIndex);
+}
+
 void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 {
 	if (!OwnerCharacter || !StateComponent)
@@ -490,6 +544,7 @@ void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 	}
 
 	CurrentAttackType = AttackType;
+	CurrentAttackMontage = AttackMontage;
 
 	ComboIndex = 0;
 	bComboWindow = false;
@@ -507,13 +562,10 @@ void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 		return;
 	}
 
-	if (ComboSectionNames.IsValidIndex(ComboIndex))
-	{
-		AnimInstance->Montage_JumpToSection(
-			ComboSectionNames[ComboIndex],
-			AttackMontage
-		);
-	}
+	AnimInstance->Montage_JumpToSection(
+		ComboSectionNames[ComboIndex],
+		AttackMontage
+	);
 
 	FOnMontageEnded EndDelegate;
 	EndDelegate.BindUObject(
@@ -531,19 +583,16 @@ void UPlayerCombatComponent::EndAttack()
 {
 	EndWeaponHitCheck();
 
+	CurrentAttackMontage = nullptr;
+
 	ComboIndex = 0;
 	bComboWindow = false;
 	bComboBuffered = false;
 
 	if (StateComponent)
 	{
-		StateComponent->RemoveStateTag(
-			CombatTags::State_Combat_Attacking
-		);
-
-		StateComponent->RemoveStateTag(
-			CombatTags::State_Movement_Locked
-		);
+		StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
+		StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
 	}
 
 	if (OwnerCharacter)
@@ -551,17 +600,24 @@ void UPlayerCombatComponent::EndAttack()
 		if (UPlayerLocomotionComponent* LocomotionComponent =
 			OwnerCharacter->GetLocomotionComponent())
 		{
-			LocomotionComponent->ConsumeDodgeBuffer();
+			LocomotionComponent->CloseDodgeBufferWindow();
+			LocomotionComponent->RefreshMovementSettings();
 		}
 	}
 }
 
 void UPlayerCombatComponent::OpenComboWindow()
 {
+	if (!CanContinueCombo())
+	{
+		return;
+	}
+
 	bComboWindow = true;
 
 	if (bComboBuffered)
 	{
+		bComboBuffered = false;
 		ContinueCombo();
 	}
 }
@@ -573,15 +629,17 @@ void UPlayerCombatComponent::ContinueCombo()
 		return;
 	}
 
-	bComboBuffered = false;
-	bComboWindow = false;
+	if (!CanContinueCombo())
+	{
+		bComboBuffered = false;
+		bComboWindow = false;
+		return;
+	}
 
 	++ComboIndex;
 
-	if (!ComboSectionNames.IsValidIndex(ComboIndex))
-	{
-		return;
-	}
+	bComboBuffered = false;
+	bComboWindow = false;
 
 	UAnimMontage* CurrentMontage =
 		CurrentAttackType == EAttackType::Light
@@ -602,6 +660,8 @@ void UPlayerCombatComponent::ContinueCombo()
 	{
 		return;
 	}
+
+	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
 
 	AnimInstance->Montage_JumpToSection(
 		ComboSectionNames[ComboIndex],

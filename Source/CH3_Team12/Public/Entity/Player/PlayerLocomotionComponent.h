@@ -40,6 +40,7 @@ public:
 
 	// Dodge notify / buffer
 	void OpenDodgeBufferWindow();
+	void CloseDodgeBufferWindow();
 	void ConsumeDodgeBuffer();
 	void EndDodge();
 
@@ -51,6 +52,7 @@ public:
 	FVector GetDodgeWorldDirectionFromLastInput() const;
 
 	void OpenDodgeRecovery();
+	void RefreshMovementSettings();
 	
 private:
 	bool CanSprint() const;
@@ -80,7 +82,13 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Speeds", meta=(AllowPrivateAccess="true"))
 	float SprintSpeed = 400.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Speeds", meta=(AllowPrivateAccess="true"))
+	float LockOnWalkSpeed = 200.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Speeds", meta=(AllowPrivateAccess="true"))
+	float GuardWalkSpeed = 200.0f;
+	
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Dodge", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimMontage> DodgeMontage;
