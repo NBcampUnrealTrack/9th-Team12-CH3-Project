@@ -22,6 +22,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Attack")
 	bool ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern);
 
+	UFUNCTION()
+	void FinishAttack();
 
 	UPROPERTY(BlueprintAssignable, Category="Attack")
 	FOnAttackFinished OnAttackFinished;
@@ -49,10 +51,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
 	TObjectPtr<UAnimMontage> FarStrongAttack;
-
-	UFUNCTION()
-	void FinishAttack();
-
+	
 	UFUNCTION()
 	void StopAttackMontage();
 

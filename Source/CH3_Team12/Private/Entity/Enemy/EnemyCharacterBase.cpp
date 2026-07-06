@@ -50,3 +50,28 @@ void AEnemyCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInput
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
+
+void AEnemyCharacterBase::AttackAnimationEnd()
+{
+	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. EnemyAttackComponent is invalid."));
+	
+	if (EnemyAttackComponent)
+	{
+		EnemyAttackComponent->FinishAttack();	
+	}
+}
+
+void AEnemyCharacterBase::AttackHitCheckStart()
+{
+	UE_LOG(LogTemp, Log, TEXT("Enemy Attack Trace Start"));
+}
+
+void AEnemyCharacterBase::AttackHitCheckTick()
+{
+	UE_LOG(LogTemp, Log, TEXT("Enemy Attack Trace Tick"));
+}
+
+void AEnemyCharacterBase::AttackHitCheckEnd()
+{
+	UE_LOG(LogTemp, Log, TEXT("Enemy Attack Trace End"));
+}
