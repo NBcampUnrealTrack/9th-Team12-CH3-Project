@@ -2,6 +2,7 @@
 #include "InputActionValue.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Entity/Player/StateTagComponent.h"
+#include "Entity/Player/PlayerCombatComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -15,11 +16,18 @@ UPlayerLocomotionComponent::UPlayerLocomotionComponent()
 void UPlayerLocomotionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerLocomotionComponent: OwnerCharacter is nullptr"));
+		return;
+	}
+
 	StateComponent = OwnerCharacter->GetStateTagComponent();
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
-	
+	CombatComponent = OwnerCharacter->GetCombatComponent();
+
 	if (MovementComponent)
 	{
 		MovementComponent->MaxWalkSpeed = NormalWalkSpeed;
@@ -70,6 +78,44 @@ FVector UPlayerLocomotionComponent::GetDodgeWorldDirectionFromLastInput() const
 	DodgeDirection.Z = 0.0f;
 
 	return DodgeDirection.GetSafeNormal();
+}
+
+bool UPlayerLocomotionComponent::CanSprint() const
+{
+	if (!StateComponent || !MovementComponent)
+	{
+		return false;
+	}
+
+	if (MovementComponent->Velocity.IsNearlyZero())
+	{
+		return false;
+	}
+
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
+	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+
+	return !StateComponent->HasAnyStateTags(BlockTags);
+}
+
+bool UPlayerLocomotionComponent::CanDodge() const
+{
+	if (!StateComponent)
+	{
+		return false;
+	}
+
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+
+	return !StateComponent->HasAnyStateTags(BlockTags);
 }
 
 void UPlayerLocomotionComponent::DoStopMove()
@@ -139,34 +185,199 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 	);
 }
 
-void UPlayerLocomotionComponent::DoStartSprint(const FInputActionValue& value)
+void UPlayerLocomotionComponent::DoStartSprint()
 {
-	if (!OwnerCharacter || !StateComponent) return;
-	
-	if (!MovementComponent) return;
+	if (!OwnerCharacter || !StateComponent || !MovementComponent)
+	{
+		return;
+	}
 
-	if (StateComponent->HasStateTag(CombatTags::State_Movement_Locked) || 
-		MovementComponent->Velocity.IsNearlyZero())
+	if (!CanSprint())
 	{
 		return;
 	}
 
 	StateComponent->AddStateTag(CombatTags::State_Movement_Sprinting);
-        
 	MovementComponent->MaxWalkSpeed = SprintSpeed;
-	
 }
 
-void UPlayerLocomotionComponent::DoStopSprint(const FInputActionValue& value)
+void UPlayerLocomotionComponent::DoStopSprint()
 {
-	if (!OwnerCharacter || !StateComponent) return;
-	
-	if (!MovementComponent) return;
-	
-	if (StateComponent->HasStateTag(CombatTags::State_Movement_Sprinting))
+	if (!StateComponent || !MovementComponent)
 	{
-		StateComponent->RemoveStateTag(CombatTags::State_Movement_Sprinting);
+		return;
 	}
-        
+
+	StateComponent->RemoveStateTag(CombatTags::State_Movement_Sprinting);
 	MovementComponent->MaxWalkSpeed = NormalWalkSpeed;
+}
+
+void UPlayerLocomotionComponent::OnSprintDodgePressed(const FInputActionValue& Value)
+{
+	if (!OwnerCharacter || !GetWorld())
+	{
+		return;
+	}
+
+	bSprintDodgeHeld = true;
+	bSprintStartedByHold = false;
+
+	SprintDodgePressedTime = GetWorld()->GetTimeSeconds();
+
+	GetWorld()->GetTimerManager().SetTimer(
+		SprintHoldTimerHandle,
+		this,
+		&UPlayerLocomotionComponent::TryStartSprintByHold,
+		SprintHoldThreshold,
+		false
+	);
+}
+
+void UPlayerLocomotionComponent::OnSprintDodgeReleased(const FInputActionValue& Value)
+{
+	if (!OwnerCharacter || !GetWorld())
+	{
+		return;
+	}
+
+	bSprintDodgeHeld = false;
+
+	GetWorld()->GetTimerManager().ClearTimer(SprintHoldTimerHandle);
+
+	const float HeldTime =
+		GetWorld()->GetTimeSeconds() - SprintDodgePressedTime;
+
+	if (bSprintStartedByHold)
+	{
+		bSprintStartedByHold = false;
+		DoStopSprint();
+		return;
+	}
+
+	if (HeldTime < SprintHoldThreshold)
+	{
+		RequestDodge();
+	}
+}
+
+void UPlayerLocomotionComponent::TryStartSprintByHold()
+{
+	if (!bSprintDodgeHeld)
+	{
+		return;
+	}
+
+	if (!CanSprint())
+	{
+		return;
+	}
+
+	bSprintStartedByHold = true;
+	DoStartSprint();
+}
+
+void UPlayerLocomotionComponent::RequestDodge()
+{
+	if (CanDodge())
+	{
+		StartDodge(GetDodgeWorldDirectionFromLastInput());
+		return;
+	}
+
+	if (!bDodgeBufferWindowOpen)
+	{
+		return;
+	}
+
+	bDodgeBuffered = true;
+	BufferedDodgeDirection = GetDodgeWorldDirectionFromLastInput();
+
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(DodgeBufferTimerHandle);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		DodgeBufferTimerHandle,
+		this,
+		&UPlayerLocomotionComponent::ClearDodgeBuffer,
+		DodgeBufferDuration,
+		false
+	);
+}
+
+void UPlayerLocomotionComponent::OpenDodgeBufferWindow()
+{
+	bDodgeBufferWindowOpen = true;
+}
+
+void UPlayerLocomotionComponent::ConsumeDodgeBuffer()
+{
+	bDodgeBufferWindowOpen = false;
+
+	if (!bDodgeBuffered)
+	{
+		return;
+	}
+
+	bDodgeBuffered = false;
+
+	if (CanDodge())
+	{
+		StartDodge(BufferedDodgeDirection);
+	}
+}
+
+void UPlayerLocomotionComponent::ClearDodgeBuffer()
+{
+	bDodgeBuffered = false;
+	BufferedDodgeDirection = FVector::ZeroVector;
+}
+
+void UPlayerLocomotionComponent::StartDodge(const FVector& DodgeDirection)
+{
+	if (!OwnerCharacter || !StateComponent || !DodgeMontage)
+	{
+		return;
+	}
+
+	DoStopSprint();
+
+	if (!DodgeDirection.IsNearlyZero())
+	{
+		FRotator DodgeRotation = DodgeDirection.Rotation();
+		DodgeRotation.Pitch = 0.0f;
+		DodgeRotation.Roll = 0.0f;
+
+		OwnerCharacter->SetActorRotation(DodgeRotation);
+	}
+
+	StateComponent->AddStateTag(CombatTags::State_Combat_Dodging);
+	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+
+	const float Duration =
+		OwnerCharacter->PlayAnimMontage(DodgeMontage);
+
+	if (Duration <= 0.0f)
+	{
+		EndDodge();
+	}
+}
+
+void UPlayerLocomotionComponent::EndDodge()
+{
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Dodging);
+	StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
+
+	if (CombatComponent)
+	{
+		CombatComponent->DisableInvincible();
+	}
 }

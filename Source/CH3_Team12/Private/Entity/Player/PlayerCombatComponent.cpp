@@ -153,41 +153,6 @@ void UPlayerCombatComponent::DisableInvincible()
 	);
 }
 
-void UPlayerCombatComponent::EndDodge()
-{
-	DisableInvincible();
-
-	if (!StateComponent)
-	{
-		return;
-	}
-
-	StateComponent->RemoveStateTag(
-		CombatTags::State_Combat_Dodging
-	);
-
-	StateComponent->RemoveStateTag(
-		CombatTags::State_Movement_Locked
-	);
-}
-
-bool UPlayerCombatComponent::CanDodge() const
-{
-	if (!StateComponent)
-	{
-		return false;
-	}
-
-	FGameplayTagContainer BlockTags;
-	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
-	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
-	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
-	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
-	BlockTags.AddTag(CombatTags::State_Hit_Dead);
-
-	return !StateComponent->HasAnyStateTags(BlockTags);
-}
-
 void UPlayerCombatComponent::ProcessHit(const FHitResult& Hit)
 {
 	AActor* HitActor = Hit.GetActor();
@@ -319,53 +284,6 @@ void UPlayerCombatComponent::HeavyAttack(const FInputActionValue& Value)
 	}
 
 	StartAttack(EAttackType::Heavy);
-}
-
-void UPlayerCombatComponent::Dodge(const FInputActionValue& Value)
-{
-	if (!CanDodge())
-	{
-		return;
-	}
-
-	if (!OwnerCharacter || !StateComponent || !DodgeMontage)
-	{
-		return;
-	}
-
-	FVector DodgeDirection = OwnerCharacter->GetActorForwardVector();
-
-	if (UPlayerLocomotionComponent* LocomotionComponent =
-		OwnerCharacter->GetLocomotionComponent())
-	{
-		DodgeDirection =
-			LocomotionComponent->GetDodgeWorldDirectionFromLastInput();
-	}
-
-	if (!DodgeDirection.IsNearlyZero())
-	{
-		FRotator DodgeRotation = DodgeDirection.Rotation();
-		DodgeRotation.Pitch = 0.0f;
-		DodgeRotation.Roll = 0.0f;
-
-		OwnerCharacter->SetActorRotation(DodgeRotation);
-	}
-
-	StateComponent->AddStateTag(
-		CombatTags::State_Combat_Dodging
-	);
-
-	StateComponent->AddStateTag(
-		CombatTags::State_Movement_Locked
-	);
-
-	const float Duration =
-		OwnerCharacter->PlayAnimMontage(DodgeMontage);
-
-	if (Duration <= 0.0f)
-	{
-		EndDodge();
-	}
 }
 
 bool UPlayerCombatComponent::CanAttack() const
@@ -515,8 +433,22 @@ void UPlayerCombatComponent::EndAttack()
 
 	if (StateComponent)
 	{
-		StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
-		StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
+		StateComponent->RemoveStateTag(
+			CombatTags::State_Combat_Attacking
+		);
+
+		StateComponent->RemoveStateTag(
+			CombatTags::State_Movement_Locked
+		);
+	}
+
+	if (OwnerCharacter)
+	{
+		if (UPlayerLocomotionComponent* LocomotionComponent =
+			OwnerCharacter->GetLocomotionComponent())
+		{
+			LocomotionComponent->ConsumeDodgeBuffer();
+		}
 	}
 }
 

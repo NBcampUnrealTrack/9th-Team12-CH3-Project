@@ -1,10 +1,10 @@
-#include "Animation/Notifies/AN_EndDodge.h"
+#include "Animation/Notifies/AN_OpenDodgeBufferWindow.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
 
-void UAN_EndDodge::Notify(
+void UAN_OpenDodgeBufferWindow::Notify(
 	USkeletalMeshComponent* MeshComp,
 	UAnimSequenceBase* Animation,
 	const FAnimNotifyEventReference& EventReference
@@ -37,5 +37,5 @@ void UAN_EndDodge::Notify(
 		return;
 	}
 
-	LocomotionComponent->EndDodge();
+	LocomotionComponent->OpenDodgeBufferWindow();
 }

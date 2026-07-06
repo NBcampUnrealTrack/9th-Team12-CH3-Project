@@ -33,7 +33,6 @@ public:
 	// Input
 	void Attack(const FInputActionValue& Value);
 	void HeavyAttack(const FInputActionValue& Value);
-	void Dodge(const FInputActionValue& Value);
 	void StartGuard(const FInputActionValue& Value);
 	void StopGuard(const FInputActionValue& Value);
 
@@ -48,12 +47,7 @@ public:
 	// Dodge Notify / NotifyState
 	void EnableInvincible();
 	void DisableInvincible();
-	void EndDodge();
-	bool CanDodge() const;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Animation")
-	TObjectPtr<UAnimMontage> DodgeMontage;
-
+	
 	bool bInvincible = false;
 	
 	UFUNCTION(BlueprintCallable, Category="Weapon")
