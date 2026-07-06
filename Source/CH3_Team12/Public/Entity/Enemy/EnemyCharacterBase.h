@@ -37,5 +37,6 @@ public:
 
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 
+	UFUNCTION(BlueprintCallable)
 	UEnemyAttackComponent* GetEnemyAttackComponent() const { return EnemyAttackComponent; }
 };
