@@ -1,10 +1,10 @@
-#include "Animation/Notifies/AN_OpenComboWindow.h"
+#include "Animation/Notifies/AN_OpenDodgeBufferWindow.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerLocomotionComponent.h"
 
-void UAN_OpenComboWindow::Notify(
+void UAN_OpenDodgeBufferWindow::Notify(
 	USkeletalMeshComponent* MeshComp,
 	UAnimSequenceBase* Animation,
 	const FAnimNotifyEventReference& EventReference
@@ -29,13 +29,13 @@ void UAN_OpenComboWindow::Notify(
 		return;
 	}
 
-	UPlayerCombatComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent();
+	UPlayerLocomotionComponent* LocomotionComponent =
+		PlayerCharacter->GetLocomotionComponent();
 
-	if (!CombatComponent)
+	if (!LocomotionComponent)
 	{
 		return;
 	}
 
-	CombatComponent->OpenComboWindow();
+	LocomotionComponent->OpenDodgeBufferWindow();
 }

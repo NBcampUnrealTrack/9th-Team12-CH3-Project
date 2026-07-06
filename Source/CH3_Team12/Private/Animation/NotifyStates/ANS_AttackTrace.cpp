@@ -11,12 +11,7 @@ void UANS_AttackTrace::NotifyBegin(
 	const FAnimNotifyEventReference& EventReference
 )
 {
-	Super::NotifyBegin(
-		MeshComp,
-		Animation,
-		TotalDuration,
-		EventReference
-	);
+	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
 	if (!MeshComp)
 	{
@@ -31,15 +26,10 @@ void UANS_AttackTrace::NotifyBegin(
 		return;
 	}
 
-	UPlayerCombatComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent();
-
-	if (!CombatComponent)
+	if (UPlayerCombatComponent* CombatComponent = PlayerCharacter->GetCombatComponent())
 	{
-		return;
+		CombatComponent->StartWeaponHitCheck();
 	}
-
-	CombatComponent->StartWeaponHitCheck();
 }
 
 void UANS_AttackTrace::NotifyTick(
@@ -49,12 +39,7 @@ void UANS_AttackTrace::NotifyTick(
 	const FAnimNotifyEventReference& EventReference
 )
 {
-	Super::NotifyTick(
-		MeshComp,
-		Animation,
-		FrameDeltaTime,
-		EventReference
-	);
+	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
 
 	if (!MeshComp)
 	{
@@ -69,15 +54,10 @@ void UANS_AttackTrace::NotifyTick(
 		return;
 	}
 
-	UPlayerCombatComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent();
-
-	if (!CombatComponent)
+	if (UPlayerCombatComponent* CombatComponent = PlayerCharacter->GetCombatComponent())
 	{
-		return;
+		CombatComponent->WeaponTrace();
 	}
-
-	CombatComponent->WeaponTrace();
 }
 
 void UANS_AttackTrace::NotifyEnd(
@@ -86,11 +66,7 @@ void UANS_AttackTrace::NotifyEnd(
 	const FAnimNotifyEventReference& EventReference
 )
 {
-	Super::NotifyEnd(
-		MeshComp,
-		Animation,
-		EventReference
-	);
+	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
 	if (!MeshComp)
 	{
@@ -105,13 +81,8 @@ void UANS_AttackTrace::NotifyEnd(
 		return;
 	}
 
-	UPlayerCombatComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent();
-
-	if (!CombatComponent)
+	if (UPlayerCombatComponent* CombatComponent = PlayerCharacter->GetCombatComponent())
 	{
-		return;
+		CombatComponent->EndWeaponHitCheck();
 	}
-
-	CombatComponent->EndComboWindow();
 }
