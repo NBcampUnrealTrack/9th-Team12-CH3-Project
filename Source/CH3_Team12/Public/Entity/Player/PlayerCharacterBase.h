@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interface/AnimationAttackInterface.h"
 #include "PlayerCharacterBase.generated.h"
 
 class APlayerControllerBase;
@@ -18,7 +19,7 @@ class UPlayerCameraComponent;
 class UPlayerCombatComponent;
 
 UCLASS()
-class CH3_TEAM12_API APlayerCharacterBase : public ACharacter
+class CH3_TEAM12_API APlayerCharacterBase : public ACharacter, public IAnimationAttackInterface
 {
 	GENERATED_BODY()
 
@@ -61,4 +62,10 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// Attack Animation Interface's Section
+public:
+	virtual void AttackAnimationEnd() override;
+	virtual void AttackHitCheckStart() override;
+	virtual void AttackHitCheckTick() override;
+	virtual void AttackHitCheckEnd() override;
 };

@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interface/AnimationAttackInterface.h"
 #include "EnemyCharacterBase.generated.h"
 
 class UEnemyAttackComponent;
 class UBehaviorTree;
 
 UCLASS()
-class CH3_TEAM12_API AEnemyCharacterBase : public ACharacter
+class CH3_TEAM12_API AEnemyCharacterBase : public ACharacter, public IAnimationAttackInterface
 {
 	GENERATED_BODY()
 
@@ -39,4 +40,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	UEnemyAttackComponent* GetEnemyAttackComponent() const { return EnemyAttackComponent; }
+	
+	// Attack Animation Interface's Section
+public:
+	virtual void AttackAnimationEnd() override;
+	virtual void AttackHitCheckStart() override;
+	virtual void AttackHitCheckTick() override;
+	virtual void AttackHitCheckEnd() override;
 };

@@ -1,8 +1,9 @@
 #include "Animation/Notifies/AN_EndAttack.h"
 
 #include "Components/SkeletalMeshComponent.h"
-#include "Entity/Player/PlayerCharacterBase.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+// #include "Entity/Player/PlayerCharacterBase.h"
+// #include "Entity/Player/PlayerCombatComponent.h"
+#include "Interface/AnimationAttackInterface.h"
 
 void UAN_EndAttack::Notify(
 	USkeletalMeshComponent* MeshComp,
@@ -20,22 +21,9 @@ void UAN_EndAttack::Notify(
 	{
 		return;
 	}
-
-	APlayerCharacterBase* PlayerCharacter =
-		Cast<APlayerCharacterBase>(MeshComp->GetOwner());
-
-	if (!PlayerCharacter)
+	
+	if (IAnimationAttackInterface* AttackPawn = Cast<IAnimationAttackInterface>(MeshComp->GetOwner()))
 	{
-		return;
+		AttackPawn->AttackAnimationEnd();
 	}
-
-	UPlayerCombatComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent();
-
-	if (!CombatComponent)
-	{
-		return;
-	}
-
-	CombatComponent->EndAttack();
 }
