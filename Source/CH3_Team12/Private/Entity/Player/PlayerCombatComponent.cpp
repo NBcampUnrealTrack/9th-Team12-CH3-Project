@@ -9,7 +9,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "Engine/Engine.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
@@ -121,21 +121,22 @@ void UPlayerCombatComponent::StartGuard(const FInputActionValue& Value)
 		return;
 	}
 
-	// Sprint 중이었다면 속도까지 정상 복구해야 하므로 Locomotion에 맡김
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerCharacter->GetLocomotionComponent())
 	{
 		LocomotionComponent->DoStopSprint();
 	}
 
-	StateComponent->AddStateTag(CombatTags::State_Combat_Guarding);
-	
+	StateComponent->AddStateTag(
+		CombatTags::State_Combat_Guarding
+	);
+
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerCharacter->GetLocomotionComponent())
 	{
 		LocomotionComponent->RefreshMovementSettings();
 	}
-	
+
 	if (GuardStartMontage)
 	{
 		OwnerCharacter->PlayAnimMontage(GuardStartMontage);
@@ -149,25 +150,32 @@ void UPlayerCombatComponent::StopGuard(const FInputActionValue& Value)
 		return;
 	}
 
-	StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
-	StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
-	
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Guarding
+	);
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Parry
+	);
+
+	if (GuardStartMontage)
+	{
+		if (USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh())
+		{
+			if (UAnimInstance* AnimInstance = Mesh->GetAnimInstance())
+			{
+				AnimInstance->Montage_Stop(
+					GuardMontageBlendOutTime,
+					GuardStartMontage
+				);
+			}
+		}
+	}
+
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerCharacter->GetLocomotionComponent())
 	{
 		LocomotionComponent->RefreshMovementSettings();
-	}
-	
-	if (GuardStartMontage)
-	{
-		if (UAnimInstance* AnimInstance =
-			OwnerCharacter->GetMesh()->GetAnimInstance())
-		{
-			AnimInstance->Montage_Stop(
-				GuardMontageBlendOutTime,
-				GuardStartMontage
-			);
-		}
 	}
 }
 
@@ -178,13 +186,25 @@ void UPlayerCombatComponent::OpenParryWindow()
 		return;
 	}
 
-	// 가드 상태가 아니면 패리도 열지 않음
-	if (!StateComponent->HasStateTagExact(CombatTags::State_Combat_Guarding))
+	if (!StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Guarding))
 	{
 		return;
 	}
 
-	StateComponent->AddStateTag(CombatTags::State_Combat_Parry);
+	StateComponent->AddStateTag(
+		CombatTags::State_Combat_Parry
+	);
+	
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,                                   // Key (화면 덮어쓰기 키)
+			2.0f,                                 // 화면에 떠 있을 시간 (초)
+			FColor::Red,                          // 텍스트 색상
+		   FString(TEXT("Open Parry Window"))
+		);
+	}
 }
 
 void UPlayerCombatComponent::CloseParryWindow()
@@ -194,12 +214,24 @@ void UPlayerCombatComponent::CloseParryWindow()
 		return;
 	}
 
-	StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Parry
+	);
+	
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+		   -1, 
+		   2.0f, 
+		   FColor::Red, 
+		   FString(TEXT("Close Parry Window"))
+		);
+	}
 }
 
 bool UPlayerCombatComponent::CanGuard() const
 {
-	if (!StateComponent)
+	if (!OwnerCharacter || !StateComponent)
 	{
 		return false;
 	}
@@ -209,7 +241,8 @@ bool UPlayerCombatComponent::CanGuard() const
 		return false;
 	}
 
-	if (!StateComponent->HasStateTagExact(CombatTags::State_Combat_Armed))
+	if (!StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Armed))
 	{
 		return false;
 	}

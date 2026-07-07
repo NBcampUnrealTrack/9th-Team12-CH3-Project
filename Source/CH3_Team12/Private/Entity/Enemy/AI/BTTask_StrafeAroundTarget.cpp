@@ -36,6 +36,14 @@ EBTNodeResult::Type UBTTask_StrafeAroundTarget::ExecuteTask(UBehaviorTreeCompone
 		return EBTNodeResult::Failed;
 	}
 
+	UBlackboardComponent* BlackboardComponent = OwnerComp.GetBlackboardComponent();
+	if (!BlackboardComponent)
+	{
+		return EBTNodeResult::Failed;
+	}
+
+	BlackboardComponent->SetValueAsBool(TEXT("bIsStrafing"), true);
+
 	CachedMovementComponent = ControlledCharacter->GetCharacterMovement();
 	if (!CachedMovementComponent)
 	{
@@ -54,6 +62,9 @@ EBTNodeResult::Type UBTTask_StrafeAroundTarget::ExecuteTask(UBehaviorTreeCompone
 		return EBTNodeResult::Failed;
 	}
 
+	CachedMovementComponent->bOrientRotationToMovement = false;
+	CachedMovementComponent->bUseControllerDesiredRotation = false;
+
 	return EBTNodeResult::InProgress;
 }
 
@@ -62,7 +73,7 @@ void UBTTask_StrafeAroundTarget::TickTask(UBehaviorTreeComponent& OwnerComp, uin
 	ElapsedTime += DeltaSeconds;
 	RepathElapsedTime += DeltaSeconds;
 
-	FaceTarget(OwnerComp, DeltaSeconds);
+	// FaceTarget(OwnerComp, DeltaSeconds);
 
 	if (ElapsedTime >= StrafeDuration)
 	{
@@ -75,15 +86,47 @@ void UBTTask_StrafeAroundTarget::TickTask(UBehaviorTreeComponent& OwnerComp, uin
 		RepathElapsedTime = 0.f;
 		RequestStrafeMove(OwnerComp);
 	}
+
+	const FVector Velocity = CachedControlledPawn->GetVelocity();
+	FVector MoveDirection = Velocity;
+
+	MoveDirection.Z = 0.f;
+
+	if (!MoveDirection.IsNearlyZero())
+	{
+		const FRotator TargetRotation = MoveDirection.Rotation();
+		const FRotator CurrentRotation = CachedControlledPawn->GetActorRotation();
+
+		const FRotator NewRotation = FMath::RInterpTo(
+			CurrentRotation,
+			FRotator(0.f, TargetRotation.Yaw, 0.f),
+			DeltaSeconds,
+			BodyRotationInterpSpeed
+		);
+
+		CachedControlledPawn->SetActorRotation(NewRotation);
+	}
 }
 
-void UBTTask_StrafeAroundTarget::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, EBTNodeResult::Type TaskResult)
+void UBTTask_StrafeAroundTarget::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory
+                                                , EBTNodeResult::Type TaskResult)
 {
 	RestoreMoveSpeed();
 
 	CachedAIController = nullptr;
 	CachedControlledPawn = nullptr;
 	CachedMovementComponent = nullptr;
+
+	UBlackboardComponent* BlackboardComponent = OwnerComp.GetBlackboardComponent();
+	if (!BlackboardComponent)
+	{
+		return;
+	}
+
+	BlackboardComponent->SetValueAsBool(TEXT("bIsStrafing"), false);
+
+	CachedMovementComponent->bOrientRotationToMovement = true;
+	CachedMovementComponent->bUseControllerDesiredRotation = false;
 
 	Super::OnTaskFinished(OwnerComp, NodeMemory, TaskResult);
 }
@@ -115,12 +158,12 @@ bool UBTTask_StrafeAroundTarget::RequestStrafeMove(UBehaviorTreeComponent& Owner
 	}
 
 	DirectionFromTarget.Normalize();
-	
-	
+
+
 	// 플레이어 중심
 	// 현재 거리 반지름
 	// 좌/우 각도만 회전
-	
+
 	const float CurrentDistance = FVector::Dist2D(EnemyLocation, TargetLocation);
 
 	const float AngleDegree = StrafeOffset / FMath::Max(CurrentDistance, 1.f) * 57.29578f;
@@ -138,7 +181,7 @@ bool UBTTask_StrafeAroundTarget::RequestStrafeMove(UBehaviorTreeComponent& Owner
 		true,
 		true,
 		true,
-		true,
+		false,
 		nullptr,
 		true
 	);
