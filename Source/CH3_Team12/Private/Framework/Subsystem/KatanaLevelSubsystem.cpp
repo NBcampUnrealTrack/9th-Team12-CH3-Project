@@ -65,14 +65,10 @@ void UKatanaLevelSubsystem::OnLoadingProgressTimer()
 {
 	DelayLoadTime += LoopRate;
 
-	UE_LOG(LogTemp, Warning, TEXT("UKatanaLevelSubsystem : LoadingProgress: %f"), GetLoadingProgress());
-
 	OnLoadingProgressUpdated.Broadcast(GetLoadingProgress());
 
 	if (GetLoadingProgress() < 1.0f)
 		return;
-
-	UE_LOG(LogTemp, Warning, TEXT("UKatanaLevelSubsystem : OpenLevelBySoftObjectPtr"));
 
 	GetWorld()->GetTimerManager().ClearTimer(LoopTimerHandle);
 
