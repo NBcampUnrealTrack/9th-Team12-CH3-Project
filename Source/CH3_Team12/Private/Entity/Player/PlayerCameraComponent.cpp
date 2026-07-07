@@ -3,19 +3,15 @@
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
+
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "DrawDebugHelpers.h"
-#include "GameFramework/Pawn.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Curves/CurveFloat.h"
-#include "Curves/CurveVector.h"
+#include "GameFramework/Character.h"
+#include "Components/CapsuleComponent.h"
 #include "InputActionValue.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Components/CapsuleComponent.h"
-#include "GameFramework/Character.h"
-
 
 UPlayerCameraComponent::UPlayerCameraComponent()
 {
@@ -93,7 +89,7 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 
 	OwnerActor->bUseControllerRotationYaw = false;
 
-	OnLockOnStateChanged.Broadcast(true);
+	// OnLockOnStateChanged.Broadcast(true);
 	
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 	OwnerActor->GetLocomotionComponent())
@@ -109,13 +105,6 @@ bool UPlayerCameraComponent::IsLockOnMode() const
 		StateTagComponent->HasStateTagExact(
 			CombatTags::State_Movement_LockOn
 		);
-}
-
-EPlayerCameraMode UPlayerCameraComponent::GetCameraMode() const
-{
-	return IsLockOnMode()
-		? EPlayerCameraMode::LockOn
-		: EPlayerCameraMode::Normal;
 }
 
 // 락온 상태면 해제, 아니면 락온 시도
@@ -261,7 +250,7 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 
 	OwnerActor->bUseControllerRotationYaw = false;
 
-	OnLockOnStateChanged.Broadcast(false);
+	// OnLockOnStateChanged.Broadcast(false);
 
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerActor->GetLocomotionComponent())
