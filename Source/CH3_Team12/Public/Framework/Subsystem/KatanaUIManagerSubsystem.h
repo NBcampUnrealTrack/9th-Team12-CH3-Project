@@ -7,6 +7,7 @@
 #include "UObject/ScriptInterface.h"
 #include "KatanaUIManagerSubsystem.generated.h"
 
+class UKatanaSoundManagerSubsystem;
 class UKatanaLevelSubsystem;
 class UPlayerAttributeComponent;
 class IPresenterInterface;
@@ -26,6 +27,9 @@ public:
 	void ShowMainMenuWidget();
 	void HideMainMenuWidget();
 
+	void ShowSettingsWidget(UKatanaSoundManagerSubsystem* InSubsystem);
+	void HideSettingsWidget();
+
 	void ShowLoadingWidget(UKatanaLevelSubsystem* InSubsystem);
 	void HideLoadingWidget();
 
@@ -34,6 +38,7 @@ public:
 
 private:
 	const FName MainMenuWidgetName = FName("MainMenuWidget");
+	const FName SettingsWidgetName = FName("SettingsWidget");
 	const FName LoadingWidgetName = FName("LoadingWidget");
 	const FName PlayerWidgetName = FName("PlayerWidget");
 
