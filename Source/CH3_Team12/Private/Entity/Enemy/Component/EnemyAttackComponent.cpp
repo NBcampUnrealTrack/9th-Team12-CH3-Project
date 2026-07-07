@@ -122,6 +122,7 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 	const float MontageLength = AnimInstance->Montage_Play(SelectedMontage);
 
 	AnimInstance->Montage_SetNextSection(
+
 		TEXT("Attack1"),
 		TEXT("Attack2"),
 		SelectedMontage
