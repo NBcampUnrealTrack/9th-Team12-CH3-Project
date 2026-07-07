@@ -12,6 +12,7 @@ UBTTask_ExecuteAttack::UBTTask_ExecuteAttack()
 {
 	NodeName = TEXT("Execute Attack");
 	bCreateNodeInstance = true;
+	bNotifyTaskFinished = true;
 }
 
 EBTNodeResult::Type UBTTask_ExecuteAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -51,6 +52,12 @@ EBTNodeResult::Type UBTTask_ExecuteAttack::ExecuteTask(UBehaviorTreeComponent& O
 
 	CachedOwnerComp = &OwnerComp;
 	CachedEnemyAttackComponent = EnemyAttackComponent;
+
+	// 방어 코드
+	EnemyAttackComponent->OnAttackFinished.RemoveDynamic(
+		this,
+		&UBTTask_ExecuteAttack::HandleAttackFinished
+	);
 	EnemyAttackComponent->OnAttackFinished.AddDynamic(this, &UBTTask_ExecuteAttack::HandleAttackFinished);
 	const bool bAttackStarted = EnemyAttackComponent->ExecuteAttack(TargetActor, SelectedAction, SelectedPattern);
 
@@ -77,13 +84,16 @@ void UBTTask_ExecuteAttack::HandleAttackFinished()
 	{
 		return;
 	}
+	UBehaviorTreeComponent* OwnerComp = CachedOwnerComp;
+	CachedOwnerComp = nullptr;
 
-	return FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
+	FinishLatentTask(*OwnerComp, EBTNodeResult::Succeeded);
 }
 
 void UBTTask_ExecuteAttack::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory
                                            , EBTNodeResult::Type TaskResult)
 {
+	UE_LOG(LogTemp, Warning, TEXT("TASK FINISHED"));
 	if (CachedEnemyAttackComponent)
 	{
 		CachedEnemyAttackComponent->OnAttackFinished.RemoveDynamic(
