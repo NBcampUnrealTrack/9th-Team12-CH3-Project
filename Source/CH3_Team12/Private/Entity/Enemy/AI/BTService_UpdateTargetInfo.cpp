@@ -59,5 +59,10 @@ void UBTService_UpdateTargetInfo::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		RotationInterpSpeed
 	);
 
-	ControlledPawn->SetActorRotation(NewRotation);
+	const bool bIsStrafing = BlackboardComponent->GetValueAsBool(TEXT("bIsStrafing"));
+
+	if (!bIsStrafing)
+	{
+		ControlledPawn->SetActorRotation(NewRotation);
+	}
 }

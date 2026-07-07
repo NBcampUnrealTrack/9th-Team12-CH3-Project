@@ -6,6 +6,7 @@
 #include "Entity/Enemy/AI/EnemyAIController.h"
 #include "Entity/Enemy/Component/EnemyAttackComponent.h"
 #include "Engine/Engine.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -23,6 +24,18 @@ AEnemyCharacterBase::AEnemyCharacterBase()
 void AEnemyCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// bUseControllerRotationPitch = false;
+	// bUseControllerRotationYaw = false;
+	// bUseControllerRotationRoll = false;
+	//
+	// // UCharacterMovementComponent* MovementComponent = GetCharacterMovement();
+	// // if (MovementComponent)
+	// // {
+	// // 	MovementComponent->bOrientRotationToMovement = true;
+	// // 	MovementComponent->bUseControllerDesiredRotation = false;
+	// // 	MovementComponent->RotationRate = FRotator(0.f, 720.f, 0.f);
+	// // }
 }
 
 // Called every frame
@@ -54,10 +67,10 @@ void AEnemyCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInput
 void AEnemyCharacterBase::AttackAnimationEnd()
 {
 	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. EnemyAttackComponent is invalid."));
-	
+
 	if (EnemyAttackComponent)
 	{
-		EnemyAttackComponent->FinishAttack();	
+		EnemyAttackComponent->FinishAttack();
 	}
 }
 
