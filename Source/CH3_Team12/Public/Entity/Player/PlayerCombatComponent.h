@@ -10,6 +10,8 @@ class APlayerCharacterBase;
 class AWeaponBase;
 class UStateTagComponent;
 class UPlayerAttributeComponent;
+class UNiagaraSystem;
+class USoundBase;
 
 struct FInputActionValue;
 struct FHitResult;
@@ -192,7 +194,9 @@ private:
 	void PlayParryReaction(EHitReactionDirection AttackDirection);
 	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
 	void PlayHitReaction(EHitReactionDirection ReactionDirection);
-	
+	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void EndHitReaction();
+
 	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
 
 public:
@@ -286,4 +290,33 @@ private:
 	);
 
 	void ResetCombatHitStop();
+
+// Test용도 : Effect, Sound
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
+	TObjectPtr<UNiagaraSystem> ParryEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
+	TObjectPtr<UNiagaraSystem> GuardHitEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
+	TObjectPtr<UNiagaraSystem> HitEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
+	TObjectPtr<USoundBase> ParrySound;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
+	TObjectPtr<USoundBase> GuardHitSound;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
+	TObjectPtr<USoundBase> HitSound;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
+	float FeedbackEffectForwardOffset = 50.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
+	float FeedbackEffectHeightOffset = 60.0f;
+
+	FVector GetFeedbackLocation(const FIncomingAttackContext& Context) const;
+	FRotator GetFeedbackRotation(const FIncomingAttackContext& Context) const;
 };

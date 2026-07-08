@@ -12,6 +12,9 @@
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
+#include "Sound/SoundBase.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
@@ -327,17 +330,19 @@ bool UPlayerCombatComponent::CanGuard() const
 		return false;
 	}
 
-	if (!StateComponent->HasStateTagExact(
-		CombatTags::State_Combat_Armed))
+	if (!StateComponent->HasStateTagExact(CombatTags::State_Combat_Armed))
 	{
 		return false;
 	}
-
+	
 	FGameplayTagContainer BlockTags;
 	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
 	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
 	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
 	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }
@@ -432,6 +437,52 @@ void UPlayerCombatComponent::PlayHitReaction(
 	if (MontageToPlay && OwnerCharacter)
 	{
 		OwnerCharacter->PlayAnimMontage(MontageToPlay);
+	}
+	
+	UAnimInstance* AnimInstance =
+		OwnerCharacter->GetMesh()
+			? OwnerCharacter->GetMesh()->GetAnimInstance()
+			: nullptr;
+
+	if (!AnimInstance)
+	{
+		return;
+	}
+	
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(
+		this,
+		&UPlayerCombatComponent::OnHitReactionMontageEnded
+	);
+
+	AnimInstance->Montage_SetEndDelegate(
+		EndDelegate,
+		MontageToPlay
+	);
+}
+
+void UPlayerCombatComponent::OnHitReactionMontageEnded(
+	UAnimMontage* Montage,
+	bool bInterrupted)
+{
+	EndHitReaction();
+}
+
+void UPlayerCombatComponent::EndHitReaction()
+{
+	if (StateComponent)
+	{
+		StateComponent->RemoveStateTag(CombatTags::State_Hit_Reacting);
+		StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
+	}
+
+	if (OwnerCharacter)
+	{
+		if (UPlayerLocomotionComponent* LocomotionComponent =
+			OwnerCharacter->GetLocomotionComponent())
+		{
+			LocomotionComponent->RefreshMovementSettings();
+		}
 	}
 }
 
@@ -748,23 +799,17 @@ bool UPlayerCombatComponent::CanAttack() const
 	{
 		return false;
 	}
+	
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
 
-	if (StateComponent->HasStateTagExact(CombatTags::State_Combat_Dodging))
-	{
-		return false;
-	}
-
-	if (StateComponent->HasStateTagExact(CombatTags::State_Combat_Guarding))
-	{
-		return false;
-	}
-
-	if (StateComponent->HasStateTagExact(CombatTags::State_Hit_Dead))
-	{
-		return false;
-	}
-
-	return true;
+	return !StateComponent->HasAnyStateTags(BlockTags);
 }
 
 bool UPlayerCombatComponent::IsAttacking() const
@@ -1061,8 +1106,6 @@ void UPlayerCombatComponent::HandleParrySuccess(
 		ParryHitStopDuration,
 		ParryHitStopTimeDilation
 	);
-
-	// Player 피해 없음
 }
 
 void UPlayerCombatComponent::HandleGuardSuccess(
@@ -1098,6 +1141,18 @@ void UPlayerCombatComponent::HandleDirectHit(
 	const FIncomingAttackContext& Context,
 	EHitReactionDirection ReactionDirection)
 {
+	if (StateComponent)
+	{
+		StateComponent->AddStateTag(CombatTags::State_Hit_Reacting);
+		StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+
+		StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
+		StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
+		StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
+	}
+
+	EndWeaponHitCheck();
+
 	PlayHitReaction(ReactionDirection);
 
 	if (AttributeComponent)
@@ -1119,18 +1174,84 @@ void UPlayerCombatComponent::HandleDirectHit(
 void UPlayerCombatComponent::SpawnParryEffect(
 	const FIncomingAttackContext& Context)
 {
+	const FVector Location = GetFeedbackLocation(Context);
+	const FRotator Rotation = GetFeedbackRotation(Context);
+
+	if (ParryEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			ParryEffect,
+			Location,
+			Rotation
+		);
+	}
+
+	if (ParrySound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			ParrySound,
+			Location
+		);
+	}
+
 	UE_LOG(LogTemp, Warning, TEXT("SpawnParryEffect"));
 }
 
 void UPlayerCombatComponent::SpawnGuardHitEffect(
 	const FIncomingAttackContext& Context)
 {
+	const FVector Location = GetFeedbackLocation(Context);
+	const FRotator Rotation = GetFeedbackRotation(Context);
+
+	if (GuardHitEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			GuardHitEffect,
+			Location,
+			Rotation
+		);
+	}
+
+	if (GuardHitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			GuardHitSound,
+			Location
+		);
+	}
+
 	UE_LOG(LogTemp, Warning, TEXT("SpawnGuardHitEffect"));
 }
 
 void UPlayerCombatComponent::SpawnHitEffect(
 	const FIncomingAttackContext& Context)
 {
+	const FVector Location = GetFeedbackLocation(Context);
+	const FRotator Rotation = GetFeedbackRotation(Context);
+
+	if (HitEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			HitEffect,
+			Location,
+			Rotation
+		);
+	}
+
+	if (HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			HitSound,
+			Location
+		);
+	}
+
 	UE_LOG(LogTemp, Warning, TEXT("SpawnHitEffect"));
 }
 
@@ -1205,4 +1326,50 @@ void UPlayerCombatComponent::ResetCombatHitStop()
 	}
 
 	HitStopActors.Reset();
+}
+
+FVector UPlayerCombatComponent::GetFeedbackLocation(
+	const FIncomingAttackContext& Context) const
+{
+	if (!OwnerCharacter)
+	{
+		return FVector::ZeroVector;
+	}
+
+	if (!Context.Hit.ImpactPoint.IsNearlyZero())
+	{
+		return Context.Hit.ImpactPoint;
+	}
+
+	return OwnerCharacter->GetActorLocation()
+		+ OwnerCharacter->GetActorForwardVector() * FeedbackEffectForwardOffset
+		+ FVector(0.0f, 0.0f, FeedbackEffectHeightOffset);
+}
+
+FRotator UPlayerCombatComponent::GetFeedbackRotation(
+	const FIncomingAttackContext& Context) const
+{
+	if (!OwnerCharacter)
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	if (!Context.AttackWorldDirection.IsNearlyZero())
+	{
+		return Context.AttackWorldDirection.Rotation();
+	}
+
+	if (Context.Attacker)
+	{
+		const FVector Direction =
+			OwnerCharacter->GetActorLocation()
+			- Context.Attacker->GetActorLocation();
+
+		if (!Direction.IsNearlyZero())
+		{
+			return Direction.Rotation();
+		}
+	}
+
+	return OwnerCharacter->GetActorForwardVector().Rotation();
 }

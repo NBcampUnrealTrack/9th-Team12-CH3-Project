@@ -26,7 +26,7 @@ namespace CombatTags
 		State_Combat_Parry,
 		"State.Combat.Parry"
 	);
-	
+
 	UE_DEFINE_GAMEPLAY_TAG(
 		State_Combat_Invincible,
 		"State.Combat.Invincible"
@@ -55,5 +55,10 @@ namespace CombatTags
 	UE_DEFINE_GAMEPLAY_TAG(
 		CombatTags::State_Hit_Dead,
 		TEXT("State.Hit.Dead")
+	);
+
+	UE_DEFINE_GAMEPLAY_TAG(
+		State_Hit_Reacting,
+		TEXT("State.Hit.Reacting")
 	);
 }
