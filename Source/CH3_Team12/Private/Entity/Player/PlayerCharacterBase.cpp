@@ -160,6 +160,22 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Completed, CombatComponent.Get(), &UPlayerCombatComponent::StopGuard);
 		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Canceled, CombatComponent.Get(), &UPlayerCombatComponent::StopGuard);
 	}
+	if (UInputAction* TestAction1 = PlayerControllerBase->GetTestAction1())
+	{
+		EnhancedInputComponent->BindAction(TestAction1, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackFront);
+	}
+	if (UInputAction* TestAction2 = PlayerControllerBase->GetTestAction2())
+	{
+		EnhancedInputComponent->BindAction(TestAction2, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackBack);
+	}
+	if (UInputAction* TestAction3 = PlayerControllerBase->GetTestAction3())
+	{
+		EnhancedInputComponent->BindAction(TestAction3, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackLeft);
+	}
+	if (UInputAction* TestAction4 = PlayerControllerBase->GetTestAction4())
+	{
+		EnhancedInputComponent->BindAction(TestAction4, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackRight);
+	}
 }
 
 void APlayerCharacterBase::AttackAnimationEnd()

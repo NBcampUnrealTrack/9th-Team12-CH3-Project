@@ -34,6 +34,14 @@ protected:
 	TObjectPtr<UInputAction> DodgeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> GuardAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> TestAction1;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> TestAction2;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> TestAction3;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> TestAction4;
 	
 	virtual void BeginPlay() override;
 	
@@ -48,4 +56,9 @@ public:
 	FORCEINLINE TObjectPtr<UInputAction> GetLockOnAction() const { return LockOnAction; }
 	FORCEINLINE TObjectPtr<UInputAction> GetDodgeAction() const { return DodgeAction; }
 	FORCEINLINE TObjectPtr<UInputAction> GetGuardAction() const { return GuardAction; }
+	
+	FORCEINLINE TObjectPtr<UInputAction> GetTestAction1() const { return TestAction1; }
+	FORCEINLINE TObjectPtr<UInputAction> GetTestAction2() const { return TestAction2; }
+	FORCEINLINE TObjectPtr<UInputAction> GetTestAction3() const { return TestAction3; }
+	FORCEINLINE TObjectPtr<UInputAction> GetTestAction4() const { return TestAction4; }
 };
