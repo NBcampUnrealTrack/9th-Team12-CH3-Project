@@ -32,6 +32,12 @@ public:
 
 	UItemInstance* GetCurrentConsumable() const;
 	
+	UItemInstance* GetCurrentWeapon() const;
+	
+	bool SetWeaponSlot(UItemInstance* Item);
+	
+	void ClearWeaponSlot();
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -45,6 +51,9 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UItemInstance>> ConsumableSlots;
 
+	UPROPERTY()
+	TObjectPtr<UItemInstance> WeaponSlot = nullptr;
+	
 	UPROPERTY()
 	int32 CurrentConsumableIndex = 0;
 	

@@ -1,6 +1,7 @@
 #include "Entity/Player/PlayerInventoryComponent.h"
 #include "Framework/DataAsset/ItemDataAsset.h"
 #include "Framework/DataAsset/ConsumableDataAsset.h"
+#include "Framework/DataAsset/WeaponDataAsset.h"
 #include "Entity/Item/ItemEffect.h"
 #include "Entity/Item/ItemInstance.h"
 
@@ -125,6 +126,11 @@ bool UPlayerInventoryComponent::RemoveItem(UItemInstance* Item, int32 Count)
 	{
 		RemoveItemFromConsumableSlots(Item);
 
+		if (WeaponSlot == Item)
+		{
+			WeaponSlot = nullptr;
+		}
+		
 		Items.RemoveSingle(Item);
 	}
 
@@ -209,4 +215,36 @@ void UPlayerInventoryComponent::SetConsumableSlot(
 	}
 	
 	ConsumableSlots[SlotIndex] = Item;
+}
+
+bool UPlayerInventoryComponent::SetWeaponSlot(UItemInstance* Item)
+{
+	if (!Item)
+	{
+		return false;
+	}
+
+	if (!Items.Contains(Item))
+	{
+		return false;
+	}
+
+	if (!Cast<UWeaponDataAsset>(Item->GetItemData()))
+	{
+		return false;
+	}
+
+	WeaponSlot = Item;
+
+	return true;
+}
+
+void UPlayerInventoryComponent::ClearWeaponSlot()
+{
+	WeaponSlot = nullptr;
+}
+
+UItemInstance* UPlayerInventoryComponent::GetCurrentWeapon() const
+{
+	return WeaponSlot;
 }
