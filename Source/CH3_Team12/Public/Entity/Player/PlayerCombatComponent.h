@@ -233,4 +233,24 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category="Combat|Guard")
 	float GuardPostureDamageRate = 1.0f;
+
+private:
+	void HandleParrySuccess(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	void HandleGuardSuccess(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	void HandleDirectHit(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	void SpawnParryEffect(const FIncomingAttackContext& Context);
+	void SpawnGuardHitEffect(const FIncomingAttackContext& Context);
+	void SpawnHitEffect(const FIncomingAttackContext& Context);
 };

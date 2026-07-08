@@ -127,11 +127,7 @@ EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
 			*UEnum::GetValueAsString(ReactionDirection)
 		);
 
-		PlayParryReaction(ReactionDirection);
-
-		// 패리 성공:
-		// Player 체력 피해 없음
-		// Player 체간 피해 없음
+		HandleParrySuccess(Context, ReactionDirection);
 		return EDefenseResult::Parry;
 	}
 
@@ -144,22 +140,7 @@ EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
 			*UEnum::GetValueAsString(ReactionDirection)
 		);
 
-		PlayGuardHitReaction(ReactionDirection);
-
-		if (AttributeComponent)
-		{
-			const float ChipDamage =
-				Context.AttackInfo.Damage * GuardChipDamageRate;
-
-			const float GuardPostureDamage =
-				Context.AttackInfo.PostureDamage * GuardPostureDamageRate;
-
-			AttributeComponent->ApplyAttributeDamage(
-				ChipDamage,
-				GuardPostureDamage
-			);
-		}
-
+		HandleGuardSuccess(Context, ReactionDirection);
 		return EDefenseResult::Guard;
 	}
 
@@ -170,15 +151,7 @@ EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
 		*UEnum::GetValueAsString(ReactionDirection)
 	);
 
-	PlayHitReaction(ReactionDirection);
-
-	if (AttributeComponent)
-	{
-		AttributeComponent->ApplyHealthDamage(
-			Context.AttackInfo.Damage
-		);
-	}
-
+	HandleDirectHit(Context, ReactionDirection);
 	return EDefenseResult::Hit;
 }
 
@@ -1073,4 +1046,72 @@ void UPlayerCombatComponent::Debug_ReceiveTestAttack(
 		TEXT("Debug Test Attack Result: %s"),
 		*UEnum::GetValueAsString(Result)
 	);
+}
+
+void UPlayerCombatComponent::HandleParrySuccess(
+	const FIncomingAttackContext& Context,
+	EHitReactionDirection ReactionDirection)
+{
+	PlayParryReaction(ReactionDirection);
+
+	SpawnParryEffect(Context);
+
+	// Player 피해 없음.
+}
+
+void UPlayerCombatComponent::HandleGuardSuccess(
+	const FIncomingAttackContext& Context,
+	EHitReactionDirection ReactionDirection)
+{
+	PlayGuardHitReaction(ReactionDirection);
+
+	if (AttributeComponent)
+	{
+		const float ChipDamage =
+			Context.AttackInfo.Damage * GuardChipDamageRate;
+
+		const float GuardPostureDamage =
+			Context.AttackInfo.PostureDamage * GuardPostureDamageRate;
+
+		AttributeComponent->ApplyAttributeDamage(
+			ChipDamage,
+			GuardPostureDamage
+		);
+	}
+
+	SpawnGuardHitEffect(Context);
+}
+
+void UPlayerCombatComponent::HandleDirectHit(
+	const FIncomingAttackContext& Context,
+	EHitReactionDirection ReactionDirection)
+{
+	PlayHitReaction(ReactionDirection);
+
+	if (AttributeComponent)
+	{
+		AttributeComponent->ApplyHealthDamage(
+			Context.AttackInfo.Damage
+		);
+	}
+
+	SpawnHitEffect(Context);
+}
+
+void UPlayerCombatComponent::SpawnParryEffect(
+	const FIncomingAttackContext& Context)
+{
+	UE_LOG(LogTemp, Warning, TEXT("SpawnParryEffect"));
+}
+
+void UPlayerCombatComponent::SpawnGuardHitEffect(
+	const FIncomingAttackContext& Context)
+{
+	UE_LOG(LogTemp, Warning, TEXT("SpawnGuardHitEffect"));
+}
+
+void UPlayerCombatComponent::SpawnHitEffect(
+	const FIncomingAttackContext& Context)
+{
+	UE_LOG(LogTemp, Warning, TEXT("SpawnHitEffect"));
 }
