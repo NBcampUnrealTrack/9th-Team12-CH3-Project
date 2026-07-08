@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "EnemyAttackComponent.generated.h"
 
-
+class UEnemyAttackDataAsset;
 class UAnimMontage;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackFinished);
 
@@ -18,7 +18,10 @@ class CH3_TEAM12_API UEnemyAttackComponent : public UActorComponent
 public:
 	// Sets default values for this component's properties
 	UEnemyAttackComponent();
+	
+	virtual void BeginPlay() override;
 
+public:
 	UFUNCTION(BlueprintCallable, Category="Attack")
 	bool ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern);
 
@@ -27,34 +30,28 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category="Attack")
 	FOnAttackFinished OnAttackFinished;
-
+	
+	void StartHitCheck();
+	void AttackTrace();
+	void EndHitCheck();
+	
 protected:
-	virtual void BeginPlay() override;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	float AttackRange = 250.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	float AttackCooldown = 2.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	bool bCanAttack = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> NormalAttack0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> NormalAttack1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> StrongAttack;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> FarStrongAttack;
+	// UFUNCTION()
+	// virtual void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	
 	UFUNCTION()
 	void StopAttackMontage();
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation|Data")
+	TObjectPtr<UEnemyAttackDataAsset> AttackData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
+	bool bCanAttack = true;
 
+private:
+	void ResetComboCount();
+	int8 ComboCount;
+	
 private:
 	FTimerHandle AttackCooldownTimerHandle;
 

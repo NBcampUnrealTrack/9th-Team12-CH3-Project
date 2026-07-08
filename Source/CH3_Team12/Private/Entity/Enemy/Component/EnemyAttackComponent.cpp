@@ -6,10 +6,12 @@
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
+#include "Framework/DataAsset/EnemyAttackDataAsset.h"
 
 // Sets default values for this component's properties
 UEnemyAttackComponent::UEnemyAttackComponent()
@@ -52,13 +54,33 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		return false;
 	}
 
-	UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	USkeletalMeshComponent* SkeletalMeshComponent = OwnerCharacter->GetMesh();
+	if (SkeletalMeshComponent == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: SkeletalMesh is invalid."));
+		return false;
+	}
+	
+	UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
 	if (!AnimInstance)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: Animinstance"));
 		return false;
 	}
-
+	
+	if (IsValid(AttackData) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Katana_UEnemyAttackComponent : AttackData is invalid."));
+		return false;
+	}
+	
+	const FAttackAnimationData* AttackAnimationData = AttackData->GetAttackAnimationData(0);
+	if (AttackAnimationData == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Katana_UEnemyAttackComponent : AttackData is invalid."));
+		return false;
+	}
+	
 	// if (SelectedAction == 1)
 	// {
 	// 	// TODO: 일반공격
@@ -71,29 +93,32 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 	// 	// NOTE: 공격Montage 끝나면 OnAttackFinished.Broadcast() 호출
 	// 	UE_LOG(LogTemp, Log, TEXT("Execute Strong Attack Pattern: %d"), SelectedPattern);
 	// }
-	UAnimMontage* SelectedMontage = nullptr;
+	
+	UAnimMontage* SelectedMontage = AttackAnimationData->Montage;
 
-	if (SelectedAction == 1 && SelectedPattern == 0)
-	{
-		// NormalAttackMontage0 
-		SelectedMontage = NormalAttack0;
-	}
-	else if (SelectedAction == 1 && SelectedPattern == 1)
-	{
-		// NormalAttackMontage1 
-		SelectedMontage = NormalAttack0;
-	}
-	else if (SelectedAction == 2 && SelectedPattern == 0)
-	{
-		// StrongAttackMontage0 
-		SelectedMontage = NormalAttack0;
-	}
-	else if (SelectedAction == 2 && SelectedPattern == 1)
-	{
-		// FarStrongAttackMontage 재생
-		SelectedMontage = FarStrongAttack;
-	}
+	// if (SelectedAction == 1 && SelectedPattern == 0)
+	// {
+	// 	// NormalAttackMontage0 
+	// 	SelectedMontage = NormalAttack0;
+	// }
+	// else if (SelectedAction == 1 && SelectedPattern == 1)
+	// {
+	// 	// NormalAttackMontage1 
+	// 	SelectedMontage = NormalAttack0;
+	// }
+	// else if (SelectedAction == 2 && SelectedPattern == 0)
+	// {
+	// 	// StrongAttackMontage0 
+	// 	SelectedMontage = NormalAttack0;
+	// }
+	// else if (SelectedAction == 2 && SelectedPattern == 1)
+	// {
+	// 	// FarStrongAttackMontage 재생
+	// 	SelectedMontage = FarStrongAttack;
+	// }
 
+	float AttackRange = AttackAnimationData->AttackRange;
+	float AttackCooldown = AttackAnimationData->AttackCooldown;
 
 	const float DistanceToTarget = FVector::Dist(
 		OwnerActor->GetActorLocation(),
@@ -118,27 +143,26 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		AttackCooldown,
 		false
 	);
-
+	
 	const float MontageLength = AnimInstance->Montage_Play(SelectedMontage);
-
-	AnimInstance->Montage_SetNextSection(
-
-		TEXT("Attack1"),
-		TEXT("Attack2"),
-		SelectedMontage
-	);
-	AnimInstance->Montage_SetNextSection(
-		TEXT("Attack2"),
-		TEXT("Attack3"),
-		SelectedMontage
-	);
+	
+	// AnimInstance->Montage_SetNextSection(
+	//
+	// 	TEXT("Attack1"),
+	// 	TEXT("Attack2"),
+	// 	SelectedMontage
+	// );
+	// AnimInstance->Montage_SetNextSection(
+	// 	TEXT("Attack2"),
+	// 	TEXT("Attack3"),
+	// 	SelectedMontage
+	// );
 	UE_LOG(LogTemp, Warning, TEXT(" MontageLength: %f"), MontageLength);
 	if (MontageLength <= 0.f)
 	{
 		return false;
 	}
-
-
+	
 	bCanAttack = false;
 	return true;
 }
@@ -153,6 +177,88 @@ void UEnemyAttackComponent::FinishAttack()
 	bCanAttack = true;
 	OnAttackFinished.Broadcast();
 }
+
+void UEnemyAttackComponent::StartHitCheck()
+{
+	const FAttackAnimationData* AttackAnimationData = AttackData->GetAttackAnimationData(0);
+	
+	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
+	
+	for (FHitBoxData HitBoxData : HitBoxDatas)
+	{
+		const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+		if (!OwnerCharacter)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: OwnerCharacter is null"));
+			return;
+		}
+		
+		USkeletalMeshComponent* SkeletalMeshComponent = OwnerCharacter->GetMesh();
+		if (SkeletalMeshComponent == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: SkeletalMesh is invalid."));
+			return;
+		}
+		
+		FName SocketName = HitBoxData.ActiveHitSocket;
+		FVector SocketLocation{};
+		FRotator SocketRotation{};
+		SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
+		DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::Red, false, 5.0f);
+	}
+}
+
+void UEnemyAttackComponent::AttackTrace()
+{
+}
+
+void UEnemyAttackComponent::EndHitCheck()
+{
+	const FAttackAnimationData* AttackAnimationData = AttackData->GetAttackAnimationData(0);
+	
+	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
+	
+	for (FHitBoxData HitBoxData : HitBoxDatas)
+	{
+		const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+		if (!OwnerCharacter)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: OwnerCharacter is null"));
+			return;
+		}
+		
+		USkeletalMeshComponent* SkeletalMeshComponent = OwnerCharacter->GetMesh();
+		if (SkeletalMeshComponent == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: SkeletalMesh is invalid."));
+			return;
+		}
+		
+		FName SocketName = HitBoxData.ActiveHitSocket;
+		FVector SocketLocation{};
+		FRotator SocketRotation{};
+		SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
+		DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::Green, false, 5.0f);
+	}
+}
+
+// void UEnemyAttackComponent::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+// {
+// 	if (bInterrupted)
+// 	{
+// 		StopAttackMontage();
+// 	}
+// 	
+// 	if (Montage)
+// 	{
+// 		int32 SectionCount = Montage->GetNumSections();
+// 		if (ComboCount >= SectionCount)
+// 		{
+// 			ResetComboCount();
+// 			return;
+// 		}
+// 	}
+// }
 
 void UEnemyAttackComponent::StopAttackMontage()
 {
@@ -170,4 +276,9 @@ void UEnemyAttackComponent::StopAttackMontage()
 
 	AnimInstance->Montage_Stop(0.15f);
 	FinishAttack();
+}
+
+void UEnemyAttackComponent::ResetComboCount()
+{
+	ComboCount = 0; 
 }
