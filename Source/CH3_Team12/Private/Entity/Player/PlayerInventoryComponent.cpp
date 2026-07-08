@@ -4,6 +4,7 @@
 #include "Entity/Item/ItemEffect.h"
 #include "Entity/Item/ItemInstance.h"
 
+
 UPlayerInventoryComponent::UPlayerInventoryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -141,6 +142,93 @@ void UPlayerInventoryComponent::RemoveItemFromConsumableSlots(
 			Slot = nullptr;
 		}
 	}
+}
+
+void UPlayerInventoryComponent::UseItem(UItemInstance* Item)
+{
+	if (!Item)
+	{
+		return;
+	}
+
+	const UItemDataAsset* ItemData = Item->GetItemData();
+	
+	if (const UConsumableDataAsset* Consumable = Cast<UConsumableDataAsset>(ItemData))
+	{
+		UseConsumable(Item, Consumable);
+	}
+}
+
+void UPlayerInventoryComponent::UseCurrentConsumable()
+{
+	if (!ConsumableSlots.IsValidIndex(CurrentConsumableIndex))
+	{
+		return;
+	}
+
+	UseItem(ConsumableSlots[CurrentConsumableIndex]);
+}
+
+void UPlayerInventoryComponent::UseConsumable(
+	UItemInstance* Item,
+	const UConsumableDataAsset* ConsumableData)
+{
+	if (!Item || !ConsumableData)
+	{
+		return;
+	}
+
+	if(!ApplyConsumableEffects(ConsumableData))
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Item Use %s, Item Count : %d"), 
+			*ConsumableData->ItemName.ToString(),
+			Item->GetCount());
+	
+	if (ConsumableData->bConsumeOnUse)
+	{
+		RemoveItem(Item, 1);
+	}
+	
+	
+}
+
+bool UPlayerInventoryComponent::ApplyConsumableEffects(
+	const UConsumableDataAsset* ConsumableData)
+{
+	if (!ConsumableData)
+	{
+		return false;
+	}
+
+	AActor* OwnerActor = GetOwner();
+
+	for (UItemEffect* Effect : ConsumableData->Effects)
+	{
+		if (!Effect)
+		{
+			continue;
+		}
+
+		if (!Effect->CanApply(OwnerActor))
+		{
+			return false;
+		}
+	}
+
+	for (UItemEffect* Effect : ConsumableData->Effects)
+	{
+		if (!Effect)
+		{
+			continue;
+		}
+
+		Effect->Apply(OwnerActor);
+	}
+	
+	return true;
 }
 
 UItemInstance* UPlayerInventoryComponent::GetCurrentConsumable() const
