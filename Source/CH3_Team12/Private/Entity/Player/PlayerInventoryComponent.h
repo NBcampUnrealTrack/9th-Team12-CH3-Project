@@ -4,6 +4,10 @@
 #include "Components/ActorComponent.h"
 #include "PlayerInventoryComponent.generated.h"
 
+class UConsumableDataAsset;
+struct FInputActionValue;
+class UItemInstance;
+class UItemDataAsset;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UPlayerInventoryComponent : public UActorComponent
@@ -12,9 +16,46 @@ class UPlayerInventoryComponent : public UActorComponent
 
 public:	
 	UPlayerInventoryComponent();
+	
+	bool AddItem(UItemDataAsset* ItemData, int32 Count = 1);
 
+	bool RemoveItem(UItemInstance* Item, int32 Count);
+
+	void UseItem(UItemInstance* Item);
+
+	// 포션 사용버튼과 바인딩
+	void UseCurrentConsumable(const FInputActionValue& Value);
+
+	bool AddConsumableSlot(UItemInstance* Item);
+
+	bool RemoveConsumableSlot(UItemInstance* Item);
+
+	void SetConsumableSlot(int32 SlotIndex, UItemInstance* Item);
+	
+	/** 모든 아이템 */
+	const TArray<TObjectPtr<UItemInstance>>& GetItems() const { return Items; }
+
+	UItemInstance* GetCurrentConsumable() const;
+	
 protected:
 	virtual void BeginPlay() override;
+
+private:
+	void UseConsumable(
+		UItemInstance* Item, 
+		const UConsumableDataAsset* ConsumableData);
 	
-		
+	bool ApplyConsumableEffects(const UConsumableDataAsset* ConsumableData);
+	
+	void RemoveItemFromConsumableSlots(UItemInstance* Item);
+	
+	// 인벤토리
+	UPROPERTY()
+	TArray<TObjectPtr<UItemInstance>> Items;
+	
+	UPROPERTY()
+	TArray<TObjectPtr<UItemInstance>> ConsumableSlots;
+
+	UPROPERTY()
+	int32 CurrentConsumableIndex = 0;
 };
