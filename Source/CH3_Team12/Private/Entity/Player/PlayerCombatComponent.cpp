@@ -2,7 +2,9 @@
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
+#include "Entity/Player/PlayerAttributeComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
+
 #include "InputActionValue.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -10,7 +12,6 @@
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
-#include "Entity/Player/PlayerAttributeComponent.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
@@ -34,6 +35,12 @@ void UPlayerCombatComponent::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : StateComponent is nullptr"));
 		return;
+	}
+	
+	AttributeComponent = OwnerCharacter->GetAttributeComponent();
+	if (!AttributeComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : AttributeComponent is nullptr"));
 	}
 
 	EquipWeapon(DefaultWeaponClass);
@@ -91,12 +98,20 @@ EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
 {
 	if (!OwnerCharacter || !StateComponent)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ResolveIncomingAttack: None"));
+		return EDefenseResult::None;
+	}
+
+	if (AttributeComponent && AttributeComponent->IsDead())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ResolveIncomingAttack: Dead"));
 		return EDefenseResult::None;
 	}
 
 	if (StateComponent->HasStateTagExact(
 		CombatTags::State_Combat_Invincible))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ResolveIncomingAttack: Invincible"));
 		return EDefenseResult::Invincible;
 	}
 
@@ -105,19 +120,64 @@ EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
 
 	if (IsParrying() && Context.AttackInfo.bCanBeParried)
 	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("ResolveIncomingAttack: Parry / Direction: %s"),
+			*UEnum::GetValueAsString(ReactionDirection)
+		);
+
 		PlayParryReaction(ReactionDirection);
+
+		// 패리 성공:
+		// Player 체력 피해 없음
+		// Player 체간 피해 없음
 		return EDefenseResult::Parry;
 	}
 
 	if (IsGuarding() && Context.AttackInfo.bCanBeGuarded)
 	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("ResolveIncomingAttack: Guard / Direction: %s"),
+			*UEnum::GetValueAsString(ReactionDirection)
+		);
+
 		PlayGuardHitReaction(ReactionDirection);
+
+		if (AttributeComponent)
+		{
+			const float ChipDamage =
+				Context.AttackInfo.Damage * GuardChipDamageRate;
+
+			const float GuardPostureDamage =
+				Context.AttackInfo.PostureDamage * GuardPostureDamageRate;
+
+			AttributeComponent->ApplyAttributeDamage(
+				ChipDamage,
+				GuardPostureDamage
+			);
+		}
+
 		return EDefenseResult::Guard;
 	}
 
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("ResolveIncomingAttack: Hit / Direction: %s"),
+		*UEnum::GetValueAsString(ReactionDirection)
+	);
+
 	PlayHitReaction(ReactionDirection);
 
-	OwnerCharacter->GetAttributeComponent()->ApplyHealthDamage(Context.AttackInfo.Damage);
+	if (AttributeComponent)
+	{
+		AttributeComponent->ApplyHealthDamage(
+			Context.AttackInfo.Damage
+		);
+	}
 
 	return EDefenseResult::Hit;
 }
@@ -373,15 +433,21 @@ void UPlayerCombatComponent::PlayHitReaction(
 	switch (ReactionDirection)
 	{
 	case EHitReactionDirection::Left:
-		MontageToPlay = HitLeftMontage;
+		MontageToPlay = HitLeftMontage
+			? HitLeftMontage
+			: HitFrontMontage;
 		break;
 
 	case EHitReactionDirection::Right:
-		MontageToPlay = HitRightMontage;
+		MontageToPlay = HitRightMontage
+			? HitRightMontage
+			: HitFrontMontage;
 		break;
 
 	case EHitReactionDirection::Back:
-		MontageToPlay = HitBackMontage;
+		MontageToPlay = HitBackMontage
+			? HitBackMontage
+			: HitFrontMontage;
 		break;
 
 	case EHitReactionDirection::Front:
@@ -921,5 +987,90 @@ void UPlayerCombatComponent::ContinueCombo()
 	AnimInstance->Montage_JumpToSection(
 		ComboSectionNames[ComboIndex],
 		CurrentMontage
+	);
+}
+
+void UPlayerCombatComponent::Debug_ReceiveTestAttackFront()
+{
+	Debug_ReceiveTestAttack(EHitReactionDirection::Front);
+}
+
+void UPlayerCombatComponent::Debug_ReceiveTestAttackLeft()
+{
+	Debug_ReceiveTestAttack(EHitReactionDirection::Left);
+}
+
+void UPlayerCombatComponent::Debug_ReceiveTestAttackRight()
+{
+	Debug_ReceiveTestAttack(EHitReactionDirection::Right);
+}
+
+void UPlayerCombatComponent::Debug_ReceiveTestAttackBack()
+{
+	Debug_ReceiveTestAttack(EHitReactionDirection::Back);
+}
+
+void UPlayerCombatComponent::Debug_ReceiveTestAttack(
+	EHitReactionDirection Direction)
+{
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+
+	FIncomingAttackContext Context;
+
+	Context.Attacker = nullptr;
+	Context.AttackInfo.Damage = DebugAttackDamage;
+	Context.AttackInfo.PostureDamage = DebugAttackPostureDamage;
+	Context.AttackInfo.SwingDirection = EAttackSwingDirection::None;
+	Context.AttackInfo.bCanBeParried = true;
+	Context.AttackInfo.bCanBeGuarded = true;
+
+	const FVector OwnerLocation =
+		OwnerCharacter->GetActorLocation();
+
+	const FVector Forward =
+		OwnerCharacter->GetActorForwardVector();
+
+	const FVector Right =
+		OwnerCharacter->GetActorRightVector();
+
+	FVector HitDirection = Forward;
+
+	switch (Direction)
+	{
+	case EHitReactionDirection::Left:
+		HitDirection = -Right;
+		break;
+
+	case EHitReactionDirection::Right:
+		HitDirection = Right;
+		break;
+
+	case EHitReactionDirection::Back:
+		HitDirection = -Forward;
+		break;
+
+	case EHitReactionDirection::Front:
+	default:
+		HitDirection = Forward;
+		break;
+	}
+
+	Context.Hit.ImpactPoint =
+		OwnerLocation + HitDirection * 100.0f;
+
+	Context.AttackWorldDirection =
+		-HitDirection;
+
+	const EDefenseResult Result =
+		ResolveIncomingAttack(Context);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Debug Test Attack Result: %s"),
+		*UEnum::GetValueAsString(Result)
 	);
 }

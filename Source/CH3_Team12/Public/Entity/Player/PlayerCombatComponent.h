@@ -9,6 +9,8 @@ class UAnimMontage;
 class APlayerCharacterBase;
 class AWeaponBase;
 class UStateTagComponent;
+class UPlayerAttributeComponent;
+
 struct FInputActionValue;
 struct FHitResult;
 
@@ -87,6 +89,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UStateTagComponent> StateComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerAttributeComponent> AttributeComponent;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Animation")
@@ -154,7 +159,6 @@ public:
 private:
 	bool CanGuard() const;
 
-private:
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
 	TObjectPtr<UAnimMontage> GuardStartMontage;
 
@@ -203,4 +207,30 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCausesKnockback = false;
 	
+	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
+	void Debug_ReceiveTestAttackFront();
+
+	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
+	void Debug_ReceiveTestAttackLeft();
+
+	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
+	void Debug_ReceiveTestAttackRight();
+
+	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
+	void Debug_ReceiveTestAttackBack();
+
+private:
+	void Debug_ReceiveTestAttack(EHitReactionDirection Direction);
+	
+	UPROPERTY(EditAnywhere, Category="Combat|Debug")
+	float DebugAttackDamage = 10.0f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Debug")
+	float DebugAttackPostureDamage = 10.0f;
+	
+	UPROPERTY(EditAnywhere, Category="Combat|Guard")
+	float GuardChipDamageRate = 0.2f;
+	
+	UPROPERTY(EditAnywhere, Category="Combat|Guard")
+	float GuardPostureDamageRate = 1.0f;
 };
