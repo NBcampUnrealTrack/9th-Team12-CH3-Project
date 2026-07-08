@@ -1,10 +1,10 @@
-#include "UI/KatanaPlayerWidget.h"
+#include "UI/HUD/PlayerWidget.h"
 
 #include "Components/Image.h"
 #include "UI/Widget/CenterProgressBar.h"
 #include "UI/Widget/DelayedProgressBar.h"
 
-void UKatanaPlayerWidget::NativeConstruct()
+void UPlayerWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
@@ -19,7 +19,7 @@ void UKatanaPlayerWidget::NativeConstruct()
 		OriginPostureCenterColor = PostureCenterImage->GetColorAndOpacity();
 }
 
-void UKatanaPlayerWidget::UpdateHealthBar(const float Percent)
+void UPlayerWidget::UpdateHealthBar(const float Percent)
 {
 	if (!HealthBar)
 		return;
@@ -34,7 +34,7 @@ void UKatanaPlayerWidget::UpdateHealthBar(const float Percent)
 	HealthPercent = Percent;
 }
 
-void UKatanaPlayerWidget::UpdatePostureBar(const float Percent)
+void UPlayerWidget::UpdatePostureBar(const float Percent)
 {
 	if (!PostureBar)
 		return;

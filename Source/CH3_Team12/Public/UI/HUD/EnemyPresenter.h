@@ -3,28 +3,27 @@
 #include "CoreMinimal.h"
 #include "Framework/PresenterInterface.h"
 #include "UObject/Object.h"
-#include "KatanaPlayerPresenter.generated.h"
+#include "EnemyPresenter.generated.h"
 
-class UPlayerAttributeComponent;
-class UKatanaPlayerWidget;
+class UEnemyWidget;
 /**
  *
  */
 UCLASS()
-class CH3_TEAM12_API UKatanaPlayerPresenter : public UObject, public IPresenterInterface
+class CH3_TEAM12_API UEnemyPresenter : public UObject, public IPresenterInterface
 {
 	GENERATED_BODY()
 
 public:
-	void Initialize(UPlayerAttributeComponent* InAttributeComponent, UKatanaPlayerWidget* InWidget);
+	void Initialize(UObject* InAttributeComponent, UEnemyWidget* InWidget);
 	virtual void Dispose() override;
 
 private:
 	UPROPERTY()
-	TWeakObjectPtr<UPlayerAttributeComponent> AttributeComponent; //Model
+	TWeakObjectPtr<UObject> AttributeComponent; //Model
 
 	UPROPERTY()
-	TWeakObjectPtr<UKatanaPlayerWidget> PlayerWidget; //View
+	TWeakObjectPtr<UEnemyWidget> EnemyWidget; //View
 
 	UFUNCTION()
 	void OnModelHealthChanged(float CurrentHealth, float MaxHealth) const;

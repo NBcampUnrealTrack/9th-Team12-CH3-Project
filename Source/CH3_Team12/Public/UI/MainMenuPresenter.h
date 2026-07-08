@@ -3,24 +3,24 @@
 #include "CoreMinimal.h"
 #include "Framework/PresenterInterface.h"
 #include "UObject/Object.h"
-#include "KatanaMainMenuPresenter.generated.h"
+#include "MainMenuPresenter.generated.h"
 
-class UKatanaMainMenuWidget;
+class UMainMenuWidget;
 /**
  *
  */
 UCLASS()
-class CH3_TEAM12_API UKatanaMainMenuPresenter : public UObject, public IPresenterInterface
+class CH3_TEAM12_API UMainMenuPresenter : public UObject, public IPresenterInterface
 {
 	GENERATED_BODY()
 
 public:
-	void Initialize(UKatanaMainMenuWidget* InWidget);
+	void Initialize(UMainMenuWidget* InWidget);
 	virtual void Dispose() override;
 
 private:
 	UPROPERTY()
-	TWeakObjectPtr<UKatanaMainMenuWidget> MainMenuWidget;
+	TWeakObjectPtr<UMainMenuWidget> MainMenuWidget;
 
 	UFUNCTION()
 	void OnPlayButtonClicked() const;

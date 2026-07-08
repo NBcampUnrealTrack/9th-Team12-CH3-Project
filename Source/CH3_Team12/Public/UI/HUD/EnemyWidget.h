@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "KatanaEnemyWidget.generated.h"
+#include "EnemyWidget.generated.h"
 
 class UCenterProgressBar;
 class UProgressBar;
@@ -11,7 +11,7 @@ class UDelayedProgressBar;
  *
  */
 UCLASS()
-class CH3_TEAM12_API UKatanaEnemyWidget : public UUserWidget
+class CH3_TEAM12_API UEnemyWidget : public UUserWidget
 {
 	GENERATED_BODY()
 

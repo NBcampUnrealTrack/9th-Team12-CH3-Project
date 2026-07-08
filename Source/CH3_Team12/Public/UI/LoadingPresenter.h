@@ -3,20 +3,20 @@
 #include "CoreMinimal.h"
 #include "Framework/PresenterInterface.h"
 #include "UObject/Object.h"
-#include "KatanaLoadingPresenter.generated.h"
+#include "LoadingPresenter.generated.h"
 
 class UKatanaLevelSubsystem;
-class UKatanaLoadingWidget;
+class ULoadingWidget;
 /**
  *
  */
 UCLASS()
-class CH3_TEAM12_API UKatanaLoadingPresenter : public UObject, public IPresenterInterface
+class CH3_TEAM12_API ULoadingPresenter : public UObject, public IPresenterInterface
 {
 	GENERATED_BODY()
 
 public:
-	void Initialize(UKatanaLevelSubsystem* InSubsystem, UKatanaLoadingWidget* InWidget);
+	void Initialize(UKatanaLevelSubsystem* InSubsystem, ULoadingWidget* InWidget);
 	virtual void Dispose() override;
 
 private:
@@ -24,7 +24,7 @@ private:
 	TWeakObjectPtr<UKatanaLevelSubsystem> LevelSubsystem;
 
 	UPROPERTY()
-	TWeakObjectPtr<UKatanaLoadingWidget> LoadingWidget;
+	TWeakObjectPtr<ULoadingWidget> LoadingWidget;
 
 	UFUNCTION()
 	void OnModelProgressUpdated(float Percent) const;

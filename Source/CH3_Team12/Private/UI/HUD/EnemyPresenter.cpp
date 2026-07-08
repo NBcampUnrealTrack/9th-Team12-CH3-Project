@@ -1,9 +1,9 @@
-#include "UI/KatanaEnemyPresenter.h"
+#include "UI/HUD/EnemyPresenter.h"
 
-#include "UI/KatanaEnemyWidget.h"
+#include "UI/HUD/EnemyWidget.h"
 
-void UKatanaEnemyPresenter::Initialize(UObject* InAttributeComponent,
-                                          UKatanaEnemyWidget* InWidget)
+void UEnemyPresenter::Initialize(UObject* InAttributeComponent,
+                                       UEnemyWidget* InWidget)
 {
 	AttributeComponent = InAttributeComponent;
 	EnemyWidget = InWidget;
@@ -23,7 +23,7 @@ void UKatanaEnemyPresenter::Initialize(UObject* InAttributeComponent,
 	// OnModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
 }
 
-void UKatanaEnemyPresenter::Dispose()
+void UEnemyPresenter::Dispose()
 {
 	if (!AttributeComponent.IsValid())
 		return;
@@ -35,7 +35,7 @@ void UKatanaEnemyPresenter::Dispose()
 	// AttributeComponent->OnDeath.RemoveDynamic(this, &UKatanaEnemyPresenter::OnModelDeath);
 }
 
-void UKatanaEnemyPresenter::OnModelHealthChanged(const float CurrentHealth, const float MaxHealth) const
+void UEnemyPresenter::OnModelHealthChanged(const float CurrentHealth, const float MaxHealth) const
 {
 	if (EnemyWidget.IsValid() && MaxHealth > 0.0f)
 	{
@@ -44,7 +44,7 @@ void UKatanaEnemyPresenter::OnModelHealthChanged(const float CurrentHealth, cons
 	}
 }
 
-void UKatanaEnemyPresenter::OnModelPostureChanged(const float CurrentPosture, const float MaxPosture) const
+void UEnemyPresenter::OnModelPostureChanged(const float CurrentPosture, const float MaxPosture) const
 {
 	if (EnemyWidget.IsValid() && MaxPosture > 0.0f)
 	{
@@ -53,17 +53,17 @@ void UKatanaEnemyPresenter::OnModelPostureChanged(const float CurrentPosture, co
 	}
 }
 
-void UKatanaEnemyPresenter::OnModelPostureBroken() const
+void UEnemyPresenter::OnModelPostureBroken() const
 {
 
 }
 
-void UKatanaEnemyPresenter::OnModelPostureRecovered() const
+void UEnemyPresenter::OnModelPostureRecovered() const
 {
 
 }
 
-void UKatanaEnemyPresenter::OnModelDeath() const
+void UEnemyPresenter::OnModelDeath() const
 {
 
 }

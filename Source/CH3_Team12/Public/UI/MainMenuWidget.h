@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "KatanaMainMenuWidget.generated.h"
+#include "MainMenuWidget.generated.h"
 
 class UButton;
 
@@ -12,7 +12,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnButtonClicked);
  *
  */
 UCLASS()
-class CH3_TEAM12_API UKatanaMainMenuWidget : public UUserWidget
+class CH3_TEAM12_API UMainMenuWidget : public UUserWidget
 {
 	GENERATED_BODY()
 

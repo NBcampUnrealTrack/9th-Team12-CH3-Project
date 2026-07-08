@@ -1,41 +1,41 @@
-#include "UI/KatanaMainMenuPresenter.h"
+#include "UI/MainMenuPresenter.h"
 
 #include "Engine/GameInstance.h"
 #include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
 #include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 #include "Kismet/GameplayStatics.h"
-#include "UI/KatanaMainMenuWidget.h"
+#include "UI/MainMenuWidget.h"
 
-void UKatanaMainMenuPresenter::Initialize(UKatanaMainMenuWidget* InWidget)
+void UMainMenuPresenter::Initialize(UMainMenuWidget* InWidget)
 {
 	MainMenuWidget = InWidget;
 
 	if (!MainMenuWidget.IsValid())
 		return;
 
-	MainMenuWidget->OnPlayButtonClicked.AddDynamic(this, &UKatanaMainMenuPresenter::OnPlayButtonClicked);
-	MainMenuWidget->OnSettingsButtonClicked.AddDynamic(this, &UKatanaMainMenuPresenter::OnSettingsButtonClicked);
-	MainMenuWidget->OnQuitButtonClicked.AddDynamic(this, &UKatanaMainMenuPresenter::OnQuitButtonClicked);
+	MainMenuWidget->OnPlayButtonClicked.AddDynamic(this, &UMainMenuPresenter::OnPlayButtonClicked);
+	MainMenuWidget->OnSettingsButtonClicked.AddDynamic(this, &UMainMenuPresenter::OnSettingsButtonClicked);
+	MainMenuWidget->OnQuitButtonClicked.AddDynamic(this, &UMainMenuPresenter::OnQuitButtonClicked);
 }
 
-void UKatanaMainMenuPresenter::Dispose()
+void UMainMenuPresenter::Dispose()
 {
 	if (!MainMenuWidget.IsValid())
 		return;
 
-	MainMenuWidget->OnPlayButtonClicked.RemoveDynamic(this, &UKatanaMainMenuPresenter::OnPlayButtonClicked);
-	MainMenuWidget->OnSettingsButtonClicked.RemoveDynamic(this, &UKatanaMainMenuPresenter::OnSettingsButtonClicked);
-	MainMenuWidget->OnQuitButtonClicked.RemoveDynamic(this, &UKatanaMainMenuPresenter::OnQuitButtonClicked);
+	MainMenuWidget->OnPlayButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::OnPlayButtonClicked);
+	MainMenuWidget->OnSettingsButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::OnSettingsButtonClicked);
+	MainMenuWidget->OnQuitButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::OnQuitButtonClicked);
 }
 
-void UKatanaMainMenuPresenter::OnPlayButtonClicked() const
+void UMainMenuPresenter::OnPlayButtonClicked() const
 {
 	UKatanaLevelSubsystem* LevelSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UKatanaLevelSubsystem>();
 	LevelSubsystem->LoadLevel("LobbyLevel");
 }
 
-void UKatanaMainMenuPresenter::OnSettingsButtonClicked() const
+void UMainMenuPresenter::OnSettingsButtonClicked() const
 {
 	UE_LOG(LogTemp, Log, TEXT("OnSettingsButtonClicked called"));
 
@@ -70,7 +70,7 @@ void UKatanaMainMenuPresenter::OnSettingsButtonClicked() const
 	UIManager->ShowSettingsWidget(SoundManager);
 }
 
-void UKatanaMainMenuPresenter::OnQuitButtonClicked() const
+void UMainMenuPresenter::OnQuitButtonClicked() const
 {
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PlayerController) return;

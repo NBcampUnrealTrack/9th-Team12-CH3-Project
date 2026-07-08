@@ -2,14 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "KatanaLoadingWidget.generated.h"
+#include "LoadingWidget.generated.h"
 
 class UProgressBar;
 /**
  *
  */
 UCLASS()
-class CH3_TEAM12_API UKatanaLoadingWidget : public UUserWidget
+class CH3_TEAM12_API ULoadingWidget : public UUserWidget
 {
 	GENERATED_BODY()
 

@@ -2,14 +2,14 @@
 
 #include "Framework/KatanaSystemSettings.h"
 #include "Framework/PresenterInterface.h"
-#include "UI/KatanaLoadingPresenter.h"
-#include "UI/KatanaLoadingWidget.h"
-#include "UI/KatanaMainMenuPresenter.h"
-#include "UI/KatanaMainMenuWidget.h"
-#include "UI/KatanaPlayerPresenter.h"
-#include "UI/KatanaPlayerWidget.h"
-#include "UI/KatanaSettingsPresenter.h"
-#include "UI/KatanaSettingsWidget.h"
+#include "UI/LoadingPresenter.h"
+#include "UI/LoadingWidget.h"
+#include "UI/MainMenuPresenter.h"
+#include "UI/MainMenuWidget.h"
+#include "UI/HUD/PlayerPresenter.h"
+#include "UI/HUD/PlayerWidget.h"
+#include "UI/Settings/InGameSettingsPresenter.h"
+#include "UI/Settings/InGameSettingsWidget.h"
 
 void UKatanaUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -31,14 +31,14 @@ void UKatanaUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UKatanaUIManagerSubsystem::ShowMainMenuWidget()
 {
-	UKatanaMainMenuWidget* ActiveView = OpShowUI<UKatanaMainMenuWidget>(MainMenuWidgetName);
+	UMainMenuWidget* ActiveView = OpShowUI<UMainMenuWidget>(MainMenuWidgetName);
 	if (!ActiveView)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *MainMenuWidgetName.ToString());
 		return;
 	}
 
-	UKatanaMainMenuPresenter* NewPresenter = NewObject<UKatanaMainMenuPresenter>(this);
+	UMainMenuPresenter* NewPresenter = NewObject<UMainMenuPresenter>(this);
 	if (!NewPresenter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *MainMenuWidgetName.ToString());
@@ -56,14 +56,14 @@ void UKatanaUIManagerSubsystem::HideMainMenuWidget()
 
 void UKatanaUIManagerSubsystem::ShowSettingsWidget(UKatanaSoundManagerSubsystem* InSubsystem)
 {
-	UKatanaSettingsWidget* ActiveView = OpShowUI<UKatanaSettingsWidget>(SettingsWidgetName);
+	UInGameSettingsWidget* ActiveView = OpShowUI<UInGameSettingsWidget>(SettingsWidgetName);
 	if (!ActiveView)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *SettingsWidgetName.ToString());
 		return;
 	}
 
-	UKatanaSettingsPresenter* NewPresenter = NewObject<UKatanaSettingsPresenter>(this);
+	UInGameSettingsPresenter* NewPresenter = NewObject<UInGameSettingsPresenter>(this);
 	if (!NewPresenter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *SettingsWidgetName.ToString());
@@ -81,14 +81,14 @@ void UKatanaUIManagerSubsystem::HideSettingsWidget()
 
 void UKatanaUIManagerSubsystem::ShowLoadingWidget(UKatanaLevelSubsystem* InSubsystem)
 {
-	UKatanaLoadingWidget* ActiveView = OpShowUI<UKatanaLoadingWidget>(LoadingWidgetName);
+	ULoadingWidget* ActiveView = OpShowUI<ULoadingWidget>(LoadingWidgetName);
 	if (!ActiveView)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *LoadingWidgetName.ToString());
 		return;
 	}
 
-	UKatanaLoadingPresenter* NewPresenter = NewObject<UKatanaLoadingPresenter>(this);
+	ULoadingPresenter* NewPresenter = NewObject<ULoadingPresenter>(this);
 	if (!NewPresenter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *LoadingWidgetName.ToString());
@@ -106,10 +106,10 @@ void UKatanaUIManagerSubsystem::HideLoadingWidget()
 
 void UKatanaUIManagerSubsystem::ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent)
 {
-	UKatanaPlayerWidget* ActiveView = OpShowUI<UKatanaPlayerWidget>(PlayerWidgetName);
+	UPlayerWidget* ActiveView = OpShowUI<UPlayerWidget>(PlayerWidgetName);
 	if (!ActiveView) return;
 
-	UKatanaPlayerPresenter* NewPresenter = NewObject<UKatanaPlayerPresenter>(this);
+	UPlayerPresenter* NewPresenter = NewObject<UPlayerPresenter>(this);
 	if (!NewPresenter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *PlayerWidgetName.ToString());

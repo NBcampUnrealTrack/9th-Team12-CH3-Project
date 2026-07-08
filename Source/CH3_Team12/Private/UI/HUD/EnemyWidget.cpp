@@ -1,17 +1,17 @@
-#include "UI/KatanaEnemyWidget.h"
+#include "UI/HUD/EnemyWidget.h"
 
 #include "Components/ProgressBar.h"
 #include "UI/Widget/CenterProgressBar.h"
 #include "UI/Widget/DelayedProgressBar.h"
 
-void UKatanaEnemyWidget::UpdateHealthBar(const float Percent) const
+void UEnemyWidget::UpdateHealthBar(const float Percent) const
 {
 	if (!HealthBar)
 		return;
 	HealthBar->SetPercent(Percent);
 }
 
-void UKatanaEnemyWidget::UpdatePostureBar(const float Percent) const
+void UEnemyWidget::UpdatePostureBar(const float Percent) const
 {
 	if (!PostureBar)
 		return;

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "KatanaSettingsWidget.generated.h"
+#include "InGameSettingsWidget.generated.h"
 
 class UStepProgressBar;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnVolumeChanged, const float, Volume);
@@ -11,7 +11,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnVolumeChanged, const float, Volum
  *
  */
 UCLASS()
-class CH3_TEAM12_API UKatanaSettingsWidget : public UUserWidget
+class CH3_TEAM12_API UInGameSettingsWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
