@@ -11,7 +11,7 @@ public class CH3_Team12 : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayTags", "AIModule", "UMG",
-			"AudioModulation", "Slate", "SlateCore"
+			"AudioModulation", "Slate", "SlateCore", "Niagara"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
