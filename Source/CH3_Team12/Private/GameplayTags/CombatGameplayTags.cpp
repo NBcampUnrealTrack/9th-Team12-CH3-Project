@@ -61,4 +61,14 @@ namespace CombatTags
 		State_Hit_Reacting,
 		TEXT("State.Hit.Reacting")
 	);
+	
+	UE_DEFINE_GAMEPLAY_TAG(
+		State_Action_Equipping,
+		TEXT("State.Action.Equipping")
+	);
+	
+	UE_DEFINE_GAMEPLAY_TAG(
+		State_Action_UsingItem,
+		TEXT("State.Action.UsingItem")
+	);
 }

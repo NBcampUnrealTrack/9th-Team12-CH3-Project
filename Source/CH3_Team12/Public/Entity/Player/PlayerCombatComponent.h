@@ -238,7 +238,6 @@ private:
 	UPROPERTY(EditAnywhere, Category="Combat|Guard")
 	float GuardPostureDamageRate = 1.0f;
 
-private:
 	void HandleParrySuccess(
 		const FIncomingAttackContext& Context,
 		EHitReactionDirection ReactionDirection
