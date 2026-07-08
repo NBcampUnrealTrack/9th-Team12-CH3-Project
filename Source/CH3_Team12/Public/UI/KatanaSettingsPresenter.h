@@ -16,6 +16,23 @@ class CH3_TEAM12_API UKatanaSettingsPresenter : public UObject, public IPresente
 	GENERATED_BODY()
 
 public:
-	virtual void Initialize(UKatanaSoundManagerSubsystem* InSubsystem, UKatanaSettingsWidget* ActiveView);
+	virtual void Initialize(UKatanaSoundManagerSubsystem* InSubsystem, UKatanaSettingsWidget* InWidget);
 	virtual void Dispose() override;
+
+private:
+	UPROPERTY()
+	TWeakObjectPtr<UKatanaSoundManagerSubsystem> SoundManagerSubsystem;
+
+	UPROPERTY()
+	TWeakObjectPtr<UKatanaSettingsWidget> SettingsWidget;
+
+	UFUNCTION()
+	void OnMasterVolumeChanged(float NewVolume) const;
+
+	UFUNCTION()
+	void OnBGMVolumeChanged(float NewVolume) const;
+
+	UFUNCTION()
+	void OnSFXVolumeChanged(float NewVolume) const;
+
 };

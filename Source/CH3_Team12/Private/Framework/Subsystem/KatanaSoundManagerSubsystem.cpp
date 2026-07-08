@@ -59,12 +59,12 @@ UAudioComponent* UKatanaSoundManagerSubsystem::PlaySound2D(EAudioType AudioType,
 	USoundBase* SoundToPlay = GetOrLoadSound(SoundKey);
 	if (!SoundToPlay) return nullptr;
 
-	// 메타사운드가 켜질 때 내부 변수를 따로 세팅해줄 필요가 없으므로 정석대로 스폰만 합니다.
 	UAudioComponent* AudioComp = UGameplayStatics::SpawnSound2D(GetWorld(), SoundToPlay, VolumeMultiplier,
 	                                                            PitchMultiplier);
 
 	if (AudioComp)
 	{
+		// 볼륨 설정에 필요한 사운드 모듈레이터 추가
 		TSet<USoundModulatorBase*> TargetBusses;
 
 		if (ControlBusMap.Contains(EAudioType::Master))
@@ -87,13 +87,13 @@ UAudioComponent* UKatanaSoundManagerSubsystem::PlaySound3DAtLocation(EAudioType 
 	USoundBase* SoundToPlay = GetOrLoadSound(SoundKey);
 	if (!SoundToPlay) return nullptr;
 
-	// 스폰 시점에 감쇄 에셋 포인터를 깔끔하게 밀어 넣습니다.
 	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAtLocation(
 		GetWorld(), SoundToPlay, Location, FRotator::ZeroRotator, 1.0f, 1.0f, 0.0f,
 		AttenuationSettings);
 
 	if (AudioComp)
 	{
+		// 볼륨 설정에 필요한 사운드 모듈레이터 추가
 		TSet<USoundModulatorBase*> TargetBusses;
 
 		if (ControlBusMap.Contains(EAudioType::Master))
@@ -115,7 +115,6 @@ void UKatanaSoundManagerSubsystem::SetVolume(const EAudioType AudioType, const f
 
 	UAudioModulationStatics::SetGlobalBusMixValue(GetWorld(), ControlBusMap[AudioType].Get(), NewVolume, 0.0f);
 
-	// 하드디스크 세이브 파일 영구 저장 처리
 	TObjectPtr<UAudioSaveGame> SaveGameInstance = Cast<UAudioSaveGame>(
 		UGameplayStatics::LoadGameFromSlot(TEXT("AudioSettingsSlot_Modulation"), 0));
 
@@ -146,7 +145,6 @@ void UKatanaSoundManagerSubsystem::LoadAudioSettings()
 
 	if (LoadGameInstance)
 	{
-		// 로드 시점에 보관된 수치들을 전역 컨트롤 버스에 바인딩 오버라이드 시켜줍니다.
 		if (ControlBusMap.Contains(EAudioType::Master))
 			UAudioModulationStatics::SetGlobalBusMixValue(GetWorld(), ControlBusMap[EAudioType::Master].Get(),
 			                                              LoadGameInstance->MasterVolume, 0.0f);
