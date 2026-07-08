@@ -12,8 +12,10 @@ class UItemDataAsset : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
-	FName ItemID;
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override
+	{
+		return FPrimaryAssetId(TEXT("Item"), GetFName());
+	}
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	FText ItemName;
