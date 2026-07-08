@@ -21,11 +21,6 @@ public:
 
 	bool RemoveItem(UItemInstance* Item, int32 Count);
 
-	void UseItem(UItemInstance* Item);
-
-	// 포션사용 시 호출
-	void UseCurrentConsumable();
-
 	bool AddConsumableSlot(UItemInstance* Item);
 
 	bool RemoveConsumableSlot(UItemInstance* Item);
@@ -41,12 +36,6 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	void UseConsumable(
-		UItemInstance* Item, 
-		const UConsumableDataAsset* ConsumableData);
-	
-	bool ApplyConsumableEffects(const UConsumableDataAsset* ConsumableData);
-	
 	void RemoveItemFromConsumableSlots(UItemInstance* Item);
 	
 	// 인벤토리
