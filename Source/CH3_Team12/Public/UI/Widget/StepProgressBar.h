@@ -5,9 +5,10 @@
 #include "Components/ProgressBar.h"
 #include "StepProgressBar.generated.h"
 
+class UImage;
 class UTextBlock;
 class UHorizontalBox;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStepValueChanged, float, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnValueChanged, float, NewValue);
 
 /**
  *
@@ -18,32 +19,32 @@ class CH3_TEAM12_API UStepProgressBar : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintAssignable, Category = "UI|CustomBar")
-	FOnStepValueChanged OnStepValueChanged;
+	UPROPERTY(BlueprintAssignable, Category = "ProgressBar")
+	FOnValueChanged OnValueChanged;
 
-	UFUNCTION(BlueprintCallable, Category = "UI|CustomBar")
-	void SetValue(float InValue);
-
-	UFUNCTION(BlueprintPure, Category = "UI|CustomBar")
-	float GetValue() const { return CurrentValue; }
+	UFUNCTION(BlueprintCallable, Category = "ProgressBar")
+	void SetPercent(float InPercent);
 
 protected:
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UHorizontalBox> GaugeBox;
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UImage> Img_Background;
 
-	UPROPERTY(meta=(BindWidget, OptionalWidget = true))
-	TObjectPtr<UTextBlock> GaugeTextBlock;
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UHorizontalBox> HBox_Widgets;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Settings")
-	float MinValue = 0.0f;
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> Txt_Display;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Settings")
-	float MaxValue = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProgressBar")
+	float MinDisplayValue = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProgressBar")
+	float MaxDisplayValue = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProgressBar")
 	float ActiveOpacity = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProgressBar")
 	float InactiveOpacity = 0.15f;
 
 	virtual void NativeConstruct() override;
@@ -52,9 +53,13 @@ protected:
 	virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 private:
-	void UpdateValueFromMouse(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent);
-	void UpdateVisuals() const;
-
 	float CurrentValue = 1.0f;
 	bool bIsDragging = false;
+
+	int32 GetStepCount() const;
+	float NormalizeValue(const float InValue) const;
+	bool ApplyValue(const float InValue, const bool bBroadcastChange);
+	float CalculateValueFromMouse(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
+	void UpdateValueFromMouse(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent);
+	void UpdateVisuals() const;
 };
