@@ -10,6 +10,7 @@
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
+#include "Entity/Player/PlayerAttributeComponent.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
@@ -86,10 +87,7 @@ void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
 }
 
 EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
-	AActor* Attacker,
-	const FAttackInfo& AttackInfo,
-	const FHitResult& Hit
-)
+	const FIncomingAttackContext& Context)
 {
 	if (!OwnerCharacter || !StateComponent)
 	{
@@ -102,19 +100,25 @@ EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
 		return EDefenseResult::Invincible;
 	}
 
-	if (IsParrying() && AttackInfo.bCanBeParried)
+	const EHitReactionDirection ReactionDirection =
+		CalculateHitReactionDirection(Context);
+
+	if (IsParrying() && Context.AttackInfo.bCanBeParried)
 	{
-		PlayParryReaction(AttackInfo.AttackDirection);
+		PlayParryReaction(ReactionDirection);
 		return EDefenseResult::Parry;
 	}
 
-	if (IsGuarding() && AttackInfo.bCanBeGuarded)
+	if (IsGuarding() && Context.AttackInfo.bCanBeGuarded)
 	{
-		PlayGuardHitReaction(AttackInfo.AttackDirection);
+		PlayGuardHitReaction(ReactionDirection);
 		return EDefenseResult::Guard;
 	}
 
-	PlayHitReaction(Attacker, AttackInfo, Hit);
+	PlayHitReaction(ReactionDirection);
+
+	OwnerCharacter->GetAttributeComponent()->ApplyHealthDamage(Context.AttackInfo.Damage);
+
 	return EDefenseResult::Hit;
 }
 
@@ -306,17 +310,17 @@ bool UPlayerCombatComponent::CanGuard() const
 }
 
 void UPlayerCombatComponent::PlayParryReaction(
-	EAttackDirection AttackDirection)
+	EHitReactionDirection AttackDirection)
 {
 	UAnimMontage* MontageToPlay = nullptr;
 
 	switch (AttackDirection)
 	{
-	case EAttackDirection::Left:
+	case EHitReactionDirection::Left:
 		MontageToPlay = ParryLeftMontage;
 		break;
 
-	case EAttackDirection::Right:
+	case EHitReactionDirection::Right:
 		MontageToPlay = ParryRightMontage;
 		break;
 
@@ -334,17 +338,17 @@ void UPlayerCombatComponent::PlayParryReaction(
 }
 
 void UPlayerCombatComponent::PlayGuardHitReaction(
-	EAttackDirection AttackDirection)
+	EHitReactionDirection AttackDirection)
 {
 	UAnimMontage* MontageToPlay = nullptr;
 
 	switch (AttackDirection)
 	{
-	case EAttackDirection::Left:
+	case EHitReactionDirection::Left:
 		MontageToPlay = GuardHitLeftMontage;
 		break;
 
-	case EAttackDirection::Right:
+	case EHitReactionDirection::Right:
 		MontageToPlay = GuardHitRightMontage;
 		break;
 
@@ -361,67 +365,26 @@ void UPlayerCombatComponent::PlayGuardHitReaction(
 	}
 }
 
-EAttackDirection UPlayerCombatComponent::CalculateHitDirectionFromAttacker(
-	AActor* Attacker) const
-{
-	if (!OwnerCharacter || !Attacker)
-	{
-		return EAttackDirection::Front;
-	}
-
-	const FVector ToAttacker =
-		(Attacker->GetActorLocation() - OwnerCharacter->GetActorLocation())
-		.GetSafeNormal2D();
-
-	const FVector Forward =
-		OwnerCharacter->GetActorForwardVector();
-
-	const FVector Right =
-		OwnerCharacter->GetActorRightVector();
-
-	const float ForwardDot =
-		FVector::DotProduct(Forward, ToAttacker);
-
-	const float RightDot =
-		FVector::DotProduct(Right, ToAttacker);
-
-	if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
-	{
-		return RightDot > 0.0f
-			? EAttackDirection::Right
-			: EAttackDirection::Left;
-	}
-
-	return ForwardDot > 0.0f
-		? EAttackDirection::Front
-		: EAttackDirection::Back;
-}
-
 void UPlayerCombatComponent::PlayHitReaction(
-	AActor* Attacker,
-	const FAttackInfo& AttackInfo,
-	const FHitResult& Hit)
+	EHitReactionDirection ReactionDirection)
 {
-	const EAttackDirection HitDirection =
-		CalculateHitDirectionFromAttacker(Attacker);
-
 	UAnimMontage* MontageToPlay = nullptr;
 
-	switch (HitDirection)
+	switch (ReactionDirection)
 	{
-	case EAttackDirection::Left:
+	case EHitReactionDirection::Left:
 		MontageToPlay = HitLeftMontage;
 		break;
 
-	case EAttackDirection::Right:
+	case EHitReactionDirection::Right:
 		MontageToPlay = HitRightMontage;
 		break;
 
-	case EAttackDirection::Back:
+	case EHitReactionDirection::Back:
 		MontageToPlay = HitBackMontage;
 		break;
 
-	case EAttackDirection::Front:
+	case EHitReactionDirection::Front:
 	default:
 		MontageToPlay = HitFrontMontage;
 		break;
@@ -431,6 +394,88 @@ void UPlayerCombatComponent::PlayHitReaction(
 	{
 		OwnerCharacter->PlayAnimMontage(MontageToPlay);
 	}
+}
+
+EHitReactionDirection UPlayerCombatComponent::CalculateHitReactionDirection(
+	const FIncomingAttackContext& Context) const
+{
+	if (!OwnerCharacter)
+	{
+		return EHitReactionDirection::Front;
+	}
+
+	// 1순위: Hit 위치 기준
+	if (!Context.Hit.ImpactPoint.IsNearlyZero())
+	{
+		FVector ToHit =
+			Context.Hit.ImpactPoint - OwnerCharacter->GetActorLocation();
+
+		ToHit.Z = 0.0f;
+
+		if (!ToHit.IsNearlyZero())
+		{
+			ToHit.Normalize();
+
+			const float RightDot = FVector::DotProduct(
+				OwnerCharacter->GetActorRightVector(),
+				ToHit
+			);
+
+			const float ForwardDot = FVector::DotProduct(
+				OwnerCharacter->GetActorForwardVector(),
+				ToHit
+			);
+
+			if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
+			{
+				return RightDot > 0.0f
+					? EHitReactionDirection::Right
+					: EHitReactionDirection::Left;
+			}
+
+			return ForwardDot >= 0.0f
+				? EHitReactionDirection::Front
+				: EHitReactionDirection::Back;
+		}
+	}
+
+	// 2순위: Attacker 위치 기준
+	if (Context.Attacker)
+	{
+		FVector ToAttacker =
+			Context.Attacker->GetActorLocation()
+			- OwnerCharacter->GetActorLocation();
+
+		ToAttacker.Z = 0.0f;
+
+		if (!ToAttacker.IsNearlyZero())
+		{
+			ToAttacker.Normalize();
+
+			const float RightDot = FVector::DotProduct(
+				OwnerCharacter->GetActorRightVector(),
+				ToAttacker
+			);
+
+			const float ForwardDot = FVector::DotProduct(
+				OwnerCharacter->GetActorForwardVector(),
+				ToAttacker
+			);
+
+			if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
+			{
+				return RightDot > 0.0f
+					? EHitReactionDirection::Right
+					: EHitReactionDirection::Left;
+			}
+
+			return ForwardDot >= 0.0f
+				? EHitReactionDirection::Front
+				: EHitReactionDirection::Back;
+		}
+	}
+
+	return EHitReactionDirection::Front;
 }
 
 void UPlayerCombatComponent::OpenAttackRecovery()

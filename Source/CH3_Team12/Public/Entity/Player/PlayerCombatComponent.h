@@ -63,11 +63,7 @@ public:
 
 	AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
 
-	EDefenseResult ResolveIncomingAttack(
-		AActor* Attacker,
-		const FAttackInfo& AttackInfo,
-		const FHitResult& Hit
-	);
+	EDefenseResult ResolveIncomingAttack(const FIncomingAttackContext& Context);
 
 	bool IsGuarding() const;
 	bool IsParrying() const;
@@ -189,10 +185,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
 	TObjectPtr<UAnimMontage> HitBackMontage;
 	
-	void PlayParryReaction(EAttackDirection AttackDirection);
-	void PlayGuardHitReaction(EAttackDirection AttackDirection);
-	EAttackDirection CalculateHitDirectionFromAttacker(AActor* Attacker) const;
-	void PlayHitReaction(AActor* Attacker, const FAttackInfo& AttackInfo, const FHitResult& Hit);
+	void PlayParryReaction(EHitReactionDirection AttackDirection);
+	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
+	void PlayHitReaction(EHitReactionDirection ReactionDirection);
+	
+	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
 
 public:
 	void OpenAttackRecovery();
