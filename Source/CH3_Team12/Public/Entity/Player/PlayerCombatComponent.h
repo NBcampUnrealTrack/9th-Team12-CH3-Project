@@ -9,6 +9,10 @@ class UAnimMontage;
 class APlayerCharacterBase;
 class AWeaponBase;
 class UStateTagComponent;
+class UPlayerAttributeComponent;
+class UNiagaraSystem;
+class USoundBase;
+
 struct FInputActionValue;
 struct FHitResult;
 
@@ -87,6 +91,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UStateTagComponent> StateComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerAttributeComponent> AttributeComponent;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Animation")
@@ -154,7 +161,6 @@ public:
 private:
 	bool CanGuard() const;
 
-private:
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
 	TObjectPtr<UAnimMontage> GuardStartMontage;
 
@@ -188,7 +194,9 @@ private:
 	void PlayParryReaction(EHitReactionDirection AttackDirection);
 	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
 	void PlayHitReaction(EHitReactionDirection ReactionDirection);
-	
+	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void EndHitReaction();
+
 	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
 
 public:
@@ -203,4 +211,111 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCausesKnockback = false;
 	
+	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
+	void Debug_ReceiveTestAttackFront();
+
+	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
+	void Debug_ReceiveTestAttackLeft();
+
+	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
+	void Debug_ReceiveTestAttackRight();
+
+	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
+	void Debug_ReceiveTestAttackBack();
+
+private:
+	void Debug_ReceiveTestAttack(EHitReactionDirection Direction);
+	
+	UPROPERTY(EditAnywhere, Category="Combat|Debug")
+	float DebugAttackDamage = 10.0f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Debug")
+	float DebugAttackPostureDamage = 10.0f;
+	
+	UPROPERTY(EditAnywhere, Category="Combat|Guard")
+	float GuardChipDamageRate = 0.2f;
+	
+	UPROPERTY(EditAnywhere, Category="Combat|Guard")
+	float GuardPostureDamageRate = 1.0f;
+
+	void HandleParrySuccess(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	void HandleGuardSuccess(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	void HandleDirectHit(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	void SpawnParryEffect(const FIncomingAttackContext& Context);
+	void SpawnGuardHitEffect(const FIncomingAttackContext& Context);
+	void SpawnHitEffect(const FIncomingAttackContext& Context);
+	
+private:
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float ParryHitStopDuration = 0.05f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float ParryHitStopTimeDilation = 0.05f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float GuardHitStopDuration = 0.035f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float GuardHitStopTimeDilation = 0.1f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float HitStopDuration = 0.04f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float HitStopTimeDilation = 0.08f;
+
+	UPROPERTY()
+	TArray<TWeakObjectPtr<AActor>> HitStopActors;
+
+	FTimerHandle HitStopTimerHandle;
+
+private:
+	void TriggerCombatHitStop(
+		const FIncomingAttackContext& Context,
+		float Duration,
+		float TimeDilation
+	);
+
+	void ResetCombatHitStop();
+
+// Test용도 : Effect, Sound
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
+	TObjectPtr<UNiagaraSystem> ParryEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
+	TObjectPtr<UNiagaraSystem> GuardHitEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
+	TObjectPtr<UNiagaraSystem> HitEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
+	TObjectPtr<USoundBase> ParrySound;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
+	TObjectPtr<USoundBase> GuardHitSound;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
+	TObjectPtr<USoundBase> HitSound;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
+	float FeedbackEffectForwardOffset = 50.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
+	float FeedbackEffectHeightOffset = 60.0f;
+
+	FVector GetFeedbackLocation(const FIncomingAttackContext& Context) const;
+	FRotator GetFeedbackRotation(const FIncomingAttackContext& Context) const;
 };
