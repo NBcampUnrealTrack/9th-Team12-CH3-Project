@@ -17,7 +17,7 @@ class UPlayerInventoryComponent : public UActorComponent
 public:	
 	UPlayerInventoryComponent();
 	
-	bool AddItem(UItemDataAsset* ItemData, int32 Count = 1);
+	UItemInstance* AddItem(UItemDataAsset* ItemData, int32 Count = 1);
 
 	bool RemoveItem(UItemInstance* Item, int32 Count);
 
@@ -58,4 +58,8 @@ private:
 
 	UPROPERTY()
 	int32 CurrentConsumableIndex = 0;
+	
+private:
+	UPROPERTY(EditAnywhere)
+	UConsumableDataAsset* testItem;
 };

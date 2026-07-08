@@ -15,26 +15,44 @@ void UPlayerInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// 테스트용 코드
+	if (testItem)
+	{
+		if (AddItem(testItem, 1))
+		{
+			SetConsumableSlot(0, Items[0]);
+		}
+	}
+	if (GetCurrentConsumable() && GetCurrentConsumable()->GetItemData())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SetConsumableSlot %s"), 
+			*GetCurrentConsumable()->GetItemData()->ItemName.ToString());
+	}
+	//
+	
 }
 
-bool UPlayerInventoryComponent::AddItem(UItemDataAsset* ItemData, int32 Count)
+UItemInstance* UPlayerInventoryComponent::AddItem(UItemDataAsset* ItemData, int32 Count)
 {
 	if (!ItemData || Count <= 0)
 	{
-		return false;
+		return nullptr;
 	}
 
 	if (!ItemData->bStackable)
 	{
+		UItemInstance* LastCreatedItem = nullptr;
+		
 		for (int32 i = 0; i < Count; ++i)
 		{
 			UItemInstance* NewItem = NewObject<UItemInstance>(this);
 			NewItem->Initialize(ItemData, 1);
 
 			Items.Add(NewItem);
+			LastCreatedItem = NewItem;
 		}
 
-		return true;
+		return LastCreatedItem;
 	}
 	
 	int32 Remaining = Count;
@@ -66,10 +84,12 @@ bool UPlayerInventoryComponent::AddItem(UItemDataAsset* ItemData, int32 Count)
 
 		if (Remaining <= 0)
 		{
-			return true;
+			return Item;
 		}
 	}
 
+	UItemInstance* FirstNewItem = nullptr;
+	
 	while (Remaining > 0)
 	{
 		const int32 StackCount = FMath::Min(Remaining, ItemData->MaxStack);
@@ -79,10 +99,15 @@ bool UPlayerInventoryComponent::AddItem(UItemDataAsset* ItemData, int32 Count)
 
 		Items.Add(NewItem);
 
+		if (!FirstNewItem)
+		{
+			FirstNewItem = NewItem;
+		}
+		
 		Remaining -= StackCount;
 	}
 
-	return true;
+	return FirstNewItem;
 }
 
 bool UPlayerInventoryComponent::RemoveItem(UItemInstance* Item, int32 Count)
@@ -96,8 +121,7 @@ bool UPlayerInventoryComponent::RemoveItem(UItemInstance* Item, int32 Count)
 	{
 		return false;
 	}
-
-
+	
 	if (Item->IsEmpty())
 	{
 		RemoveItemFromConsumableSlots(Item);
