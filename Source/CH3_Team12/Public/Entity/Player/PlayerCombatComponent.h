@@ -10,6 +10,8 @@ class APlayerCharacterBase;
 class AWeaponBase;
 class UStateTagComponent;
 class UPlayerAttributeComponent;
+class UNiagaraSystem;
+class USoundBase;
 
 struct FInputActionValue;
 struct FHitResult;
@@ -192,7 +194,9 @@ private:
 	void PlayParryReaction(EHitReactionDirection AttackDirection);
 	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
 	void PlayHitReaction(EHitReactionDirection ReactionDirection);
-	
+	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void EndHitReaction();
+
 	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
 
 public:
@@ -233,4 +237,85 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category="Combat|Guard")
 	float GuardPostureDamageRate = 1.0f;
+
+	void HandleParrySuccess(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	void HandleGuardSuccess(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	void HandleDirectHit(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	void SpawnParryEffect(const FIncomingAttackContext& Context);
+	void SpawnGuardHitEffect(const FIncomingAttackContext& Context);
+	void SpawnHitEffect(const FIncomingAttackContext& Context);
+	
+private:
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float ParryHitStopDuration = 0.05f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float ParryHitStopTimeDilation = 0.05f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float GuardHitStopDuration = 0.035f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float GuardHitStopTimeDilation = 0.1f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float HitStopDuration = 0.04f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float HitStopTimeDilation = 0.08f;
+
+	UPROPERTY()
+	TArray<TWeakObjectPtr<AActor>> HitStopActors;
+
+	FTimerHandle HitStopTimerHandle;
+
+private:
+	void TriggerCombatHitStop(
+		const FIncomingAttackContext& Context,
+		float Duration,
+		float TimeDilation
+	);
+
+	void ResetCombatHitStop();
+
+// Test용도 : Effect, Sound
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
+	TObjectPtr<UNiagaraSystem> ParryEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
+	TObjectPtr<UNiagaraSystem> GuardHitEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
+	TObjectPtr<UNiagaraSystem> HitEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
+	TObjectPtr<USoundBase> ParrySound;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
+	TObjectPtr<USoundBase> GuardHitSound;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
+	TObjectPtr<USoundBase> HitSound;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
+	float FeedbackEffectForwardOffset = 50.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
+	float FeedbackEffectHeightOffset = 60.0f;
+
+	FVector GetFeedbackLocation(const FIncomingAttackContext& Context) const;
+	FRotator GetFeedbackRotation(const FIncomingAttackContext& Context) const;
 };

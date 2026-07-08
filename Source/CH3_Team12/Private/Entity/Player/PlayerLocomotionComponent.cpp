@@ -212,10 +212,14 @@ bool UPlayerLocomotionComponent::CanSprint() const
 	}
 
 	FGameplayTagContainer BlockTags;
-	BlockTags.AddTag(CombatTags::State_Movement_Locked);
 	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
 	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
 	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }
@@ -231,8 +235,11 @@ bool UPlayerLocomotionComponent::CanDodge() const
 	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
 	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
 	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
 	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
 	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }

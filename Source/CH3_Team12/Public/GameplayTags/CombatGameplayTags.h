@@ -19,6 +19,8 @@ namespace CombatTags
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hit_PostureBroken);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hit_Dead);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hit_Reacting);
 	
-	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Action_Equipping);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Action_UsingItem);
 }

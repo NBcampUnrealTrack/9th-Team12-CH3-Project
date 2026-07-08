@@ -12,6 +12,9 @@
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
+#include "Sound/SoundBase.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
@@ -127,11 +130,7 @@ EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
 			*UEnum::GetValueAsString(ReactionDirection)
 		);
 
-		PlayParryReaction(ReactionDirection);
-
-		// 패리 성공:
-		// Player 체력 피해 없음
-		// Player 체간 피해 없음
+		HandleParrySuccess(Context, ReactionDirection);
 		return EDefenseResult::Parry;
 	}
 
@@ -144,22 +143,7 @@ EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
 			*UEnum::GetValueAsString(ReactionDirection)
 		);
 
-		PlayGuardHitReaction(ReactionDirection);
-
-		if (AttributeComponent)
-		{
-			const float ChipDamage =
-				Context.AttackInfo.Damage * GuardChipDamageRate;
-
-			const float GuardPostureDamage =
-				Context.AttackInfo.PostureDamage * GuardPostureDamageRate;
-
-			AttributeComponent->ApplyAttributeDamage(
-				ChipDamage,
-				GuardPostureDamage
-			);
-		}
-
+		HandleGuardSuccess(Context, ReactionDirection);
 		return EDefenseResult::Guard;
 	}
 
@@ -170,15 +154,7 @@ EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
 		*UEnum::GetValueAsString(ReactionDirection)
 	);
 
-	PlayHitReaction(ReactionDirection);
-
-	if (AttributeComponent)
-	{
-		AttributeComponent->ApplyHealthDamage(
-			Context.AttackInfo.Damage
-		);
-	}
-
+	HandleDirectHit(Context, ReactionDirection);
 	return EDefenseResult::Hit;
 }
 
@@ -354,17 +330,19 @@ bool UPlayerCombatComponent::CanGuard() const
 		return false;
 	}
 
-	if (!StateComponent->HasStateTagExact(
-		CombatTags::State_Combat_Armed))
+	if (!StateComponent->HasStateTagExact(CombatTags::State_Combat_Armed))
 	{
 		return false;
 	}
-
+	
 	FGameplayTagContainer BlockTags;
 	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
 	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
 	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
 	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }
@@ -459,6 +437,52 @@ void UPlayerCombatComponent::PlayHitReaction(
 	if (MontageToPlay && OwnerCharacter)
 	{
 		OwnerCharacter->PlayAnimMontage(MontageToPlay);
+	}
+	
+	UAnimInstance* AnimInstance =
+		OwnerCharacter->GetMesh()
+			? OwnerCharacter->GetMesh()->GetAnimInstance()
+			: nullptr;
+
+	if (!AnimInstance)
+	{
+		return;
+	}
+	
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(
+		this,
+		&UPlayerCombatComponent::OnHitReactionMontageEnded
+	);
+
+	AnimInstance->Montage_SetEndDelegate(
+		EndDelegate,
+		MontageToPlay
+	);
+}
+
+void UPlayerCombatComponent::OnHitReactionMontageEnded(
+	UAnimMontage* Montage,
+	bool bInterrupted)
+{
+	EndHitReaction();
+}
+
+void UPlayerCombatComponent::EndHitReaction()
+{
+	if (StateComponent)
+	{
+		StateComponent->RemoveStateTag(CombatTags::State_Hit_Reacting);
+		StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
+	}
+
+	if (OwnerCharacter)
+	{
+		if (UPlayerLocomotionComponent* LocomotionComponent =
+			OwnerCharacter->GetLocomotionComponent())
+		{
+			LocomotionComponent->RefreshMovementSettings();
+		}
 	}
 }
 
@@ -775,23 +799,17 @@ bool UPlayerCombatComponent::CanAttack() const
 	{
 		return false;
 	}
+	
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
 
-	if (StateComponent->HasStateTagExact(CombatTags::State_Combat_Dodging))
-	{
-		return false;
-	}
-
-	if (StateComponent->HasStateTagExact(CombatTags::State_Combat_Guarding))
-	{
-		return false;
-	}
-
-	if (StateComponent->HasStateTagExact(CombatTags::State_Hit_Dead))
-	{
-		return false;
-	}
-
-	return true;
+	return !StateComponent->HasAnyStateTags(BlockTags);
 }
 
 bool UPlayerCombatComponent::IsAttacking() const
@@ -1073,4 +1091,285 @@ void UPlayerCombatComponent::Debug_ReceiveTestAttack(
 		TEXT("Debug Test Attack Result: %s"),
 		*UEnum::GetValueAsString(Result)
 	);
+}
+
+void UPlayerCombatComponent::HandleParrySuccess(
+	const FIncomingAttackContext& Context,
+	EHitReactionDirection ReactionDirection)
+{
+	PlayParryReaction(ReactionDirection);
+
+	SpawnParryEffect(Context);
+
+	TriggerCombatHitStop(
+		Context,
+		ParryHitStopDuration,
+		ParryHitStopTimeDilation
+	);
+}
+
+void UPlayerCombatComponent::HandleGuardSuccess(
+	const FIncomingAttackContext& Context,
+	EHitReactionDirection ReactionDirection)
+{
+	PlayGuardHitReaction(ReactionDirection);
+
+	if (AttributeComponent)
+	{
+		const float ChipDamage =
+			Context.AttackInfo.Damage * GuardChipDamageRate;
+
+		const float GuardPostureDamage =
+			Context.AttackInfo.PostureDamage * GuardPostureDamageRate;
+
+		AttributeComponent->ApplyAttributeDamage(
+			ChipDamage,
+			GuardPostureDamage
+		);
+	}
+
+	SpawnGuardHitEffect(Context);
+
+	TriggerCombatHitStop(
+		Context,
+		GuardHitStopDuration,
+		GuardHitStopTimeDilation
+	);
+}
+
+void UPlayerCombatComponent::HandleDirectHit(
+	const FIncomingAttackContext& Context,
+	EHitReactionDirection ReactionDirection)
+{
+	if (StateComponent)
+	{
+		StateComponent->AddStateTag(CombatTags::State_Hit_Reacting);
+		StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+
+		StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
+		StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
+		StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
+	}
+
+	EndWeaponHitCheck();
+
+	PlayHitReaction(ReactionDirection);
+
+	if (AttributeComponent)
+	{
+		AttributeComponent->ApplyHealthDamage(
+			Context.AttackInfo.Damage
+		);
+	}
+
+	SpawnHitEffect(Context);
+
+	TriggerCombatHitStop(
+		Context,
+		HitStopDuration,
+		HitStopTimeDilation
+	);
+}
+
+void UPlayerCombatComponent::SpawnParryEffect(
+	const FIncomingAttackContext& Context)
+{
+	const FVector Location = GetFeedbackLocation(Context);
+	const FRotator Rotation = GetFeedbackRotation(Context);
+
+	if (ParryEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			ParryEffect,
+			Location,
+			Rotation
+		);
+	}
+
+	if (ParrySound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			ParrySound,
+			Location
+		);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("SpawnParryEffect"));
+}
+
+void UPlayerCombatComponent::SpawnGuardHitEffect(
+	const FIncomingAttackContext& Context)
+{
+	const FVector Location = GetFeedbackLocation(Context);
+	const FRotator Rotation = GetFeedbackRotation(Context);
+
+	if (GuardHitEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			GuardHitEffect,
+			Location,
+			Rotation
+		);
+	}
+
+	if (GuardHitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			GuardHitSound,
+			Location
+		);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("SpawnGuardHitEffect"));
+}
+
+void UPlayerCombatComponent::SpawnHitEffect(
+	const FIncomingAttackContext& Context)
+{
+	const FVector Location = GetFeedbackLocation(Context);
+	const FRotator Rotation = GetFeedbackRotation(Context);
+
+	if (HitEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			HitEffect,
+			Location,
+			Rotation
+		);
+	}
+
+	if (HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			HitSound,
+			Location
+		);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("SpawnHitEffect"));
+}
+
+void UPlayerCombatComponent::TriggerCombatHitStop(
+	const FIncomingAttackContext& Context,
+	float Duration,
+	float TimeDilation)
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	if (Duration <= 0.0f)
+	{
+		return;
+	}
+
+	TimeDilation = FMath::Clamp(
+		TimeDilation,
+		0.01f,
+		1.0f
+	);
+
+	// 이전 HitStop이 남아 있으면 먼저 원복
+	ResetCombatHitStop();
+
+	HitStopActors.Reset();
+
+	if (OwnerCharacter)
+	{
+		HitStopActors.Add(OwnerCharacter);
+	}
+
+	if (Context.Attacker)
+	{
+		HitStopActors.Add(Context.Attacker);
+	}
+
+	for (TWeakObjectPtr<AActor> ActorPtr : HitStopActors)
+	{
+		if (AActor* Actor = ActorPtr.Get())
+		{
+			Actor->CustomTimeDilation = TimeDilation;
+		}
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(
+		HitStopTimerHandle,
+		this,
+		&UPlayerCombatComponent::ResetCombatHitStop,
+		Duration,
+		false
+	);
+}
+
+void UPlayerCombatComponent::ResetCombatHitStop()
+{
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(
+			HitStopTimerHandle
+		);
+	}
+
+	for (TWeakObjectPtr<AActor> ActorPtr : HitStopActors)
+	{
+		if (AActor* Actor = ActorPtr.Get())
+		{
+			Actor->CustomTimeDilation = 1.0f;
+		}
+	}
+
+	HitStopActors.Reset();
+}
+
+FVector UPlayerCombatComponent::GetFeedbackLocation(
+	const FIncomingAttackContext& Context) const
+{
+	if (!OwnerCharacter)
+	{
+		return FVector::ZeroVector;
+	}
+
+	if (!Context.Hit.ImpactPoint.IsNearlyZero())
+	{
+		return Context.Hit.ImpactPoint;
+	}
+
+	return OwnerCharacter->GetActorLocation()
+		+ OwnerCharacter->GetActorForwardVector() * FeedbackEffectForwardOffset
+		+ FVector(0.0f, 0.0f, FeedbackEffectHeightOffset);
+}
+
+FRotator UPlayerCombatComponent::GetFeedbackRotation(
+	const FIncomingAttackContext& Context) const
+{
+	if (!OwnerCharacter)
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	if (!Context.AttackWorldDirection.IsNearlyZero())
+	{
+		return Context.AttackWorldDirection.Rotation();
+	}
+
+	if (Context.Attacker)
+	{
+		const FVector Direction =
+			OwnerCharacter->GetActorLocation()
+			- Context.Attacker->GetActorLocation();
+
+		if (!Direction.IsNearlyZero())
+		{
+			return Direction.Rotation();
+		}
+	}
+
+	return OwnerCharacter->GetActorForwardVector().Rotation();
 }
