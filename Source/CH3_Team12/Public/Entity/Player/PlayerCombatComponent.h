@@ -12,6 +12,16 @@ struct FInputActionValue;
 struct FHitResult;
 
 UENUM(BlueprintType)
+enum class EDefenseResult : uint8
+{
+	None,
+	Parry,
+	Guard,
+	Hit,
+	Invincible
+};
+
+UENUM(BlueprintType)
 enum class EAttackType : uint8
 {
 	Light,
@@ -32,7 +42,7 @@ protected:
 public:
 	void Attack(const FInputActionValue& Value);
 	void HeavyAttack(const FInputActionValue& Value);
-	
+
 	// Attack Notify / NotifyState
 	void OpenComboWindow();
 	void EndAttack();
@@ -44,13 +54,23 @@ public:
 	// Dodge Notify / NotifyState
 	void EnableInvincible();
 	void DisableInvincible();
-	
+
 	bool bInvincible = false;
-	
+
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
 
 	AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
+
+	EDefenseResult ResolveIncomingAttack(
+		AActor* Attacker,
+		float Damage,
+		float PostureDamage,
+		const FVector& HitLocation
+	);
+
+	bool IsGuarding() const;
+	bool IsParrying() const;
 
 private:
 	bool CanAttack() const;
@@ -116,7 +136,7 @@ private:
 private:
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentAttackMontage;
-	
+
 	int32 ComboIndex = 0;
 
 	bool bComboWindow = false;
@@ -124,10 +144,10 @@ private:
 	bool bWeaponHitCheck = false;
 
 	EAttackType CurrentAttackType = EAttackType::Light;
-	
+
 private:
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	
+
 public:
 	void StartGuard(const FInputActionValue& Value);
 	void StopGuard(const FInputActionValue& Value);
@@ -144,8 +164,16 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
 	float GuardMontageBlendOutTime = 0.1f;
-	
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
+	TObjectPtr<UAnimMontage> GuardHitMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Parry")
+	TObjectPtr<UAnimMontage> ParrySuccessMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
+	TObjectPtr<UAnimMontage> HitReactionMontage;
+
 public:
 	void OpenAttackRecovery();
-
 };

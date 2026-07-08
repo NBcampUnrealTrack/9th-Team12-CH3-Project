@@ -85,6 +85,98 @@ void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
 	}
 }
 
+EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
+	AActor* Attacker,
+	float Damage,
+	float PostureDamage,
+	const FVector& HitLocation
+)
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return EDefenseResult::None;
+	}
+
+	if (StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Invincible))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Incoming Attack Result: Invincible"));
+		return EDefenseResult::Invincible;
+	}
+
+	// 중요: Parry가 Guard보다 먼저다.
+	// Parry 상태는 Guarding 상태와 같이 존재하기 때문.
+	if (IsParrying())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Incoming Attack Result: Parry"));
+
+		if (ParrySuccessMontage)
+		{
+			OwnerCharacter->PlayAnimMontage(ParrySuccessMontage);
+		}
+
+		// 여기서 나중에:
+		// - 적 체간 데미지
+		// - 적 튕김 몽타주
+		// - 패리 이펙트
+		// - HitStop
+		// 를 붙이면 됨.
+
+		return EDefenseResult::Parry;
+	}
+
+	if (IsGuarding())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Incoming Attack Result: Guard"));
+
+		if (GuardHitMontage)
+		{
+			OwnerCharacter->PlayAnimMontage(GuardHitMontage);
+		}
+
+		// 여기서 나중에:
+		// - 플레이어 체간 증가
+		// - 칩 데미지
+		// - 가드 이펙트
+		// 를 붙이면 됨.
+
+		return EDefenseResult::Guard;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Incoming Attack Result: Hit"));
+
+	if (HitReactionMontage)
+	{
+		OwnerCharacter->PlayAnimMontage(HitReactionMontage);
+	}
+
+	UGameplayStatics::ApplyDamage(
+		OwnerCharacter,
+		Damage,
+		Attacker ? Attacker->GetInstigatorController() : nullptr,
+		Attacker,
+		nullptr
+	);
+
+	return EDefenseResult::Hit;
+}
+
+bool UPlayerCombatComponent::IsGuarding() const
+{
+	return StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Guarding
+		);
+}
+
+bool UPlayerCombatComponent::IsParrying() const
+{
+	return StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Parry
+		);
+}
+
 void UPlayerCombatComponent::CacheWeaponTraceLocation()
 {
 	if (!EquippedWeapon)
