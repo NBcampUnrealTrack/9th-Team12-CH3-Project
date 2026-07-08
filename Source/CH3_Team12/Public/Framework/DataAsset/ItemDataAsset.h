@@ -22,8 +22,11 @@ public:
 	FText Description;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
-	int32 MaxStack = 1;
+	int32 MaxStack = 99;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
+	bool bStackable = true;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	UTexture2D* Icon = nullptr;
 };

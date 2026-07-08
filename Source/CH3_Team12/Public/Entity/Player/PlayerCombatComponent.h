@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Combat/CombatTypes.h"
 #include "PlayerCombatComponent.generated.h"
 
 class UAnimMontage;
@@ -10,6 +11,16 @@ class AWeaponBase;
 class UStateTagComponent;
 struct FInputActionValue;
 struct FHitResult;
+
+UENUM(BlueprintType)
+enum class EDefenseResult : uint8
+{
+	None,
+	Parry,
+	Guard,
+	Hit,
+	Invincible
+};
 
 UENUM(BlueprintType)
 enum class EAttackType : uint8
@@ -32,7 +43,7 @@ protected:
 public:
 	void Attack(const FInputActionValue& Value);
 	void HeavyAttack(const FInputActionValue& Value);
-	
+
 	// Attack Notify / NotifyState
 	void OpenComboWindow();
 	void EndAttack();
@@ -44,13 +55,22 @@ public:
 	// Dodge Notify / NotifyState
 	void EnableInvincible();
 	void DisableInvincible();
-	
+
 	bool bInvincible = false;
-	
+
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
 
 	AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
+
+	EDefenseResult ResolveIncomingAttack(
+		AActor* Attacker,
+		const FAttackInfo& AttackInfo,
+		const FHitResult& Hit
+	);
+
+	bool IsGuarding() const;
+	bool IsParrying() const;
 
 private:
 	bool CanAttack() const;
@@ -116,7 +136,7 @@ private:
 private:
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentAttackMontage;
-	
+
 	int32 ComboIndex = 0;
 
 	bool bComboWindow = false;
@@ -124,10 +144,10 @@ private:
 	bool bWeaponHitCheck = false;
 
 	EAttackType CurrentAttackType = EAttackType::Light;
-	
+
 private:
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	
+
 public:
 	void StartGuard(const FInputActionValue& Value);
 	void StopGuard(const FInputActionValue& Value);
@@ -144,8 +164,46 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
 	float GuardMontageBlendOutTime = 0.1f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Parry")
+	TObjectPtr<UAnimMontage> ParryLeftMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Parry")
+	TObjectPtr<UAnimMontage> ParryRightMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
+	TObjectPtr<UAnimMontage> GuardHitLeftMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
+	TObjectPtr<UAnimMontage> GuardHitRightMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
+	TObjectPtr<UAnimMontage> HitFrontMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
+	TObjectPtr<UAnimMontage> HitLeftMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
+	TObjectPtr<UAnimMontage> HitRightMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
+	TObjectPtr<UAnimMontage> HitBackMontage;
 	
+	void PlayParryReaction(EAttackDirection AttackDirection);
+	void PlayGuardHitReaction(EAttackDirection AttackDirection);
+	EAttackDirection CalculateHitDirectionFromAttacker(AActor* Attacker) const;
+	void PlayHitReaction(AActor* Attacker, const FAttackInfo& AttackInfo, const FHitResult& Hit);
+
 public:
 	void OpenAttackRecovery();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsThrust = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsUnblockable = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCausesKnockback = false;
+	
 };

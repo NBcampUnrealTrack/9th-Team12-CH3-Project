@@ -85,6 +85,55 @@ void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
 	}
 }
 
+EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
+	AActor* Attacker,
+	const FAttackInfo& AttackInfo,
+	const FHitResult& Hit
+)
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return EDefenseResult::None;
+	}
+
+	if (StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Invincible))
+	{
+		return EDefenseResult::Invincible;
+	}
+
+	if (IsParrying() && AttackInfo.bCanBeParried)
+	{
+		PlayParryReaction(AttackInfo.AttackDirection);
+		return EDefenseResult::Parry;
+	}
+
+	if (IsGuarding() && AttackInfo.bCanBeGuarded)
+	{
+		PlayGuardHitReaction(AttackInfo.AttackDirection);
+		return EDefenseResult::Guard;
+	}
+
+	PlayHitReaction(Attacker, AttackInfo, Hit);
+	return EDefenseResult::Hit;
+}
+
+bool UPlayerCombatComponent::IsGuarding() const
+{
+	return StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Guarding
+		);
+}
+
+bool UPlayerCombatComponent::IsParrying() const
+{
+	return StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Parry
+		);
+}
+
 void UPlayerCombatComponent::CacheWeaponTraceLocation()
 {
 	if (!EquippedWeapon)
@@ -254,6 +303,134 @@ bool UPlayerCombatComponent::CanGuard() const
 	BlockTags.AddTag(CombatTags::State_Hit_Dead);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
+}
+
+void UPlayerCombatComponent::PlayParryReaction(
+	EAttackDirection AttackDirection)
+{
+	UAnimMontage* MontageToPlay = nullptr;
+
+	switch (AttackDirection)
+	{
+	case EAttackDirection::Left:
+		MontageToPlay = ParryLeftMontage;
+		break;
+
+	case EAttackDirection::Right:
+		MontageToPlay = ParryRightMontage;
+		break;
+
+	default:
+		MontageToPlay = ParryRightMontage
+			? ParryRightMontage
+			: ParryLeftMontage;
+		break;
+	}
+
+	if (MontageToPlay && OwnerCharacter)
+	{
+		OwnerCharacter->PlayAnimMontage(MontageToPlay);
+	}
+}
+
+void UPlayerCombatComponent::PlayGuardHitReaction(
+	EAttackDirection AttackDirection)
+{
+	UAnimMontage* MontageToPlay = nullptr;
+
+	switch (AttackDirection)
+	{
+	case EAttackDirection::Left:
+		MontageToPlay = GuardHitLeftMontage;
+		break;
+
+	case EAttackDirection::Right:
+		MontageToPlay = GuardHitRightMontage;
+		break;
+
+	default:
+		MontageToPlay = GuardHitRightMontage
+			? GuardHitRightMontage
+			: GuardHitLeftMontage;
+		break;
+	}
+
+	if (MontageToPlay && OwnerCharacter)
+	{
+		OwnerCharacter->PlayAnimMontage(MontageToPlay);
+	}
+}
+
+EAttackDirection UPlayerCombatComponent::CalculateHitDirectionFromAttacker(
+	AActor* Attacker) const
+{
+	if (!OwnerCharacter || !Attacker)
+	{
+		return EAttackDirection::Front;
+	}
+
+	const FVector ToAttacker =
+		(Attacker->GetActorLocation() - OwnerCharacter->GetActorLocation())
+		.GetSafeNormal2D();
+
+	const FVector Forward =
+		OwnerCharacter->GetActorForwardVector();
+
+	const FVector Right =
+		OwnerCharacter->GetActorRightVector();
+
+	const float ForwardDot =
+		FVector::DotProduct(Forward, ToAttacker);
+
+	const float RightDot =
+		FVector::DotProduct(Right, ToAttacker);
+
+	if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
+	{
+		return RightDot > 0.0f
+			? EAttackDirection::Right
+			: EAttackDirection::Left;
+	}
+
+	return ForwardDot > 0.0f
+		? EAttackDirection::Front
+		: EAttackDirection::Back;
+}
+
+void UPlayerCombatComponent::PlayHitReaction(
+	AActor* Attacker,
+	const FAttackInfo& AttackInfo,
+	const FHitResult& Hit)
+{
+	const EAttackDirection HitDirection =
+		CalculateHitDirectionFromAttacker(Attacker);
+
+	UAnimMontage* MontageToPlay = nullptr;
+
+	switch (HitDirection)
+	{
+	case EAttackDirection::Left:
+		MontageToPlay = HitLeftMontage;
+		break;
+
+	case EAttackDirection::Right:
+		MontageToPlay = HitRightMontage;
+		break;
+
+	case EAttackDirection::Back:
+		MontageToPlay = HitBackMontage;
+		break;
+
+	case EAttackDirection::Front:
+	default:
+		MontageToPlay = HitFrontMontage;
+		break;
+	}
+
+	if (MontageToPlay && OwnerCharacter)
+	{
+		OwnerCharacter->PlayAnimMontage(MontageToPlay);
+	}
 }
 
 void UPlayerCombatComponent::OpenAttackRecovery()
