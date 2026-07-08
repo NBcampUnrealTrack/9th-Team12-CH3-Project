@@ -8,6 +8,8 @@
 #include "UI/KatanaMainMenuWidget.h"
 #include "UI/KatanaPlayerPresenter.h"
 #include "UI/KatanaPlayerWidget.h"
+#include "UI/KatanaSettingsPresenter.h"
+#include "UI/KatanaSettingsWidget.h"
 
 void UKatanaUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -50,6 +52,31 @@ void UKatanaUIManagerSubsystem::ShowMainMenuWidget()
 void UKatanaUIManagerSubsystem::HideMainMenuWidget()
 {
 	OpHideUI(MainMenuWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::ShowSettingsWidget(UKatanaSoundManagerSubsystem* InSubsystem)
+{
+	UKatanaSettingsWidget* ActiveView = OpShowUI<UKatanaSettingsWidget>(SettingsWidgetName);
+	if (!ActiveView)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *SettingsWidgetName.ToString());
+		return;
+	}
+
+	UKatanaSettingsPresenter* NewPresenter = NewObject<UKatanaSettingsPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *SettingsWidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(InSubsystem, ActiveView);
+	ActivePresenters.Add(SettingsWidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::HideSettingsWidget()
+{
+	OpHideUI(SettingsWidgetName);
 }
 
 void UKatanaUIManagerSubsystem::ShowLoadingWidget(UKatanaLevelSubsystem* InSubsystem)

@@ -26,8 +26,8 @@ private:
 	void OnPlayButtonClicked() const;
 
 	UFUNCTION()
-	void OnSettingsButtonClicked();
+	void OnSettingsButtonClicked() const;
 
 	UFUNCTION()
-	void OnQuitButtonClicked();
+	void OnQuitButtonClicked() const;
 };

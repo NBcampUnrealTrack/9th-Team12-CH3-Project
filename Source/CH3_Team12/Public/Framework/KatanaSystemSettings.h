@@ -1,11 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DataAsset/LevelDataAsset.h"
 #include "Engine/DeveloperSettings.h"
 #include "UObject/SoftObjectPtr.h"
 #include "KatanaSystemSettings.generated.h"
 
+class ULevelDataAsset;
+class USoundDataAsset;
 class UUIDataAsset;
 /**
  *
@@ -21,4 +22,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Config, Category="UI")
 	TSoftObjectPtr<UUIDataAsset> UIDataAsset;
+
+	UPROPERTY(EditAnywhere, Config, Category="Sound")
+	TSoftObjectPtr<USoundDataAsset> SoundDataAsset;
 };
