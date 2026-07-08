@@ -17,14 +17,14 @@ class UPlayerInventoryComponent : public UActorComponent
 public:	
 	UPlayerInventoryComponent();
 	
-	bool AddItem(UItemDataAsset* ItemData, int32 Count = 1);
+	UItemInstance* AddItem(UItemDataAsset* ItemData, int32 Count = 1);
 
 	bool RemoveItem(UItemInstance* Item, int32 Count);
 
 	void UseItem(UItemInstance* Item);
 
-	// 포션 사용버튼과 바인딩
-	void UseCurrentConsumable(const FInputActionValue& Value);
+	// 포션사용 시 호출
+	void UseCurrentConsumable();
 
 	bool AddConsumableSlot(UItemInstance* Item);
 
@@ -58,4 +58,8 @@ private:
 
 	UPROPERTY()
 	int32 CurrentConsumableIndex = 0;
+	
+private:
+	UPROPERTY(EditAnywhere)
+	UConsumableDataAsset* testItem;
 };
