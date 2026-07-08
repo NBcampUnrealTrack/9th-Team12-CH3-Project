@@ -18,7 +18,7 @@ void UPlayerInventoryComponent::BeginPlay()
 	// 테스트용 코드
 	if (testItem)
 	{
-		if (AddItem(testItem, 1))
+		if (AddItem(testItem, 99))
 		{
 			SetConsumableSlot(0, Items[0]);
 		}
@@ -159,7 +159,7 @@ void UPlayerInventoryComponent::UseItem(UItemInstance* Item)
 	}
 }
 
-void UPlayerInventoryComponent::UseCurrentConsumable(const FInputActionValue& Value)
+void UPlayerInventoryComponent::UseCurrentConsumable()
 {
 	if (!ConsumableSlots.IsValidIndex(CurrentConsumableIndex))
 	{
@@ -183,10 +183,16 @@ void UPlayerInventoryComponent::UseConsumable(
 		return;
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("Item Use %s, Item Count : %d"), 
+			*ConsumableData->ItemName.ToString(),
+			Item->GetCount());
+	
 	if (ConsumableData->bConsumeOnUse)
 	{
 		RemoveItem(Item, 1);
 	}
+	
+	
 }
 
 bool UPlayerInventoryComponent::ApplyConsumableEffects(

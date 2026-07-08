@@ -23,8 +23,8 @@ public:
 
 	void UseItem(UItemInstance* Item);
 
-	// 포션 사용버튼과 바인딩
-	void UseCurrentConsumable(const FInputActionValue& Value);
+	// 포션사용 시 호출
+	void UseCurrentConsumable();
 
 	bool AddConsumableSlot(UItemInstance* Item);
 
