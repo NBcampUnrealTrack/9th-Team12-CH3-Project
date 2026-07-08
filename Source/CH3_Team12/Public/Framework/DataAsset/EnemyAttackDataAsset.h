@@ -12,8 +12,14 @@ struct FHitBoxData
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack|Socket")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="HitBox")
 	FName ActiveHitSocket;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="HitBox", meta = (ClampMin = 0, UIMin = 0))
+	float TraceRadius = 150.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="HitBox", meta = (ClampMax = 50, UIMax = 50))
+	int32 TraceSampleCount = 5;
 };
 
 USTRUCT(BlueprintType)
@@ -34,9 +40,6 @@ public:
 	TArray<FHitBoxData> HitBoxes;
 };
 
-/**
- * 
- */
 UCLASS()
 class CH3_TEAM12_API UEnemyAttackDataAsset : public UPrimaryDataAsset
 {
@@ -56,22 +59,4 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")
 	TArray<FAttackAnimationData> AttackAnimationDatas;
-	
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	// float AttackRange = 250.f;
-	//
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	// float AttackCooldown = 2.f;
-	//
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	// TObjectPtr<UAnimMontage> NormalAttack0;
-	//
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	// TObjectPtr<UAnimMontage> NormalAttack1;
-	//
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	// TObjectPtr<UAnimMontage> StrongAttack;
-	//
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	// TObjectPtr<UAnimMontage> FarStrongAttack;
 };

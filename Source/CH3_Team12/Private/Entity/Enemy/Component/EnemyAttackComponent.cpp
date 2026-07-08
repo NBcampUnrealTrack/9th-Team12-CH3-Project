@@ -12,6 +12,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
 #include "Framework/DataAsset/EnemyAttackDataAsset.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
 UEnemyAttackComponent::UEnemyAttackComponent()
@@ -20,7 +21,7 @@ UEnemyAttackComponent::UEnemyAttackComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	// ...
+	CurrentPlayingMontage = EEnemyAttackPattern::End;
 }
 
 
@@ -28,8 +29,6 @@ UEnemyAttackComponent::UEnemyAttackComponent()
 void UEnemyAttackComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// ...
 }
 
 bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern)
@@ -74,7 +73,7 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		return false;
 	}
 	
-	const FAttackAnimationData* AttackAnimationData = AttackData->GetAttackAnimationData(0);
+	const FAttackAnimationData* AttackAnimationData = GetSelectedPatternData(SelectedAction, SelectedPattern);
 	if (AttackAnimationData == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Katana_UEnemyAttackComponent : AttackData is invalid."));
@@ -95,27 +94,6 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 	// }
 	
 	UAnimMontage* SelectedMontage = AttackAnimationData->Montage;
-
-	// if (SelectedAction == 1 && SelectedPattern == 0)
-	// {
-	// 	// NormalAttackMontage0 
-	// 	SelectedMontage = NormalAttack0;
-	// }
-	// else if (SelectedAction == 1 && SelectedPattern == 1)
-	// {
-	// 	// NormalAttackMontage1 
-	// 	SelectedMontage = NormalAttack0;
-	// }
-	// else if (SelectedAction == 2 && SelectedPattern == 0)
-	// {
-	// 	// StrongAttackMontage0 
-	// 	SelectedMontage = NormalAttack0;
-	// }
-	// else if (SelectedAction == 2 && SelectedPattern == 1)
-	// {
-	// 	// FarStrongAttackMontage 재생
-	// 	SelectedMontage = FarStrongAttack;
-	// }
 
 	float AttackRange = AttackAnimationData->AttackRange;
 	float AttackCooldown = AttackAnimationData->AttackCooldown;
@@ -176,40 +154,114 @@ void UEnemyAttackComponent::FinishAttack()
 {
 	bCanAttack = true;
 	OnAttackFinished.Broadcast();
+	
+	CurrentPlayingMontage = EEnemyAttackPattern::End;
 }
 
 void UEnemyAttackComponent::StartHitCheck()
 {
-	const FAttackAnimationData* AttackAnimationData = AttackData->GetAttackAnimationData(0);
+	const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
 	
 	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
 	
 	for (FHitBoxData HitBoxData : HitBoxDatas)
 	{
-		const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-		if (!OwnerCharacter)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: OwnerCharacter is null"));
-			return;
-		}
-		
-		USkeletalMeshComponent* SkeletalMeshComponent = OwnerCharacter->GetMesh();
+		USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
 		if (SkeletalMeshComponent == nullptr)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: SkeletalMesh is invalid."));
 			return;
-		}
 		
 		FName SocketName = HitBoxData.ActiveHitSocket;
 		FVector SocketLocation{};
 		FRotator SocketRotation{};
 		SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
-		DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::Red, false, 5.0f);
+		DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
 	}
+	
+	HitActors.Reset();
+	PreviousHitBoxCenters.Reset();
 }
 
 void UEnemyAttackComponent::AttackTrace()
 {
+	AActor* Owner = GetOwner();
+	if (Owner == nullptr)
+	{
+		return;
+	}
+	
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
+	
+	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
+	
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(Owner);
+	
+	for (FHitBoxData HitBoxData : HitBoxDatas)
+	{
+		USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
+		if (SkeletalMeshComponent ==nullptr)
+			return;
+		
+		const FCollisionShape CollisionShape = FCollisionShape::MakeSphere(HitBoxData.TraceRadius);
+		const int32 SafeSampleCount = FMath::Max(HitBoxData.TraceSampleCount, 2);
+		
+		FName SocketName = HitBoxData.ActiveHitSocket;
+		FVector CurrentHitBoxCenter{};
+		FRotator CurrentHitBoxRotation{};
+		SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, CurrentHitBoxCenter, CurrentHitBoxRotation);
+		
+		for (int32 Index = 0; Index < SafeSampleCount; ++Index)
+		{
+			const FVector PreviousPoint = PreviousHitBoxCenters.Contains(SocketName) ? 
+				PreviousHitBoxCenters[SocketName] : CurrentHitBoxCenter;
+			const FVector CurrentPoint = CurrentHitBoxCenter;
+
+			TArray<FHitResult> HitResults;
+			const bool bHit = World->SweepMultiByChannel(
+				HitResults,
+				PreviousPoint,
+				CurrentPoint,
+				FQuat::Identity,
+				TraceChannel,
+				CollisionShape,
+				Params
+			);
+			
+			if (!bHit)
+			{
+				DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, 150.0f, 16, FColor::Blue, false, 5.0f);
+				continue;
+			}
+
+			DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, 150.0f, 16, FColor::Red, false, 5.0f);
+			
+			for (const FHitResult& Hit : HitResults)
+			{
+				AActor* HitActor = Hit.GetActor();
+
+				if (!HitActor || HitActor == Owner)
+				{
+					continue;
+				}
+
+				if (HitActors.Contains(HitActor))
+				{
+					continue;
+				}
+
+				HitActors.Add(HitActor);
+				ProcessHit(Hit);
+			}
+		}
+
+		PreviousHitBoxCenters.FindOrAdd(SocketName) = CurrentHitBoxCenter;
+	}
 }
 
 void UEnemyAttackComponent::EndHitCheck()
@@ -220,45 +272,46 @@ void UEnemyAttackComponent::EndHitCheck()
 	
 	for (FHitBoxData HitBoxData : HitBoxDatas)
 	{
-		const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-		if (!OwnerCharacter)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: OwnerCharacter is null"));
-			return;
-		}
-		
-		USkeletalMeshComponent* SkeletalMeshComponent = OwnerCharacter->GetMesh();
+		USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
 		if (SkeletalMeshComponent == nullptr)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: SkeletalMesh is invalid."));
 			return;
-		}
 		
 		FName SocketName = HitBoxData.ActiveHitSocket;
 		FVector SocketLocation{};
 		FRotator SocketRotation{};
 		SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
-		DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::Green, false, 5.0f);
+		DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
 	}
+	
+	HitActors.Reset();
+	PreviousHitBoxCenters.Reset();
 }
 
-// void UEnemyAttackComponent::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
-// {
-// 	if (bInterrupted)
-// 	{
-// 		StopAttackMontage();
-// 	}
-// 	
-// 	if (Montage)
-// 	{
-// 		int32 SectionCount = Montage->GetNumSections();
-// 		if (ComboCount >= SectionCount)
-// 		{
-// 			ResetComboCount();
-// 			return;
-// 		}
-// 	}
-// }
+// Player에게 데미지 주기 위해 수정 필요
+void UEnemyAttackComponent::ProcessHit(const FHitResult& Hit)
+{
+	AActor* HitActor = Hit.GetActor();
+	if (!HitActor)
+	{
+		return;
+	}
+	
+	APawn* Owner = Cast<APawn>(GetOwner());
+	if (Owner == nullptr)
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Hit : %s"), *HitActor->GetName());
+
+	UGameplayStatics::ApplyDamage(
+		HitActor,
+		25.0f,
+		Owner->GetController(),
+		Owner,
+		nullptr
+	);
+}
 
 void UEnemyAttackComponent::StopAttackMontage()
 {
@@ -276,6 +329,67 @@ void UEnemyAttackComponent::StopAttackMontage()
 
 	AnimInstance->Montage_Stop(0.15f);
 	FinishAttack();
+}
+
+const FAttackAnimationData* UEnemyAttackComponent::GetCurrentPatternData()
+{
+	if (AttackData == nullptr
+		|| CurrentPlayingMontage == EEnemyAttackPattern::End)
+		return nullptr;
+	
+	return AttackData->GetAttackAnimationData(static_cast<uint8>(CurrentPlayingMontage));
+}
+
+const FAttackAnimationData* UEnemyAttackComponent::GetSelectedPatternData(int32 InSelectedAction, int32 InSelectedPattern)
+{
+	if (AttackData == nullptr)
+		return nullptr;
+	
+	if (InSelectedAction == 1 && InSelectedPattern == 0)
+	{
+		// NormalAttackMontage0 
+		//SelectedMontage = NormalAttack0;
+		CurrentPlayingMontage = EEnemyAttackPattern::NormalAttack_1;
+	}
+	else if (InSelectedAction == 1 && InSelectedPattern == 1)
+	{
+		// NormalAttackMontage1 
+		//SelectedMontage = NormalAttack0;
+		CurrentPlayingMontage = EEnemyAttackPattern::NormalAttack_2;
+	}
+	else if (InSelectedAction == 2 && InSelectedPattern == 0)
+	{
+		// StrongAttackMontage0 
+		//SelectedMontage = NormalAttack0;
+		CurrentPlayingMontage = EEnemyAttackPattern::NormalAttack_1;
+	}
+	else if (InSelectedAction == 2 && InSelectedPattern == 1)
+	{
+		// FarStrongAttackMontage 재생
+		//SelectedMontage = FarStrongAttack;
+		CurrentPlayingMontage = EEnemyAttackPattern::FarStrongAttack;
+	}
+	
+	return AttackData->GetAttackAnimationData(static_cast<int8>(CurrentPlayingMontage));
+}
+
+USkeletalMeshComponent* UEnemyAttackComponent::GetOwnerSkeletalMeshComponent()
+{
+	const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: OwnerCharacter is null"));
+		return nullptr;
+	}
+		
+	USkeletalMeshComponent* SkeletalMeshComponent = OwnerCharacter->GetMesh();
+	if (SkeletalMeshComponent == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: SkeletalMesh is invalid."));
+		return nullptr;
+	}
+	
+	return SkeletalMeshComponent;
 }
 
 void UEnemyAttackComponent::ResetComboCount()
