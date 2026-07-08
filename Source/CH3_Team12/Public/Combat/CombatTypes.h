@@ -4,14 +4,22 @@
 #include "CombatTypes.generated.h"
 
 UENUM(BlueprintType)
-enum class EAttackDirection : uint8
+enum class EAttackSwingDirection : uint8
+{
+	None,
+	LeftToRight,
+	RightToLeft,
+	Thrust,
+	Overhead
+};
+
+UENUM(BlueprintType)
+enum class EHitReactionDirection : uint8
 {
 	Front,
 	Left,
 	Right,
-	Back,
-	Thrust,
-	Overhead
+	Back
 };
 
 USTRUCT(BlueprintType)
@@ -25,13 +33,33 @@ struct FAttackInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PostureDamage = 10.0f;
 
-	// 플레이어 기준으로 어디서 들어오는 공격인지
+	// Enemy 공격 애니메이션 기준 방향
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EAttackDirection AttackDirection = EAttackDirection::Front;
+	EAttackSwingDirection SwingDirection =
+		EAttackSwingDirection::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanBeParried = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanBeGuarded = true;
+};
+
+USTRUCT(BlueprintType)
+struct FIncomingAttackContext
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<AActor> Attacker = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FAttackInfo AttackInfo;
+
+	UPROPERTY()
+	FHitResult Hit;
+
+	// 선택값. Enemy 쪽에서 계산 가능하면 넘김.
+	UPROPERTY()
+	FVector AttackWorldDirection = FVector::ZeroVector;
 };
