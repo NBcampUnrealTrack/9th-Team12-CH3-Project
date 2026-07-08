@@ -1056,7 +1056,13 @@ void UPlayerCombatComponent::HandleParrySuccess(
 
 	SpawnParryEffect(Context);
 
-	// Player 피해 없음.
+	TriggerCombatHitStop(
+		Context,
+		ParryHitStopDuration,
+		ParryHitStopTimeDilation
+	);
+
+	// Player 피해 없음
 }
 
 void UPlayerCombatComponent::HandleGuardSuccess(
@@ -1080,6 +1086,12 @@ void UPlayerCombatComponent::HandleGuardSuccess(
 	}
 
 	SpawnGuardHitEffect(Context);
+
+	TriggerCombatHitStop(
+		Context,
+		GuardHitStopDuration,
+		GuardHitStopTimeDilation
+	);
 }
 
 void UPlayerCombatComponent::HandleDirectHit(
@@ -1096,6 +1108,12 @@ void UPlayerCombatComponent::HandleDirectHit(
 	}
 
 	SpawnHitEffect(Context);
+
+	TriggerCombatHitStop(
+		Context,
+		HitStopDuration,
+		HitStopTimeDilation
+	);
 }
 
 void UPlayerCombatComponent::SpawnParryEffect(
@@ -1114,4 +1132,77 @@ void UPlayerCombatComponent::SpawnHitEffect(
 	const FIncomingAttackContext& Context)
 {
 	UE_LOG(LogTemp, Warning, TEXT("SpawnHitEffect"));
+}
+
+void UPlayerCombatComponent::TriggerCombatHitStop(
+	const FIncomingAttackContext& Context,
+	float Duration,
+	float TimeDilation)
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	if (Duration <= 0.0f)
+	{
+		return;
+	}
+
+	TimeDilation = FMath::Clamp(
+		TimeDilation,
+		0.01f,
+		1.0f
+	);
+
+	// 이전 HitStop이 남아 있으면 먼저 원복
+	ResetCombatHitStop();
+
+	HitStopActors.Reset();
+
+	if (OwnerCharacter)
+	{
+		HitStopActors.Add(OwnerCharacter);
+	}
+
+	if (Context.Attacker)
+	{
+		HitStopActors.Add(Context.Attacker);
+	}
+
+	for (TWeakObjectPtr<AActor> ActorPtr : HitStopActors)
+	{
+		if (AActor* Actor = ActorPtr.Get())
+		{
+			Actor->CustomTimeDilation = TimeDilation;
+		}
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(
+		HitStopTimerHandle,
+		this,
+		&UPlayerCombatComponent::ResetCombatHitStop,
+		Duration,
+		false
+	);
+}
+
+void UPlayerCombatComponent::ResetCombatHitStop()
+{
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(
+			HitStopTimerHandle
+		);
+	}
+
+	for (TWeakObjectPtr<AActor> ActorPtr : HitStopActors)
+	{
+		if (AActor* Actor = ActorPtr.Get())
+		{
+			Actor->CustomTimeDilation = 1.0f;
+		}
+	}
+
+	HitStopActors.Reset();
 }

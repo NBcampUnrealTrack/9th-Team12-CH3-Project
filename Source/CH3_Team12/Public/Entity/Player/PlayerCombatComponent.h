@@ -253,4 +253,37 @@ private:
 	void SpawnParryEffect(const FIncomingAttackContext& Context);
 	void SpawnGuardHitEffect(const FIncomingAttackContext& Context);
 	void SpawnHitEffect(const FIncomingAttackContext& Context);
+	
+private:
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float ParryHitStopDuration = 0.05f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float ParryHitStopTimeDilation = 0.05f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float GuardHitStopDuration = 0.035f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float GuardHitStopTimeDilation = 0.1f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float HitStopDuration = 0.04f;
+
+	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
+	float HitStopTimeDilation = 0.08f;
+
+	UPROPERTY()
+	TArray<TWeakObjectPtr<AActor>> HitStopActors;
+
+	FTimerHandle HitStopTimerHandle;
+
+private:
+	void TriggerCombatHitStop(
+		const FIncomingAttackContext& Context,
+		float Duration,
+		float TimeDilation
+	);
+
+	void ResetCombatHitStop();
 };
