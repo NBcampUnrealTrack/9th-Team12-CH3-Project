@@ -10,6 +10,7 @@
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
+#include "Entity/Player/PlayerAttributeComponent.h"
 
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
@@ -83,6 +84,58 @@ void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
 	{
 		StateComponent->AddStateTag(CombatTags::State_Combat_Armed);
 	}
+}
+
+EDefenseResult UPlayerCombatComponent::ResolveIncomingAttack(
+	const FIncomingAttackContext& Context)
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return EDefenseResult::None;
+	}
+
+	if (StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Invincible))
+	{
+		return EDefenseResult::Invincible;
+	}
+
+	const EHitReactionDirection ReactionDirection =
+		CalculateHitReactionDirection(Context);
+
+	if (IsParrying() && Context.AttackInfo.bCanBeParried)
+	{
+		PlayParryReaction(ReactionDirection);
+		return EDefenseResult::Parry;
+	}
+
+	if (IsGuarding() && Context.AttackInfo.bCanBeGuarded)
+	{
+		PlayGuardHitReaction(ReactionDirection);
+		return EDefenseResult::Guard;
+	}
+
+	PlayHitReaction(ReactionDirection);
+
+	OwnerCharacter->GetAttributeComponent()->ApplyHealthDamage(Context.AttackInfo.Damage);
+
+	return EDefenseResult::Hit;
+}
+
+bool UPlayerCombatComponent::IsGuarding() const
+{
+	return StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Guarding
+		);
+}
+
+bool UPlayerCombatComponent::IsParrying() const
+{
+	return StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Parry
+		);
 }
 
 void UPlayerCombatComponent::CacheWeaponTraceLocation()
@@ -254,6 +307,175 @@ bool UPlayerCombatComponent::CanGuard() const
 	BlockTags.AddTag(CombatTags::State_Hit_Dead);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
+}
+
+void UPlayerCombatComponent::PlayParryReaction(
+	EHitReactionDirection AttackDirection)
+{
+	UAnimMontage* MontageToPlay = nullptr;
+
+	switch (AttackDirection)
+	{
+	case EHitReactionDirection::Left:
+		MontageToPlay = ParryLeftMontage;
+		break;
+
+	case EHitReactionDirection::Right:
+		MontageToPlay = ParryRightMontage;
+		break;
+
+	default:
+		MontageToPlay = ParryRightMontage
+			? ParryRightMontage
+			: ParryLeftMontage;
+		break;
+	}
+
+	if (MontageToPlay && OwnerCharacter)
+	{
+		OwnerCharacter->PlayAnimMontage(MontageToPlay);
+	}
+}
+
+void UPlayerCombatComponent::PlayGuardHitReaction(
+	EHitReactionDirection AttackDirection)
+{
+	UAnimMontage* MontageToPlay = nullptr;
+
+	switch (AttackDirection)
+	{
+	case EHitReactionDirection::Left:
+		MontageToPlay = GuardHitLeftMontage;
+		break;
+
+	case EHitReactionDirection::Right:
+		MontageToPlay = GuardHitRightMontage;
+		break;
+
+	default:
+		MontageToPlay = GuardHitRightMontage
+			? GuardHitRightMontage
+			: GuardHitLeftMontage;
+		break;
+	}
+
+	if (MontageToPlay && OwnerCharacter)
+	{
+		OwnerCharacter->PlayAnimMontage(MontageToPlay);
+	}
+}
+
+void UPlayerCombatComponent::PlayHitReaction(
+	EHitReactionDirection ReactionDirection)
+{
+	UAnimMontage* MontageToPlay = nullptr;
+
+	switch (ReactionDirection)
+	{
+	case EHitReactionDirection::Left:
+		MontageToPlay = HitLeftMontage;
+		break;
+
+	case EHitReactionDirection::Right:
+		MontageToPlay = HitRightMontage;
+		break;
+
+	case EHitReactionDirection::Back:
+		MontageToPlay = HitBackMontage;
+		break;
+
+	case EHitReactionDirection::Front:
+	default:
+		MontageToPlay = HitFrontMontage;
+		break;
+	}
+
+	if (MontageToPlay && OwnerCharacter)
+	{
+		OwnerCharacter->PlayAnimMontage(MontageToPlay);
+	}
+}
+
+EHitReactionDirection UPlayerCombatComponent::CalculateHitReactionDirection(
+	const FIncomingAttackContext& Context) const
+{
+	if (!OwnerCharacter)
+	{
+		return EHitReactionDirection::Front;
+	}
+
+	// 1순위: Hit 위치 기준
+	if (!Context.Hit.ImpactPoint.IsNearlyZero())
+	{
+		FVector ToHit =
+			Context.Hit.ImpactPoint - OwnerCharacter->GetActorLocation();
+
+		ToHit.Z = 0.0f;
+
+		if (!ToHit.IsNearlyZero())
+		{
+			ToHit.Normalize();
+
+			const float RightDot = FVector::DotProduct(
+				OwnerCharacter->GetActorRightVector(),
+				ToHit
+			);
+
+			const float ForwardDot = FVector::DotProduct(
+				OwnerCharacter->GetActorForwardVector(),
+				ToHit
+			);
+
+			if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
+			{
+				return RightDot > 0.0f
+					? EHitReactionDirection::Right
+					: EHitReactionDirection::Left;
+			}
+
+			return ForwardDot >= 0.0f
+				? EHitReactionDirection::Front
+				: EHitReactionDirection::Back;
+		}
+	}
+
+	// 2순위: Attacker 위치 기준
+	if (Context.Attacker)
+	{
+		FVector ToAttacker =
+			Context.Attacker->GetActorLocation()
+			- OwnerCharacter->GetActorLocation();
+
+		ToAttacker.Z = 0.0f;
+
+		if (!ToAttacker.IsNearlyZero())
+		{
+			ToAttacker.Normalize();
+
+			const float RightDot = FVector::DotProduct(
+				OwnerCharacter->GetActorRightVector(),
+				ToAttacker
+			);
+
+			const float ForwardDot = FVector::DotProduct(
+				OwnerCharacter->GetActorForwardVector(),
+				ToAttacker
+			);
+
+			if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
+			{
+				return RightDot > 0.0f
+					? EHitReactionDirection::Right
+					: EHitReactionDirection::Left;
+			}
+
+			return ForwardDot >= 0.0f
+				? EHitReactionDirection::Front
+				: EHitReactionDirection::Back;
+		}
+	}
+
+	return EHitReactionDirection::Front;
 }
 
 void UPlayerCombatComponent::OpenAttackRecovery()
