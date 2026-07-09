@@ -6,9 +6,23 @@
 #include "Components/ActorComponent.h"
 #include "EnemyAttackComponent.generated.h"
 
-
+struct FAttackInfo;
+struct FHitResult;
+struct FHitBoxData;
+struct FAttackAnimationData;
+class UEnemyAttackDataAsset;
 class UAnimMontage;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackFinished);
+
+UENUM()
+enum class EEnemyAttackPattern : uint8
+{
+	NormalAttack_1,
+	NormalAttack_2,
+	NormalAttack_3,
+	FarStrongAttack,
+	End,
+};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UEnemyAttackComponent : public UActorComponent
@@ -18,7 +32,10 @@ class CH3_TEAM12_API UEnemyAttackComponent : public UActorComponent
 public:
 	// Sets default values for this component's properties
 	UEnemyAttackComponent();
+	
+	virtual void BeginPlay() override;
 
+public:
 	UFUNCTION(BlueprintCallable, Category="Attack")
 	bool ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern);
 
@@ -27,36 +44,48 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category="Attack")
 	FOnAttackFinished OnAttackFinished;
-
-protected:
-	virtual void BeginPlay() override;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	float AttackRange = 250.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	float AttackCooldown = 2.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	bool bCanAttack = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> NormalAttack0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> NormalAttack1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> StrongAttack;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> FarStrongAttack;
 	
+	void StartHitCheck();
+	void AttackTrace();
+	void EndHitCheck();
+	
+private:
+	void ProcessHit(const FHitResult& InHitResult, const FAttackInfo& InAttackInfo);
+	const FAttackAnimationData* GetCurrentPatternData();
+	const FAttackAnimationData* GetSelectedPatternData(int32 InSelectedAction, int32 InSelectedPattern);
+	
+	USkeletalMeshComponent* GetOwnerSkeletalMeshComponent();
+	
+	void ResetComboCount();
+	
+protected:
 	UFUNCTION()
 	void StopAttackMontage();
 
 private:
 	FTimerHandle AttackCooldownTimerHandle;
-
 	void ResetAttackCooldown();
+	
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation|Data")
+	TObjectPtr<UEnemyAttackDataAsset> AttackData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
+	bool bCanAttack = true;
+	
+	UPROPERTY()
+	EEnemyAttackPattern CurrentPlayingMontage;
+	
+	UPROPERTY(EditAnywhere,	BlueprintReadOnly, Category = "Attack|Debug")
+	bool bUseDebugColliderDraw = true;
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
+	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
+	
+	UPROPERTY()
+	TMap<FName, FVector> PreviousHitBoxCenters;
+	
+	TSet<TWeakObjectPtr<AActor>> HitActors;
+	
+	int8 ComboCount;
 };
