@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Combat/CombatTypes.h"
+#include "Framework/DataAsset/PlayerCombatMontageDataAsset.h"
+#include "Framework/DataAsset/PlayerCombatFeedbackDataAsset.h"
 #include "PlayerCombatComponent.generated.h"
 
 class UAnimMontage;
@@ -33,27 +35,6 @@ enum class EAttackType : uint8
 	Heavy
 };
 
-UENUM(BlueprintType)
-enum class ECombatEffectRotationMode : uint8
-{
-	None,
-	ImpactNormal,
-	AttackDirection,
-	OppositeAttackDirection,
-	AttackerToDefender,
-	DefenderToAttacker,
-	DefenderForward
-};
-
-UENUM(BlueprintType)
-enum class ECombatEffectLocationMode : uint8
-{
-	HitImpactPoint,
-	DefenderWeaponClashSocket,
-	DefenderWeaponBladeMiddle,
-	DefenderActorCenter
-};
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UPlayerCombatComponent : public UActorComponent
 {
@@ -66,34 +47,42 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	// Input
 	void Attack(const FInputActionValue& Value);
 	void HeavyAttack(const FInputActionValue& Value);
+	
+	void StartGuard(const FInputActionValue& Value);
+	void StopGuard(const FInputActionValue& Value);
 
-	// Attack Notify / NotifyState
+	// Notify / NotifyState
 	void OpenComboWindow();
 	void EndAttack();
-
+	void OpenAttackRecovery();
 	void StartWeaponHitCheck();
 	void WeaponTrace();
 	void EndWeaponHitCheck();
 
-	// Dodge Notify / NotifyState
+	bool bInvincible = false;
 	void EnableInvincible();
 	void DisableInvincible();
 
-	bool bInvincible = false;
-
-	UFUNCTION(BlueprintCallable, Category="Weapon")
-	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
-
-	AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
+	void OpenParryWindow();
+	void CloseParryWindow();
 
 	EDefenseResult ResolveIncomingAttack(const FIncomingAttackContext& Context);
 
-	bool IsGuarding() const;
-	bool IsParrying() const;
+	UPROPERTY(EditAnywhere, Category="Combat|Data")
+	TObjectPtr<UPlayerCombatMontageDataAsset> MontageData;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Data")
+	TObjectPtr<UPlayerCombatFeedbackDataAsset> FeedbackData;
 
 private:
+	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
+	AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
+	bool IsGuarding() const;
+	bool IsParrying() const;
+	
 	bool CanAttack() const;
 	bool IsAttacking() const;
 	bool IsBusy() const;
@@ -106,7 +95,6 @@ private:
 	void ProcessHit(const FHitResult& Hit);
 	void CacheWeaponTraceLocation();
 
-private:
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
 
@@ -115,13 +103,6 @@ private:
 	
 	UPROPERTY()
 	TObjectPtr<UPlayerAttributeComponent> AttributeComponent;
-
-private:
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Animation")
-	TObjectPtr<UAnimMontage> LightAttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Animation")
-	TObjectPtr<UAnimMontage> HeavyAttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Combo")
 	TArray<FName> ComboSectionNames = {
@@ -132,7 +113,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Attack")
 	float AttackPlayRate = 1.0f;
 
-private:
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	TSubclassOf<AWeaponBase> DefaultWeaponClass;
 
@@ -142,7 +122,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WeaponSocketName = TEXT("katana3");
 
-private:
 	FVector PreviousBladeStart = FVector::ZeroVector;
 	FVector PreviousBladeEnd = FVector::ZeroVector;
 
@@ -156,8 +135,7 @@ private:
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
 
 	TSet<TWeakObjectPtr<AActor>> HitActors;
-
-private:
+	
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentAttackMontage;
 
@@ -168,70 +146,10 @@ private:
 	bool bWeaponHitCheck = false;
 
 	EAttackType CurrentAttackType = EAttackType::Light;
-
-private:
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 public:
-	void StartGuard(const FInputActionValue& Value);
-	void StopGuard(const FInputActionValue& Value);
-
-	void OpenParryWindow();
-	void CloseParryWindow();
-
-private:
-	bool CanGuard() const;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
-	TObjectPtr<UAnimMontage> GuardStartMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
-	float GuardMontageBlendOutTime = 0.1f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Parry")
-	TObjectPtr<UAnimMontage> ParryLeftMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Parry")
-	TObjectPtr<UAnimMontage> ParryRightMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
-	TObjectPtr<UAnimMontage> GuardHitLeftMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
-	TObjectPtr<UAnimMontage> GuardHitRightMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
-	TObjectPtr<UAnimMontage> HitFrontMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
-	TObjectPtr<UAnimMontage> HitLeftMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
-	TObjectPtr<UAnimMontage> HitRightMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
-	TObjectPtr<UAnimMontage> HitBackMontage;
-	
-	void PlayParryReaction(EHitReactionDirection AttackDirection);
-	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
-	void PlayHitReaction(EHitReactionDirection ReactionDirection);
-	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	void EndHitReaction();
-
-	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
-
-public:
-	void OpenAttackRecovery();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsThrust = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsUnblockable = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCausesKnockback = false;
-	
+	// Debug
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackFront();
 
@@ -244,7 +162,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackBack();
 
-private:
 	void Debug_ReceiveTestAttack(EHitReactionDirection Direction);
 	
 	UPROPERTY(EditAnywhere, Category="Combat|Debug")
@@ -253,56 +170,48 @@ private:
 	UPROPERTY(EditAnywhere, Category="Combat|Debug")
 	float DebugAttackPostureDamage = 10.0f;
 	
+private:
+	// Guard
+	bool CanGuard() const;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
+	float GuardMontageBlendOutTime = 0.1f;
+	
+	void PlayParryReaction(EHitReactionDirection AttackDirection);
+	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
+	UAnimMontage* GetHitMontage(EHitReactionDirection ReactionDirection) const;
+	void PlayHitReaction(EHitReactionDirection ReactionDirection);
+	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void EndHitReaction();
+
+	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
+
 	UPROPERTY(EditAnywhere, Category="Combat|Guard")
 	float GuardChipDamageRate = 0.2f;
 	
 	UPROPERTY(EditAnywhere, Category="Combat|Guard")
 	float GuardPostureDamageRate = 1.0f;
 
+	void PlayCombatFeedback(const FIncomingAttackContext& Context, const FCombatFeedbackData& Feedback);
+
 	void HandleParrySuccess(
 		const FIncomingAttackContext& Context,
 		EHitReactionDirection ReactionDirection
 	);
-
 	void HandleGuardSuccess(
 		const FIncomingAttackContext& Context,
 		EHitReactionDirection ReactionDirection
 	);
-
 	void HandleDirectHit(
 		const FIncomingAttackContext& Context,
 		EHitReactionDirection ReactionDirection
 	);
-
-	void SpawnParryEffect(const FIncomingAttackContext& Context);
-	void SpawnGuardHitEffect(const FIncomingAttackContext& Context);
-	void SpawnHitEffect(const FIncomingAttackContext& Context);
 	
-private:
-	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
-	float ParryHitStopDuration = 0.05f;
-
-	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
-	float ParryHitStopTimeDilation = 0.05f;
-
-	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
-	float GuardHitStopDuration = 0.035f;
-
-	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
-	float GuardHitStopTimeDilation = 0.1f;
-
-	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
-	float HitStopDuration = 0.04f;
-
-	UPROPERTY(EditAnywhere, Category="Combat|Feedback")
-	float HitStopTimeDilation = 0.08f;
-
+	// HitStop
 	UPROPERTY()
 	TArray<TWeakObjectPtr<AActor>> HitStopActors;
-
 	FTimerHandle HitStopTimerHandle;
 
-private:
 	void TriggerCombatHitStop(
 		const FIncomingAttackContext& Context,
 		float Duration,
@@ -311,39 +220,22 @@ private:
 
 	void ResetCombatHitStop();
 
-// Test용도 : Effect, Sound
-private:
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
-	TObjectPtr<UNiagaraSystem> ParryEffect;
+	// Effect
+	FVector MakeCombatEffectLocation(
+		const FIncomingAttackContext& Context,
+		ECombatEffectLocationMode LocationMode
+	) const;
 
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
-	TObjectPtr<UNiagaraSystem> GuardHitEffect;
+	FVector GetWeaponClashEffectLocation(
+		const FIncomingAttackContext& Context
+	) const;
 
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|VFX")
-	TObjectPtr<UNiagaraSystem> HitEffect;
+	FVector GetHitImpactEffectLocation(
+		const FIncomingAttackContext& Context
+	) const;
 
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
-	TObjectPtr<USoundBase> ParrySound;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
-	TObjectPtr<USoundBase> GuardHitSound;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback|SFX")
-	TObjectPtr<USoundBase> HitSound;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
-	float FeedbackEffectForwardOffset = 50.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
-	float FeedbackEffectHeightOffset = 60.0f;
-
-	FVector GetFeedbackLocation(const FIncomingAttackContext& Context) const;
-	FRotator GetFeedbackRotation(const FIncomingAttackContext& Context) const;
+	FVector GetFallbackEffectLocation() const;
 	
-	FVector GetWeaponClashEffectLocation(const FIncomingAttackContext& Context) const;
-	FVector GetHitEffectLocation(const FIncomingAttackContext& Context) const;
 	FRotator MakeCombatEffectRotation(const FIncomingAttackContext& Context,
-	                                  ECombatEffectRotationMode RotationMode) const;
-
-	FName GuardSocketName = TEXT("katana_FXSocket");
+									  ECombatEffectRotationMode RotationMode) const;
 };

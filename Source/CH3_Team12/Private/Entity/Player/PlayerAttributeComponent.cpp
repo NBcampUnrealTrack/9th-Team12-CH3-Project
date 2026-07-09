@@ -27,6 +27,15 @@ void UPlayerAttributeComponent::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerAttributeComponent could not find StateTagComponent."));
 	}
+	
+	if (AttributeData)
+	{
+		MaxHealth = AttributeData->MaxHealth;
+		MaxPosture = AttributeData->MaxPosture;
+		PostureRecoveryRate = AttributeData->PostureRecoveryRate;
+		PostureRecoveryDelay = AttributeData->PostureRecoveryDelay;
+		PostureBreakDuration = AttributeData->PostureBreakDuration;
+	}
 
 	ResetAttributes();
 }

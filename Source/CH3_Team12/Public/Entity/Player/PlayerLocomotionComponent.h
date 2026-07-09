@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Framework/DataAsset/PlayerLocomotionDataAsset.h"
 #include "PlayerLocomotionComponent.generated.h"
 
 class UAnimMontage;
@@ -23,6 +24,7 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	
 	// Input
 	void DoStartJump(const FInputActionValue& Value);
 	void DoStopJump(const FInputActionValue& Value);
@@ -53,8 +55,9 @@ public:
 
 	void OpenDodgeRecovery();
 	void RefreshMovementSettings();
-	
+
 private:
+	bool CanMove() const;
 	bool CanSprint() const;
 	bool CanDodge() const;
 
@@ -63,7 +66,6 @@ private:
 	void StartDodge(const FVector& DodgeDirection);
 	void ClearDodgeBuffer();
 
-private:
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
 
@@ -76,29 +78,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<UPlayerCombatComponent> CombatComponent;
 
-private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Speeds", meta=(AllowPrivateAccess="true"))
-	float NormalWalkSpeed = 200.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Speeds", meta=(AllowPrivateAccess="true"))
-	float SprintSpeed = 400.0f;
+	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Data")
+	TObjectPtr<UPlayerLocomotionDataAsset> LocomotionData;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Speeds", meta=(AllowPrivateAccess="true"))
-	float LockOnWalkSpeed = 200.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Locomotion|Speeds", meta=(AllowPrivateAccess="true"))
-	float GuardWalkSpeed = 200.0f;
-	
-private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Dodge", meta=(AllowPrivateAccess="true"))
-	TObjectPtr<UAnimMontage> DodgeMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Dodge", meta=(AllowPrivateAccess="true"))
-	float SprintHoldThreshold = 0.2f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion|Dodge", meta=(AllowPrivateAccess="true"))
-	float DodgeBufferDuration = 0.15f;
-
 private:
 	FVector2D LastMovementInput = FVector2D::ZeroVector;
 
@@ -113,10 +95,17 @@ private:
 	FVector BufferedDodgeDirection = FVector::ZeroVector;
 
 	FTimerHandle DodgeBufferTimerHandle;
-	
 	FTimerHandle DodgeEndTimerHandle;
 
-	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Dodge")
-	float DodgeBlendOutTime = 0.12f;
-
+	// Speed
+	float NormalWalkSpeed = 0.0f;
+	float WalkSpeed = 0.0f;
+	float SprintSpeed = 0.0f;
+	float LockOnWalkSpeed = 0.0f;
+	float GuardWalkSpeed = 0.0f;
+	
+	// Dodge
+	float SprintHoldThreshold = 0.0f;
+	float DodgeBufferDuration = 0.0f;
+	float DodgeBlendOutTime = 0.0f;
 };
