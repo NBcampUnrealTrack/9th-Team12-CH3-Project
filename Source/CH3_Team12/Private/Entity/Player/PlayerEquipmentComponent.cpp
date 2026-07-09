@@ -8,6 +8,7 @@
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Engine/World.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimInstance.h"
 #include "InputActionValue.h"
 
 UPlayerEquipmentComponent::UPlayerEquipmentComponent()
@@ -73,7 +74,7 @@ bool UPlayerEquipmentComponent::Equip(UItemInstance* Item)
 	const UWeaponDataAsset* WeaponData =
 		Cast<UWeaponDataAsset>(Item->GetItemData());
 
-	if (!WeaponData)
+	if (!WeaponData || !WeaponData->EquipMontage)
 	{
 		return false;
 	}
@@ -82,17 +83,34 @@ bool UPlayerEquipmentComponent::Equip(UItemInstance* Item)
 	
 	StateComp->AddStateTag(CombatTags::State_Action_Equipping);
 	
+	UAnimInstance* AnimInstance =
+		OwnerCharacter->GetMesh()->GetAnimInstance();
+	
+	if (!AnimInstance)
+	{
+		PendingEquipItem = nullptr;
+		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
+		return false;
+	}
+	
 	const float Duration =
-	OwnerCharacter->PlayAnimMontage(WeaponData->EquipMontage);
+		AnimInstance->Montage_Play(WeaponData->EquipMontage);
 
 	if (Duration <= 0.f)
 	{
 		PendingEquipItem = nullptr;
-		
 		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
-
 		return false;
 	}
+	
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(
+		this,
+		&UPlayerEquipmentComponent::OnEquipMontageEnded);
+	
+	AnimInstance->Montage_SetEndDelegate(
+		EndDelegate,
+		WeaponData->EquipMontage);
 	
 	return true;
 }
@@ -109,21 +127,10 @@ void UPlayerEquipmentComponent::OnEquipNotify()
 
 	if (!WeaponData)
 	{
-		PendingEquipItem = nullptr;
-		
-		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
-		
 		return;
 	}
 	
 	EquipWeapon(PendingEquipItem, WeaponData);
-
-	PendingEquipItem = nullptr;
-	
-	if (StateComp->HasStateTag(CombatTags::State_Action_Equipping))
-	{
-		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
-	}
 }
 
 bool UPlayerEquipmentComponent::EquipWeapon(
@@ -183,30 +190,44 @@ void UPlayerEquipmentComponent::Unequip()
 	const UWeaponDataAsset* WeaponData =
 		Cast<UWeaponDataAsset>(EquippedWeaponItem->GetItemData());
 
-	if (!WeaponData)
+	if (!WeaponData || !WeaponData->UnequipMontage)
 	{
 		return;
 	}
 
 	StateComp->AddStateTag(CombatTags::State_Action_Equipping);
 	
-	const float Duration = 
-		OwnerCharacter->PlayAnimMontage(WeaponData->UnequipMontage);
+	UAnimInstance* AnimInstance =
+		OwnerCharacter->GetMesh()->GetAnimInstance();
+	
+	if (!AnimInstance)
+	{
+		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
+		return;
+	}
+	
+	const float Duration =
+		AnimInstance->Montage_Play(WeaponData->UnequipMontage);
 	
 	if (Duration <= 0.f)
 	{
 		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
+		return;
 	}
+	
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(
+		this,
+		&UPlayerEquipmentComponent::OnUnequipMontageEnded);
+
+	AnimInstance->Montage_SetEndDelegate(
+		EndDelegate,
+		WeaponData->UnequipMontage);
 }
 
 void UPlayerEquipmentComponent::OnUnequipNotify()
 {
 	UnequipWeapon();
-	
-	if (StateComp->HasStateTag(CombatTags::State_Action_Equipping))
-	{
-		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
-	}
 }
 
 void UPlayerEquipmentComponent::UnequipWeapon()
@@ -222,6 +243,40 @@ void UPlayerEquipmentComponent::UnequipWeapon()
 	if (StateComp->HasStateTag(CombatTags::State_Combat_Armed))
 	{
 		StateComp->RemoveStateTag(CombatTags::State_Combat_Armed);
+	}
+}
+
+void UPlayerEquipmentComponent::OnEquipMontageEnded(
+	UAnimMontage* Montage,
+	bool bInterrupted)
+{
+	PendingEquipItem = nullptr;
+
+	if (StateComp->HasStateTag(CombatTags::State_Action_Equipping))
+	{
+		StateComp->RemoveStateTag(
+			CombatTags::State_Action_Equipping);
+	}
+
+	if (bInterrupted)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Equip Interrupted"));
+	}
+}
+
+void UPlayerEquipmentComponent::OnUnequipMontageEnded(
+	UAnimMontage* Montage,
+	bool bInterrupted)
+{
+	if (StateComp->HasStateTag(CombatTags::State_Action_Equipping))
+	{
+		StateComp->RemoveStateTag(
+			CombatTags::State_Action_Equipping);
+	}
+
+	if (bInterrupted)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Unequip Interrupted"));
 	}
 }
 
