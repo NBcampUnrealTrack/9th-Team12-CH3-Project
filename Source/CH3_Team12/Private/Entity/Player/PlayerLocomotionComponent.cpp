@@ -29,6 +29,31 @@ void UPlayerLocomotionComponent::BeginPlay()
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
 	CombatComponent = OwnerCharacter->GetCombatComponent();
 	
+	{
+		MovementComponent->bOrientRotationToMovement = true;
+		MovementComponent->bUseControllerDesiredRotation = false;
+		MovementComponent->RotationRate = FRotator(0.0f, 1000.0f, 0.0f);
+		MovementComponent->MaxAcceleration = 2048.0f;
+		MovementComponent->GroundFriction = 4.0f;
+		MovementComponent->BrakingDecelerationWalking = 200.0f;
+		MovementComponent->GravityScale = 1.0f;
+	}
+	
+	{
+		// Speed
+		NormalWalkSpeed = LocomotionData->NormalWalkSpeed;
+		WalkSpeed = LocomotionData->WalkSpeed;
+		SprintSpeed = LocomotionData->SprintSpeed;
+		LockOnWalkSpeed = LocomotionData->LockOnWalkSpeed;
+		GuardWalkSpeed = LocomotionData->GuardWalkSpeed;
+	
+		// Dodge
+		SprintHoldThreshold = LocomotionData->SprintHoldThreshold;
+		DodgeBufferDuration = LocomotionData->DodgeBufferDuration;
+		DodgeBlendOutTime = LocomotionData->DodgeBlendOutTime;
+		
+	}
+	
 	RefreshMovementSettings();
 }
 
@@ -107,14 +132,14 @@ void UPlayerLocomotionComponent::OpenDodgeRecovery()
 
 	RefreshMovementSettings();
 
-	if (DodgeMontage)
+	if (LocomotionData->DodgeMontage)
 	{
 		if (UAnimInstance* AnimInstance =
 			OwnerCharacter->GetMesh()->GetAnimInstance())
 		{
 			AnimInstance->Montage_Stop(
 				DodgeBlendOutTime,
-				DodgeMontage
+				LocomotionData->DodgeMontage
 			);
 		}
 	}
@@ -508,7 +533,7 @@ void UPlayerLocomotionComponent::ClearDodgeBuffer()
 void UPlayerLocomotionComponent::StartDodge(
 	const FVector& DodgeDirection)
 {
-	if (!OwnerCharacter || !StateComponent || !DodgeMontage)
+	if (!OwnerCharacter || !StateComponent || !LocomotionData->DodgeMontage)
 	{
 		return;
 	}
@@ -537,7 +562,7 @@ void UPlayerLocomotionComponent::StartDodge(
 	RefreshMovementSettings();
 
 	const float Duration =
-		OwnerCharacter->PlayAnimMontage(DodgeMontage);
+		OwnerCharacter->PlayAnimMontage(LocomotionData->DodgeMontage);
 
 	if (Duration <= 0.0f)
 	{

@@ -27,15 +27,6 @@ APlayerCharacterBase::APlayerCharacterBase()
 		bUseControllerRotationYaw = false;
 		bUseControllerRotationRoll = false;
 	
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		GetCharacterMovement()->bUseControllerDesiredRotation = false;
-		GetCharacterMovement()->RotationRate = FRotator(0.0f, 1000.0f, 0.0f); // 회전 속도
-		// GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
-		GetCharacterMovement()->MaxAcceleration = 4096.0f;
-		GetCharacterMovement()->GroundFriction = 4.0f;
-		GetCharacterMovement()->BrakingDecelerationWalking = 200.0f;
-		GetCharacterMovement()->GravityScale = 1.0f;
-	
 		CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 		CameraBoom->SetupAttachment(RootComponent);
 		CameraBoom->TargetArmLength = 400.0f;
