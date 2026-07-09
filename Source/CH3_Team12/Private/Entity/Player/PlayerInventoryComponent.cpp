@@ -1,6 +1,7 @@
 #include "Entity/Player/PlayerInventoryComponent.h"
 #include "Framework/DataAsset/ItemDataAsset.h"
 #include "Framework/DataAsset/ConsumableDataAsset.h"
+#include "Framework/DataAsset/WeaponDataAsset.h"
 #include "Entity/Item/ItemEffect.h"
 #include "Entity/Item/ItemInstance.h"
 
@@ -14,18 +15,26 @@ void UPlayerInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// 테스트용 코드
-	if (testItem)
+	// 시작 아이템 지급
+	for (const FStarterItem& StarterItem : StarterItems)
 	{
-		if (AddItem(testItem, 99))
+		UItemInstance* Item = AddItem(
+			StarterItem.Item,
+			StarterItem.Count);
+
+		if (!Item)
 		{
-			SetConsumableSlot(0, Items[0]);
+			continue;
 		}
-	}
-	if (GetCurrentConsumable() && GetCurrentConsumable()->GetItemData())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("SetConsumableSlot %s"), 
-			*GetCurrentConsumable()->GetItemData()->ItemName.ToString());
+
+		if (Cast<UWeaponDataAsset>(StarterItem.Item))
+		{
+			SetWeaponSlot(Item);
+		}
+		else if (Cast<UConsumableDataAsset>(StarterItem.Item))
+		{
+			SetConsumableSlot(0, Item); // 추후 AddConsumableSlot으로 교체
+		}
 	}
 	//
 	
@@ -125,6 +134,11 @@ bool UPlayerInventoryComponent::RemoveItem(UItemInstance* Item, int32 Count)
 	{
 		RemoveItemFromConsumableSlots(Item);
 
+		if (WeaponSlot == Item)
+		{
+			WeaponSlot = nullptr;
+		}
+		
 		Items.RemoveSingle(Item);
 	}
 
@@ -178,6 +192,7 @@ bool UPlayerInventoryComponent::AddConsumableSlot(UItemInstance* Item)
 		return false;
 	}
 
+	// 지금은 퀵슬롯 갯수 무한인데 추후 슬롯 수 제한가능
 	ConsumableSlots.Add(Item);
 
 	return true;
@@ -209,4 +224,36 @@ void UPlayerInventoryComponent::SetConsumableSlot(
 	}
 	
 	ConsumableSlots[SlotIndex] = Item;
+}
+
+bool UPlayerInventoryComponent::SetWeaponSlot(UItemInstance* Item)
+{
+	if (!Item)
+	{
+		return false;
+	}
+
+	if (!Items.Contains(Item))
+	{
+		return false;
+	}
+
+	if (!Cast<UWeaponDataAsset>(Item->GetItemData()))
+	{
+		return false;
+	}
+
+	WeaponSlot = Item;
+
+	return true;
+}
+
+void UPlayerInventoryComponent::ClearWeaponSlot()
+{
+	WeaponSlot = nullptr;
+}
+
+UItemInstance* UPlayerInventoryComponent::GetCurrentWeapon() const
+{
+	return WeaponSlot;
 }

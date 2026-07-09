@@ -1077,7 +1077,7 @@ void UPlayerCombatComponent::Debug_ReceiveTestAttack(
 	}
 
 	Context.Hit.ImpactPoint =
-		OwnerLocation + HitDirection * 100.0f;
+		OwnerLocation;
 
 	Context.AttackWorldDirection =
 		-HitDirection;
@@ -1174,8 +1174,14 @@ void UPlayerCombatComponent::HandleDirectHit(
 void UPlayerCombatComponent::SpawnParryEffect(
 	const FIncomingAttackContext& Context)
 {
-	const FVector Location = GetFeedbackLocation(Context);
-	const FRotator Rotation = GetFeedbackRotation(Context);
+	const FVector Location =
+		GetWeaponClashEffectLocation(Context);
+
+	const FRotator Rotation =
+		MakeCombatEffectRotation(
+			Context,
+			ECombatEffectRotationMode::OppositeAttackDirection
+		);
 
 	if (ParryEffect)
 	{
@@ -1195,15 +1201,19 @@ void UPlayerCombatComponent::SpawnParryEffect(
 			Location
 		);
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("SpawnParryEffect"));
 }
 
 void UPlayerCombatComponent::SpawnGuardHitEffect(
 	const FIncomingAttackContext& Context)
 {
-	const FVector Location = GetFeedbackLocation(Context);
-	const FRotator Rotation = GetFeedbackRotation(Context);
+	const FVector Location =
+		GetWeaponClashEffectLocation(Context);
+
+	const FRotator Rotation =
+		MakeCombatEffectRotation(
+			Context,
+			ECombatEffectRotationMode::OppositeAttackDirection
+		);
 
 	if (GuardHitEffect)
 	{
@@ -1223,15 +1233,19 @@ void UPlayerCombatComponent::SpawnGuardHitEffect(
 			Location
 		);
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("SpawnGuardHitEffect"));
 }
 
 void UPlayerCombatComponent::SpawnHitEffect(
 	const FIncomingAttackContext& Context)
 {
-	const FVector Location = GetFeedbackLocation(Context);
-	const FRotator Rotation = GetFeedbackRotation(Context);
+	const FVector Location =
+		GetHitEffectLocation(Context);
+
+	const FRotator Rotation =
+		MakeCombatEffectRotation(
+			Context,
+			ECombatEffectRotationMode::ImpactNormal
+		);
 
 	if (HitEffect)
 	{
@@ -1251,8 +1265,6 @@ void UPlayerCombatComponent::SpawnHitEffect(
 			Location
 		);
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("SpawnHitEffect"));
 }
 
 void UPlayerCombatComponent::TriggerCombatHitStop(
@@ -1372,4 +1384,125 @@ FRotator UPlayerCombatComponent::GetFeedbackRotation(
 	}
 
 	return OwnerCharacter->GetActorForwardVector().Rotation();
+}
+
+FVector UPlayerCombatComponent::GetWeaponClashEffectLocation(
+	const FIncomingAttackContext& Context) const
+{
+	if (EquippedWeapon)
+	{
+		if (UStaticMeshComponent* WeaponMesh =
+			EquippedWeapon->GetWeaponMesh())
+		{
+			if (WeaponMesh->DoesSocketExist(GuardSocketName))
+			{
+				return WeaponMesh->GetSocketLocation(GuardSocketName);
+			}
+		}
+
+		const FVector BladeStart =
+			EquippedWeapon->GetBladeStartLocation();
+
+		const FVector BladeEnd =
+			EquippedWeapon->GetBladeEndLocation();
+
+		if (!BladeStart.IsNearlyZero() && !BladeEnd.IsNearlyZero())
+		{
+			return (BladeStart + BladeEnd) * 0.5f;
+		}
+	}
+
+	if (!Context.Hit.ImpactPoint.IsNearlyZero())
+	{
+		return Context.Hit.ImpactPoint;
+	}
+
+	return OwnerCharacter
+		? OwnerCharacter->GetActorLocation() + FVector(0.0f, 0.0f, 0.0f)
+		: FVector::ZeroVector;
+}
+
+FVector UPlayerCombatComponent::GetHitEffectLocation(
+	const FIncomingAttackContext& Context) const
+{
+	if (!Context.Hit.ImpactPoint.IsNearlyZero())
+	{
+		return Context.Hit.ImpactPoint
+			+ Context.Hit.ImpactNormal * 2.0f;
+	}
+
+	return OwnerCharacter
+		? OwnerCharacter->GetActorLocation() + FVector(0.0f, 0.0f, 0.0f)
+		: FVector::ZeroVector;
+}
+
+FRotator UPlayerCombatComponent::MakeCombatEffectRotation(
+	const FIncomingAttackContext& Context,
+	ECombatEffectRotationMode RotationMode) const
+{
+	if (!OwnerCharacter)
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	FVector Direction = OwnerCharacter->GetActorForwardVector();
+
+	switch (RotationMode)
+	{
+	case ECombatEffectRotationMode::ImpactNormal:
+		if (!Context.Hit.ImpactNormal.IsNearlyZero())
+		{
+			Direction = Context.Hit.ImpactNormal;
+		}
+		break;
+
+	case ECombatEffectRotationMode::AttackDirection:
+		if (!Context.AttackWorldDirection.IsNearlyZero())
+		{
+			Direction = Context.AttackWorldDirection;
+		}
+		break;
+
+	case ECombatEffectRotationMode::OppositeAttackDirection:
+		if (!Context.AttackWorldDirection.IsNearlyZero())
+		{
+			Direction = -Context.AttackWorldDirection;
+		}
+		break;
+
+	case ECombatEffectRotationMode::AttackerToDefender:
+		if (Context.Attacker)
+		{
+			Direction =
+				OwnerCharacter->GetActorLocation()
+				- Context.Attacker->GetActorLocation();
+		}
+		break;
+
+	case ECombatEffectRotationMode::DefenderToAttacker:
+		if (Context.Attacker)
+		{
+			Direction =
+				Context.Attacker->GetActorLocation()
+				- OwnerCharacter->GetActorLocation();
+		}
+		break;
+
+	case ECombatEffectRotationMode::DefenderForward:
+		Direction = OwnerCharacter->GetActorForwardVector();
+		break;
+
+	case ECombatEffectRotationMode::None:
+	default:
+		return FRotator::ZeroRotator;
+	}
+
+	if (Direction.IsNearlyZero())
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	return FRotationMatrix::MakeFromX(
+		Direction.GetSafeNormal()
+	).Rotator();
 }
