@@ -53,8 +53,9 @@ public:
 
 	void OpenDodgeRecovery();
 	void RefreshMovementSettings();
-	
+
 private:
+	bool CanMove() const;
 	bool CanSprint() const;
 	bool CanDodge() const;
 

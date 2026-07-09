@@ -199,6 +199,26 @@ void UPlayerLocomotionComponent::RefreshMovementSettings()
 	MovementComponent->bUseControllerDesiredRotation = bShouldStrafe;
 }
 
+bool UPlayerLocomotionComponent::CanMove() const
+{
+	if (!StateComponent)
+	{
+		return false;
+	}
+
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	// BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
+
+	return !StateComponent->HasAnyStateTags(BlockTags);
+}
+
 bool UPlayerLocomotionComponent::CanSprint() const
 {
 	if (!StateComponent || !MovementComponent)
@@ -244,11 +264,6 @@ bool UPlayerLocomotionComponent::CanDodge() const
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }
 
-void UPlayerLocomotionComponent::DoStopMove()
-{
-	LastMovementInput = FVector2D::ZeroVector;
-}
-
 void UPlayerLocomotionComponent::DoStartJump(const FInputActionValue& value)
 {
 	if (!OwnerCharacter) return;
@@ -277,7 +292,7 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 
 	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
 
-	if (StateComp->HasStateTagExact(CombatTags::State_Movement_Locked))
+	if (!CanMove())
 	{
 		return;
 	}
@@ -311,6 +326,11 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 	);
 	
 	// UE_LOG(LogTemp, Warning, TEXT("Move Input Called"));
+}
+
+void UPlayerLocomotionComponent::DoStopMove()
+{
+	LastMovementInput = FVector2D::ZeroVector;
 }
 
 void UPlayerLocomotionComponent::DoStartSprint()
