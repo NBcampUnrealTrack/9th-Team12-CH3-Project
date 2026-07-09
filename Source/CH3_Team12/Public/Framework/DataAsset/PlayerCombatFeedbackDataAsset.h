@@ -70,7 +70,7 @@ public:
 	FCombatFeedbackData HitFeedback;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
-	FName WeaponClashEffectSocketName = TEXT("katana_FXSocket");
+	FName WeaponClashEffectSocketName = TEXT("weapon_r_FXSocket");
 	
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
 	float HitEffectSurfaceOffset = 2.0f;
