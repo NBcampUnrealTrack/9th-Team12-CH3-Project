@@ -4,8 +4,6 @@
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "Entity/Player/PlayerAttributeComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
-#include "Framework/DataAsset/PlayerCombatMontageDataAsset.h"
-#include "Framework/DataAsset/PlayerCombatFeedbackDataAsset.h"
 
 #include "InputActionValue.h"
 #include "Animation/AnimInstance.h"

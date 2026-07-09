@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Combat/CombatTypes.h"
+#include "Framework/DataAsset/PlayerCombatMontageDataAsset.h"
 #include "Framework/DataAsset/PlayerCombatFeedbackDataAsset.h"
 #include "PlayerCombatComponent.generated.h"
 
@@ -13,7 +14,6 @@ class UStateTagComponent;
 class UPlayerAttributeComponent;
 class UNiagaraSystem;
 class USoundBase;
-class UPlayerCombatMontageDataAsset;
 
 struct FInputActionValue;
 struct FHitResult;

@@ -2,11 +2,31 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "Combat/CombatTypes.h"
 #include "PlayerCombatFeedbackDataAsset.generated.h"
 
 class UNiagaraSystem;
 class USoundBase;
+
+UENUM(BlueprintType)
+enum class ECombatEffectLocationMode : uint8
+{
+	HitImpactPoint,
+	DefenderWeaponClashSocket,
+	DefenderWeaponBladeMiddle,
+	DefenderActorCenter
+};
+
+UENUM(BlueprintType)
+enum class ECombatEffectRotationMode : uint8
+{
+	None,
+	ImpactNormal,
+	AttackDirection,
+	OppositeAttackDirection,
+	AttackerToDefender,
+	DefenderToAttacker,
+	DefenderForward
+};
 
 USTRUCT(BlueprintType)
 struct FCombatFeedbackData
