@@ -33,6 +33,27 @@ enum class EAttackType : uint8
 	Heavy
 };
 
+UENUM(BlueprintType)
+enum class ECombatEffectRotationMode : uint8
+{
+	None,
+	ImpactNormal,
+	AttackDirection,
+	OppositeAttackDirection,
+	AttackerToDefender,
+	DefenderToAttacker,
+	DefenderForward
+};
+
+UENUM(BlueprintType)
+enum class ECombatEffectLocationMode : uint8
+{
+	HitImpactPoint,
+	DefenderWeaponClashSocket,
+	DefenderWeaponBladeMiddle,
+	DefenderActorCenter
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UPlayerCombatComponent : public UActorComponent
 {
@@ -318,4 +339,11 @@ private:
 
 	FVector GetFeedbackLocation(const FIncomingAttackContext& Context) const;
 	FRotator GetFeedbackRotation(const FIncomingAttackContext& Context) const;
+	
+	FVector GetWeaponClashEffectLocation(const FIncomingAttackContext& Context) const;
+	FVector GetHitEffectLocation(const FIncomingAttackContext& Context) const;
+	FRotator MakeCombatEffectRotation(const FIncomingAttackContext& Context,
+	                                  ECombatEffectRotationMode RotationMode) const;
+
+	FName GuardSocketName = TEXT("katana_FXSocket");
 };

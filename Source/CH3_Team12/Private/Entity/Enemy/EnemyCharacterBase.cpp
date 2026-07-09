@@ -76,15 +76,30 @@ void AEnemyCharacterBase::AttackAnimationEnd()
 
 void AEnemyCharacterBase::AttackHitCheckStart()
 {
-	UE_LOG(LogTemp, Log, TEXT("Enemy Attack Trace Start"));
+	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. AttackComponent is invalid."));
+	
+	if (EnemyAttackComponent)
+	{
+		EnemyAttackComponent->StartHitCheck();
+	}
 }
 
 void AEnemyCharacterBase::AttackHitCheckTick()
 {
-	UE_LOG(LogTemp, Log, TEXT("Enemy Attack Trace Tick"));
+	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. AttackComponent is invalid."));
+	
+	if (EnemyAttackComponent)
+	{
+		EnemyAttackComponent->AttackTrace();
+	}
 }
 
 void AEnemyCharacterBase::AttackHitCheckEnd()
 {
-	UE_LOG(LogTemp, Log, TEXT("Enemy Attack Trace End"));
+	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. AttackComponent is invalid."));
+	
+	if (EnemyAttackComponent)
+	{
+		EnemyAttackComponent->EndHitCheck();
+	}
 }
