@@ -48,4 +48,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Feedback")
 	FCombatFeedbackData HitFeedback;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
+	FName WeaponClashEffectSocketName = TEXT("katana_FXSocket");
+	
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
+	float HitEffectSurfaceOffset = 2.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Feedback")
+	float FallbackEffectHeightOffset = 20.0f;
 };

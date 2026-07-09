@@ -1294,10 +1294,10 @@ FVector UPlayerCombatComponent::GetWeaponClashEffectLocation(
 		if (UStaticMeshComponent* WeaponMesh =
 			EquippedWeapon->GetWeaponMesh())
 		{
-			if (WeaponMesh->DoesSocketExist(WeaponClashEffectSocketName))
+			if (WeaponMesh->DoesSocketExist(FeedbackData->WeaponClashEffectSocketName))
 			{
 				return WeaponMesh->GetSocketLocation(
-					WeaponClashEffectSocketName
+					FeedbackData->WeaponClashEffectSocketName
 				);
 			}
 		}
@@ -1326,7 +1326,7 @@ FVector UPlayerCombatComponent::GetHitImpactEffectLocation(
 		{
 			return Context.Hit.ImpactPoint
 				+ Context.Hit.ImpactNormal.GetSafeNormal()
-				* HitEffectSurfaceOffset;
+				* FeedbackData->HitEffectSurfaceOffset;
 		}
 
 		return Context.Hit.ImpactPoint;
@@ -1343,7 +1343,7 @@ FVector UPlayerCombatComponent::GetFallbackEffectLocation() const
 	}
 
 	return OwnerCharacter->GetActorLocation()
-		+ FVector(0.0f, 0.0f, FallbackEffectHeightOffset);
+		+ FVector(0.0f, 0.0f, FeedbackData->FallbackEffectHeightOffset);
 }
 
 FVector UPlayerCombatComponent::MakeCombatEffectLocation(
