@@ -15,18 +15,26 @@ void UPlayerInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// 테스트용 코드
-	if (testItem)
+	// 시작 아이템 지급
+	for (const FStarterItem& StarterItem : StarterItems)
 	{
-		if (AddItem(testItem, 99))
+		UItemInstance* Item = AddItem(
+			StarterItem.Item,
+			StarterItem.Count);
+
+		if (!Item)
 		{
-			SetConsumableSlot(0, Items[0]);
+			continue;
 		}
-	}
-	if (GetCurrentConsumable() && GetCurrentConsumable()->GetItemData())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("SetConsumableSlot %s"), 
-			*GetCurrentConsumable()->GetItemData()->ItemName.ToString());
+
+		if (Cast<UWeaponDataAsset>(StarterItem.Item))
+		{
+			SetWeaponSlot(Item);
+		}
+		else if (Cast<UConsumableDataAsset>(StarterItem.Item))
+		{
+			SetConsumableSlot(0, Item); // 추후 AddConsumableSlot으로 교체
+		}
 	}
 	//
 	
@@ -184,6 +192,7 @@ bool UPlayerInventoryComponent::AddConsumableSlot(UItemInstance* Item)
 		return false;
 	}
 
+	// 지금은 퀵슬롯 갯수 무한인데 추후 슬롯 수 제한가능
 	ConsumableSlots.Add(Item);
 
 	return true;

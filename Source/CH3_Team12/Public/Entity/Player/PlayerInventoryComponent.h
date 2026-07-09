@@ -9,6 +9,18 @@ struct FInputActionValue;
 class UItemInstance;
 class UItemDataAsset;
 
+USTRUCT(BlueprintType)
+struct FStarterItem
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	UItemDataAsset* Item = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	int32 Count = 1;
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UPlayerInventoryComponent : public UActorComponent
 {
@@ -58,6 +70,6 @@ private:
 	int32 CurrentConsumableIndex = 0;
 	
 private:
-	UPROPERTY(EditAnywhere)
-	UConsumableDataAsset* testItem;
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FStarterItem> StarterItems;
 };
