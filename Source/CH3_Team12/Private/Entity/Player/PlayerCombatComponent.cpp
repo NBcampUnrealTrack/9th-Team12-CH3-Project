@@ -4,6 +4,7 @@
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "Entity/Player/PlayerAttributeComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
+#include "Framework/DataAsset/PlayerCombatMontageDataAsset.h"
 
 #include "InputActionValue.h"
 #include "Animation/AnimInstance.h"
@@ -19,7 +20,6 @@
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	
 }
 
 void UPlayerCombatComponent::BeginPlay()
@@ -226,9 +226,9 @@ void UPlayerCombatComponent::StartGuard(const FInputActionValue& Value)
 		LocomotionComponent->RefreshMovementSettings();
 	}
 
-	if (GuardStartMontage)
+	if (MontageData->GuardStartMontage)
 	{
-		OwnerCharacter->PlayAnimMontage(GuardStartMontage);
+		OwnerCharacter->PlayAnimMontage(MontageData->GuardStartMontage);
 	}
 }
 
@@ -247,7 +247,7 @@ void UPlayerCombatComponent::StopGuard(const FInputActionValue& Value)
 		CombatTags::State_Combat_Parry
 	);
 
-	if (GuardStartMontage)
+	if (MontageData->GuardStartMontage)
 	{
 		if (USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh())
 		{
@@ -255,7 +255,7 @@ void UPlayerCombatComponent::StopGuard(const FInputActionValue& Value)
 			{
 				AnimInstance->Montage_Stop(
 					GuardMontageBlendOutTime,
-					GuardStartMontage
+					MontageData->GuardStartMontage
 				);
 			}
 		}
@@ -355,17 +355,17 @@ void UPlayerCombatComponent::PlayParryReaction(
 	switch (AttackDirection)
 	{
 	case EHitReactionDirection::Left:
-		MontageToPlay = ParryLeftMontage;
+		MontageToPlay = MontageData->ParryLeftMontage;
 		break;
 
 	case EHitReactionDirection::Right:
-		MontageToPlay = ParryRightMontage;
+		MontageToPlay = MontageData->ParryRightMontage;
 		break;
 
 	default:
-		MontageToPlay = ParryRightMontage
-			? ParryRightMontage
-			: ParryLeftMontage;
+		MontageToPlay = MontageData->ParryRightMontage
+			? MontageData->ParryRightMontage
+			: MontageData->ParryLeftMontage;
 		break;
 	}
 
@@ -383,17 +383,17 @@ void UPlayerCombatComponent::PlayGuardHitReaction(
 	switch (AttackDirection)
 	{
 	case EHitReactionDirection::Left:
-		MontageToPlay = GuardHitLeftMontage;
+		MontageToPlay = MontageData->GuardHitLeftMontage;
 		break;
 
 	case EHitReactionDirection::Right:
-		MontageToPlay = GuardHitRightMontage;
+		MontageToPlay = MontageData->GuardHitRightMontage;
 		break;
 
 	default:
-		MontageToPlay = GuardHitRightMontage
-			? GuardHitRightMontage
-			: GuardHitLeftMontage;
+		MontageToPlay = MontageData->GuardHitRightMontage
+			? MontageData->GuardHitRightMontage
+			: MontageData->GuardHitLeftMontage;
 		break;
 	}
 
@@ -403,37 +403,42 @@ void UPlayerCombatComponent::PlayGuardHitReaction(
 	}
 }
 
-void UPlayerCombatComponent::PlayHitReaction(
-	EHitReactionDirection ReactionDirection)
+UAnimMontage* UPlayerCombatComponent::GetHitMontage(
+	EHitReactionDirection ReactionDirection) const
 {
-	UAnimMontage* MontageToPlay = nullptr;
+	if (!MontageData)
+	{
+		return nullptr;
+	}
 
 	switch (ReactionDirection)
 	{
 	case EHitReactionDirection::Left:
-		MontageToPlay = HitLeftMontage
-			? HitLeftMontage
-			: HitFrontMontage;
-		break;
+		return MontageData->HitLeftMontage
+			? MontageData->HitLeftMontage
+			: MontageData->HitFrontMontage;
 
 	case EHitReactionDirection::Right:
-		MontageToPlay = HitRightMontage
-			? HitRightMontage
-			: HitFrontMontage;
-		break;
+		return MontageData->HitRightMontage
+			? MontageData->HitRightMontage
+			: MontageData->HitFrontMontage;
 
 	case EHitReactionDirection::Back:
-		MontageToPlay = HitBackMontage
-			? HitBackMontage
-			: HitFrontMontage;
-		break;
+		return MontageData->HitBackMontage
+			? MontageData->HitBackMontage
+			: MontageData->HitFrontMontage;
 
 	case EHitReactionDirection::Front:
 	default:
-		MontageToPlay = HitFrontMontage;
-		break;
+		return MontageData->HitFrontMontage;
 	}
+}
 
+void UPlayerCombatComponent::PlayHitReaction(
+	EHitReactionDirection ReactionDirection)
+{
+	UAnimMontage* MontageToPlay = GetHitMontage(ReactionDirection);
+	
 	if (MontageToPlay && OwnerCharacter)
 	{
 		OwnerCharacter->PlayAnimMontage(MontageToPlay);
@@ -859,11 +864,11 @@ void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 	switch (AttackType)
 	{
 	case EAttackType::Light:
-		AttackMontage = LightAttackMontage;
+		AttackMontage = MontageData->LightAttackMontage;
 		break;
 
 	case EAttackType::Heavy:
-		AttackMontage = HeavyAttackMontage;
+		AttackMontage = MontageData->HeavyAttackMontage;
 		break;
 	}
 
@@ -982,8 +987,8 @@ void UPlayerCombatComponent::ContinueCombo()
 
 	UAnimMontage* CurrentMontage =
 		CurrentAttackType == EAttackType::Light
-			? LightAttackMontage
-			: HeavyAttackMontage;
+			? MontageData->LightAttackMontage
+			: MontageData->HeavyAttackMontage;
 
 	if (!CurrentMontage)
 	{

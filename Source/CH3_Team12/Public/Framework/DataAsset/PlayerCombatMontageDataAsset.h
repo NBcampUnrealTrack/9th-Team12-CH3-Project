@@ -37,11 +37,11 @@ public:
 	TObjectPtr<UAnimMontage> HitFrontMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
+	TObjectPtr<UAnimMontage> HitBackMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
 	TObjectPtr<UAnimMontage> HitLeftMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
 	TObjectPtr<UAnimMontage> HitRightMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
-	TObjectPtr<UAnimMontage> HitBackMontage;
 };

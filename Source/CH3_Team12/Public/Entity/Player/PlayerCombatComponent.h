@@ -12,6 +12,7 @@ class UStateTagComponent;
 class UPlayerAttributeComponent;
 class UNiagaraSystem;
 class USoundBase;
+class UPlayerCombatMontageDataAsset;
 
 struct FInputActionValue;
 struct FHitResult;
@@ -116,12 +117,6 @@ private:
 	TObjectPtr<UPlayerAttributeComponent> AttributeComponent;
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Animation")
-	TObjectPtr<UAnimMontage> LightAttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Animation")
-	TObjectPtr<UAnimMontage> HeavyAttackMontage;
-
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Combo")
 	TArray<FName> ComboSectionNames = {
 		TEXT("Attack0"),
@@ -180,39 +175,16 @@ public:
 
 private:
 	bool CanGuard() const;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
-	TObjectPtr<UAnimMontage> GuardStartMontage;
+	
+	UPROPERTY(EditAnywhere, Category="Combat|Data")
+	TObjectPtr<UPlayerCombatMontageDataAsset> MontageData;
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
 	float GuardMontageBlendOutTime = 0.1f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Parry")
-	TObjectPtr<UAnimMontage> ParryLeftMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Parry")
-	TObjectPtr<UAnimMontage> ParryRightMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
-	TObjectPtr<UAnimMontage> GuardHitLeftMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Guard")
-	TObjectPtr<UAnimMontage> GuardHitRightMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
-	TObjectPtr<UAnimMontage> HitFrontMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
-	TObjectPtr<UAnimMontage> HitLeftMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
-	TObjectPtr<UAnimMontage> HitRightMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Hit")
-	TObjectPtr<UAnimMontage> HitBackMontage;
 	
 	void PlayParryReaction(EHitReactionDirection AttackDirection);
 	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
+	UAnimMontage* GetHitMontage(EHitReactionDirection ReactionDirection) const;
 	void PlayHitReaction(EHitReactionDirection ReactionDirection);
 	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void EndHitReaction();
