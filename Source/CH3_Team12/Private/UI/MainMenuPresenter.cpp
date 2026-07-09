@@ -14,9 +14,9 @@ void UMainMenuPresenter::Initialize(UMainMenuWidget* InWidget)
 	if (!MainMenuWidget.IsValid())
 		return;
 
-	MainMenuWidget->OnPlayButtonClicked.AddDynamic(this, &UMainMenuPresenter::OnPlayButtonClicked);
-	MainMenuWidget->OnSettingsButtonClicked.AddDynamic(this, &UMainMenuPresenter::OnSettingsButtonClicked);
-	MainMenuWidget->OnQuitButtonClicked.AddDynamic(this, &UMainMenuPresenter::OnQuitButtonClicked);
+	MainMenuWidget->OnPlayButtonClicked.AddDynamic(this, &UMainMenuPresenter::HandlePlayButtonClicked);
+	MainMenuWidget->OnSettingsButtonClicked.AddDynamic(this, &UMainMenuPresenter::HandleSettingsButtonClicked);
+	MainMenuWidget->OnQuitButtonClicked.AddDynamic(this, &UMainMenuPresenter::HandleQuitButtonClicked);
 }
 
 void UMainMenuPresenter::Dispose()
@@ -24,53 +24,38 @@ void UMainMenuPresenter::Dispose()
 	if (!MainMenuWidget.IsValid())
 		return;
 
-	MainMenuWidget->OnPlayButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::OnPlayButtonClicked);
-	MainMenuWidget->OnSettingsButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::OnSettingsButtonClicked);
-	MainMenuWidget->OnQuitButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::OnQuitButtonClicked);
+	MainMenuWidget->OnPlayButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::HandlePlayButtonClicked);
+	MainMenuWidget->OnSettingsButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::HandleSettingsButtonClicked);
+	MainMenuWidget->OnQuitButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::HandleQuitButtonClicked);
 }
 
-void UMainMenuPresenter::OnPlayButtonClicked() const
+void UMainMenuPresenter::HandlePlayButtonClicked() const
 {
-	UKatanaLevelSubsystem* LevelSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UKatanaLevelSubsystem>();
+	UKatanaLevelSubsystem* LevelSubsystem = UKatanaLevelSubsystem::Get(this);
+	if (!LevelSubsystem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("LevelSubsystem is null"));
+		return;
+	}
+
 	LevelSubsystem->LoadLevel("LobbyLevel");
 }
 
-void UMainMenuPresenter::OnSettingsButtonClicked() const
+void UMainMenuPresenter::HandleSettingsButtonClicked() const
 {
 	UE_LOG(LogTemp, Log, TEXT("OnSettingsButtonClicked called"));
 
-	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (!PlayerController)
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController is null"));
-		return;
-	}
-
-	const ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
-	if (!LocalPlayer)
-	{
-		UE_LOG(LogTemp, Error, TEXT("LocalPlayer is null"));
-		return;
-	}
-
-	UKatanaSoundManagerSubsystem* SoundManager = GetWorld()->GetGameInstance()->GetSubsystem<UKatanaSoundManagerSubsystem>();
-	if (!SoundManager)
-	{
-		UE_LOG(LogTemp, Error, TEXT("SoundManager is null"));
-		return;
-	}
-
-	UKatanaUIManagerSubsystem* UIManager = LocalPlayer->GetSubsystem<UKatanaUIManagerSubsystem>();
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UIManager is null"));
 		return;
 	}
 
-	UIManager->ShowSettingsWidget(SoundManager);
+	UIManager->ShowMainMenuSettingsWidget();
 }
 
-void UMainMenuPresenter::OnQuitButtonClicked() const
+void UMainMenuPresenter::HandleQuitButtonClicked() const
 {
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PlayerController) return;

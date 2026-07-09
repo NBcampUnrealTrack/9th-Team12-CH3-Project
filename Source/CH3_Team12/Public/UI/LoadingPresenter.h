@@ -16,7 +16,7 @@ class CH3_TEAM12_API ULoadingPresenter : public UObject, public IPresenterInterf
 	GENERATED_BODY()
 
 public:
-	void Initialize(UKatanaLevelSubsystem* InSubsystem, ULoadingWidget* InWidget);
+	void Initialize(ULoadingWidget* InWidget);
 	virtual void Dispose() override;
 
 private:

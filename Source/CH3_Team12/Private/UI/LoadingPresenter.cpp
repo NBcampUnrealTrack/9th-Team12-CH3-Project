@@ -3,12 +3,16 @@
 #include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "UI/LoadingWidget.h"
 
-void ULoadingPresenter::Initialize(UKatanaLevelSubsystem* InSubsystem, ULoadingWidget* InWidget)
+void ULoadingPresenter::Initialize(ULoadingWidget* InWidget)
 {
-	LevelSubsystem = InSubsystem;
+	LevelSubsystem = UKatanaLevelSubsystem::Get(this);
+
+	if (!LevelSubsystem.IsValid())
+		return;
+
 	LoadingWidget = InWidget;
 
-	if (!LevelSubsystem.IsValid() || !LoadingWidget.IsValid())
+	if (!LoadingWidget.IsValid())
 		return;
 
 	LevelSubsystem->OnLoadingProgressUpdated.AddDynamic(this, &ULoadingPresenter::OnModelProgressUpdated);

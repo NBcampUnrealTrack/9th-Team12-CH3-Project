@@ -11,28 +11,7 @@
  *
  */
 UCLASS()
-class CH3_TEAM12_API UInGameSettingsPresenter : public UObject, public IPresenterInterface
+class CH3_TEAM12_API UInGameSettingsPresenter : public UObject
 {
 	GENERATED_BODY()
-
-public:
-	virtual void Initialize(UKatanaSoundManagerSubsystem* InSubsystem, UInGameSettingsWidget* InWidget);
-	virtual void Dispose() override;
-
-private:
-	UPROPERTY()
-	TWeakObjectPtr<UKatanaSoundManagerSubsystem> SoundManagerSubsystem;
-
-	UPROPERTY()
-	TWeakObjectPtr<UInGameSettingsWidget> SettingsWidget;
-
-	UFUNCTION()
-	void OnMasterVolumeChanged(float NewVolume) const;
-
-	UFUNCTION()
-	void OnBGMVolumeChanged(float NewVolume) const;
-
-	UFUNCTION()
-	void OnSFXVolumeChanged(float NewVolume) const;
-
 };

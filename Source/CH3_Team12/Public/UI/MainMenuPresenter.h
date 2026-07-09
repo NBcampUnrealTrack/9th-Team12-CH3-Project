@@ -23,11 +23,11 @@ private:
 	TWeakObjectPtr<UMainMenuWidget> MainMenuWidget;
 
 	UFUNCTION()
-	void OnPlayButtonClicked() const;
+	void HandlePlayButtonClicked() const;
 
 	UFUNCTION()
-	void OnSettingsButtonClicked() const;
+	void HandleSettingsButtonClicked() const;
 
 	UFUNCTION()
-	void OnQuitButtonClicked() const;
+	void HandleQuitButtonClicked() const;
 };

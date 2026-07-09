@@ -7,6 +7,7 @@
 #include "UObject/ScriptInterface.h"
 #include "KatanaUIManagerSubsystem.generated.h"
 
+class USoundSettingsWidget;
 class UKatanaSoundManagerSubsystem;
 class UKatanaLevelSubsystem;
 class UPlayerAttributeComponent;
@@ -22,15 +23,20 @@ class CH3_TEAM12_API UKatanaUIManagerSubsystem : public ULocalPlayerSubsystem
 	GENERATED_BODY()
 
 public:
+	static UKatanaUIManagerSubsystem* Get(const UObject* WorldContextObject);
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 	void ShowMainMenuWidget();
 	void HideMainMenuWidget();
 
-	void ShowSettingsWidget(UKatanaSoundManagerSubsystem* InSubsystem);
-	void HideSettingsWidget();
+	void ShowMainMenuSettingsWidget();
+	void HideMainMenuSettingsWidget();
 
-	void ShowLoadingWidget(UKatanaLevelSubsystem* InSubsystem);
+	void RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
+	void UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
+
+	void ShowLoadingWidget();
 	void HideLoadingWidget();
 
 	void ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent);
@@ -38,8 +44,11 @@ public:
 
 private:
 	const FName MainMenuWidgetName = FName("MainMenuWidget");
-	const FName SettingsWidgetName = FName("SettingsWidget");
+	const FName MainMenuSettingsWidgetName = FName("MainMenuSettingsWidget");
 	const FName LoadingWidgetName = FName("LoadingWidget");
+
+	const FName SoundSettingsWidgetName = FName("SoundSettingsWidget");
+
 	const FName PlayerWidgetName = FName("PlayerWidget");
 
 	UPROPERTY()

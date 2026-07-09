@@ -24,6 +24,8 @@ class CH3_TEAM12_API UKatanaSoundManagerSubsystem : public UGameInstanceSubsyste
 	GENERATED_BODY()
 
 public:
+	static UKatanaSoundManagerSubsystem* Get(const UObject* WorldContextObject);
+
 	// 서브시스템 시동 시 에셋 로드 및 기존 세이브 볼륨 동기화
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 

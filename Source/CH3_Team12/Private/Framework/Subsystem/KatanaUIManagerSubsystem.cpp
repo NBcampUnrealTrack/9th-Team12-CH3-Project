@@ -9,7 +9,31 @@
 #include "UI/HUD/PlayerPresenter.h"
 #include "UI/HUD/PlayerWidget.h"
 #include "UI/Settings/InGameSettingsPresenter.h"
-#include "UI/Settings/InGameSettingsWidget.h"
+#include "UI/Settings/MainMenuSettingsPresenter.h"
+#include "UI/Settings/MainMenuSettingsWidget.h"
+#include "UI/Settings/SoundSettingsPresenter.h"
+
+UKatanaUIManagerSubsystem* UKatanaUIManagerSubsystem::Get(const UObject* WorldContextObject)
+{
+	if (!WorldContextObject) return nullptr;
+
+	const UWorld* World = WorldContextObject->GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaUIManagerSubsystem: World is null"));
+		return nullptr;
+	}
+
+	//UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	const ULocalPlayer* LocalPlayer = World->GetFirstLocalPlayerFromController();
+	if (!LocalPlayer)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaUIManagerSubsystem: LocalPlayer is null"));
+		return nullptr;
+	}
+
+	return LocalPlayer->GetSubsystem<UKatanaUIManagerSubsystem>();
+}
 
 void UKatanaUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -31,22 +55,23 @@ void UKatanaUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UKatanaUIManagerSubsystem::ShowMainMenuWidget()
 {
-	UMainMenuWidget* ActiveView = OpShowUI<UMainMenuWidget>(MainMenuWidgetName);
+	const FName WidgetName = MainMenuWidgetName;
+	UMainMenuWidget* ActiveView = OpShowUI<UMainMenuWidget>(WidgetName);
 	if (!ActiveView)
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *MainMenuWidgetName.ToString());
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *WidgetName.ToString());
 		return;
 	}
 
 	UMainMenuPresenter* NewPresenter = NewObject<UMainMenuPresenter>(this);
 	if (!NewPresenter)
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *MainMenuWidgetName.ToString());
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
 		return;
 	}
 
 	NewPresenter->Initialize(ActiveView);
-	ActivePresenters.Add(MainMenuWidgetName, NewPresenter);
+	ActivePresenters.Add(WidgetName, NewPresenter);
 }
 
 void UKatanaUIManagerSubsystem::HideMainMenuWidget()
@@ -54,32 +79,53 @@ void UKatanaUIManagerSubsystem::HideMainMenuWidget()
 	OpHideUI(MainMenuWidgetName);
 }
 
-void UKatanaUIManagerSubsystem::ShowSettingsWidget(UKatanaSoundManagerSubsystem* InSubsystem)
+void UKatanaUIManagerSubsystem::ShowMainMenuSettingsWidget()
 {
-	UInGameSettingsWidget* ActiveView = OpShowUI<UInGameSettingsWidget>(SettingsWidgetName);
+	const FName WidgetName = MainMenuSettingsWidgetName;
+	UMainMenuSettingsWidget* ActiveView = OpShowUI<UMainMenuSettingsWidget>(WidgetName);
 	if (!ActiveView)
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *SettingsWidgetName.ToString());
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *WidgetName.ToString());
 		return;
 	}
 
-	UInGameSettingsPresenter* NewPresenter = NewObject<UInGameSettingsPresenter>(this);
+	UMainMenuSettingsPresenter* NewPresenter = NewObject<UMainMenuSettingsPresenter>(this);
 	if (!NewPresenter)
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *SettingsWidgetName.ToString());
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
 		return;
 	}
 
-	NewPresenter->Initialize(InSubsystem, ActiveView);
-	ActivePresenters.Add(SettingsWidgetName, NewPresenter);
+	NewPresenter->Initialize(ActiveView);
+	ActivePresenters.Add(WidgetName, NewPresenter);
 }
 
-void UKatanaUIManagerSubsystem::HideSettingsWidget()
+void UKatanaUIManagerSubsystem::HideMainMenuSettingsWidget()
 {
-	OpHideUI(SettingsWidgetName);
+	OpHideUI(MainMenuSettingsWidgetName);
 }
 
-void UKatanaUIManagerSubsystem::ShowLoadingWidget(UKatanaLevelSubsystem* InSubsystem)
+void UKatanaUIManagerSubsystem::RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget)
+{
+	const FName WidgetName = SoundSettingsWidgetName;
+
+	USoundSettingsPresenter* NewPresenter = NewObject<USoundSettingsPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(InWidget);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget)
+{
+	OpHideUI(SoundSettingsWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::ShowLoadingWidget()
 {
 	ULoadingWidget* ActiveView = OpShowUI<ULoadingWidget>(LoadingWidgetName);
 	if (!ActiveView)
@@ -95,7 +141,7 @@ void UKatanaUIManagerSubsystem::ShowLoadingWidget(UKatanaLevelSubsystem* InSubsy
 		return;
 	}
 
-	NewPresenter->Initialize(InSubsystem, ActiveView);
+	NewPresenter->Initialize(ActiveView);
 	ActivePresenters.Add(LoadingWidgetName, NewPresenter);
 }
 

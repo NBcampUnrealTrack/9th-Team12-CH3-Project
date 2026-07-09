@@ -1,9 +1,7 @@
 #include "Framework/GameMode/KatanaLoadingPlayerController.h"
 
-#include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
-#include "Framework/Subsystem/KatanaLevelSubsystem.h"
 
 void AKatanaLoadingPlayerController::BeginPlay()
 {
@@ -13,13 +11,9 @@ void AKatanaLoadingPlayerController::BeginPlay()
 	const FInputModeUIOnly InputMode;
 	SetInputMode(InputMode);
 
-	UKatanaUIManagerSubsystem* UIManager = GetLocalPlayer()->GetSubsystem<UKatanaUIManagerSubsystem>();
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
 		return;
 
-	UKatanaLevelSubsystem* LevelSubsystem = GetGameInstance()->GetSubsystem<UKatanaLevelSubsystem>();
-	if (!LevelSubsystem)
-		return;
-
-	UIManager->ShowLoadingWidget(LevelSubsystem);
+	UIManager->ShowLoadingWidget();
 }

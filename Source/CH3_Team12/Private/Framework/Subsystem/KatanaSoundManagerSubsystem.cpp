@@ -5,10 +5,32 @@
 #include "Sound/SoundBase.h"
 #include "AudioModulationStatics.h"
 #include "SoundControlBus.h"
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Framework/AudioSaveGame.h"
 #include "Framework/KatanaSystemSettings.h"
 #include "Framework/DataAsset/SoundDataAsset.h"
+
+UKatanaSoundManagerSubsystem* UKatanaSoundManagerSubsystem::Get(const UObject* WorldContextObject)
+{
+	if (!WorldContextObject) return nullptr;
+
+	const UWorld* World = WorldContextObject->GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaSoundManagerSubsystem: World is null"));
+		return nullptr;
+	}
+
+	const UGameInstance* GameInstance = World->GetGameInstance();
+	if (!GameInstance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaSoundManagerSubsystem: GameInstance is null"));
+		return nullptr;
+	}
+
+	return  GameInstance->GetSubsystem<UKatanaSoundManagerSubsystem>();
+}
 
 void UKatanaSoundManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
