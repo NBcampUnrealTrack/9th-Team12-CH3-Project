@@ -55,6 +55,14 @@ private:
 	bool EquipWeapon(UItemInstance* Item, const UWeaponDataAsset* WeaponData);
 	
 	void UnequipWeapon();
+	
+	void OnEquipMontageEnded(
+		UAnimMontage* Montage,
+		bool bInterrupted);
+
+	void OnUnequipMontageEnded(
+		UAnimMontage* Montage,
+		bool bInterrupted);
 private:
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
@@ -76,10 +84,4 @@ private:
 	/** 장착 예정 Item */
 	UPROPERTY()
 	TObjectPtr<UItemInstance> PendingEquipItem;
-	
-	UPROPERTY()
-	TObjectPtr<UItemInstance> PendingUnequipItem;
-	
-	UPROPERTY()
-	bool bIsChangingWeapon = false;
 };

@@ -40,15 +40,15 @@ void UPlayerEquipmentComponent::ToggleWeaponInput(
 		return;
 	}
 	
+	if (!Inventory)
+	{
+		return;
+	}
+	
 	// 이미 장착 중이면 해제
 	if (EquippedWeaponItem)
 	{
 		Unequip();
-		return;
-	}
-	
-	if (!Inventory)
-	{
 		return;
 	}
 	
@@ -65,11 +65,6 @@ void UPlayerEquipmentComponent::ToggleWeaponInput(
 
 bool UPlayerEquipmentComponent::Equip(UItemInstance* Item)
 {
-	if (bIsChangingWeapon)
-	{
-		return false;
-	}
-	
 	if (!OwnerCharacter || !Item || PendingEquipItem)
 	{
 		return false;
@@ -83,14 +78,22 @@ bool UPlayerEquipmentComponent::Equip(UItemInstance* Item)
 		return false;
 	}
 	
-	bIsChangingWeapon = true;
-	
 	PendingEquipItem = Item;
-
-	StateComp->AddStateTag(CombatTags::State_Movement_Locked);
 	
+	StateComp->AddStateTag(CombatTags::State_Action_Equipping);
+	
+	const float Duration =
 	OwnerCharacter->PlayAnimMontage(WeaponData->EquipMontage);
 
+	if (Duration <= 0.f)
+	{
+		PendingEquipItem = nullptr;
+		
+		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
+
+		return false;
+	}
+	
 	return true;
 }
 
@@ -107,18 +110,19 @@ void UPlayerEquipmentComponent::OnEquipNotify()
 	if (!WeaponData)
 	{
 		PendingEquipItem = nullptr;
+		
+		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
+		
 		return;
 	}
-	
-	bIsChangingWeapon = false;
 	
 	EquipWeapon(PendingEquipItem, WeaponData);
 
 	PendingEquipItem = nullptr;
 	
-	if (StateComp->HasStateTag(CombatTags::State_Movement_Locked))
+	if (StateComp->HasStateTag(CombatTags::State_Action_Equipping))
 	{
-		StateComp->RemoveStateTag(CombatTags::State_Movement_Locked);
+		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
 	}
 }
 
@@ -131,6 +135,11 @@ bool UPlayerEquipmentComponent::EquipWeapon(
 		return false;
 	}
 
+	if (EquippedWeapon)
+	{
+		UnequipWeapon();
+	}
+	
 	if (!WeaponData || !WeaponData->WeaponClass)
 	{
 		return false;
@@ -179,26 +188,24 @@ void UPlayerEquipmentComponent::Unequip()
 		return;
 	}
 
-	bIsChangingWeapon = true;
+	StateComp->AddStateTag(CombatTags::State_Action_Equipping);
 	
-	PendingUnequipItem = EquippedWeaponItem;
-
-	StateComp->AddStateTag(CombatTags::State_Movement_Locked);
+	const float Duration = 
+		OwnerCharacter->PlayAnimMontage(WeaponData->UnequipMontage);
 	
-	OwnerCharacter->PlayAnimMontage(WeaponData->UnequipMontage);
+	if (Duration <= 0.f)
+	{
+		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
+	}
 }
 
 void UPlayerEquipmentComponent::OnUnequipNotify()
 {
-	bIsChangingWeapon = false;
-	
 	UnequipWeapon();
 	
-	PendingUnequipItem = nullptr;
-	
-	if (StateComp->HasStateTag(CombatTags::State_Movement_Locked))
+	if (StateComp->HasStateTag(CombatTags::State_Action_Equipping))
 	{
-		StateComp->RemoveStateTag(CombatTags::State_Movement_Locked);
+		StateComp->RemoveStateTag(CombatTags::State_Action_Equipping);
 	}
 }
 
@@ -225,11 +232,6 @@ bool UPlayerEquipmentComponent::CanChangeWeapon() const
 		return false;
 	}
 
-	if (bIsChangingWeapon)
-	{
-		return false;
-	}
-
 	if (StateComp->HasStateTag(CombatTags::State_Combat_Attacking))
 	{
 		return false;
@@ -240,7 +242,7 @@ bool UPlayerEquipmentComponent::CanChangeWeapon() const
 		return false;
 	}
 
-	if (StateComp->HasStateTag(CombatTags::State_Movement_Locked))
+	if (StateComp->HasStateTag(CombatTags::State_Action_Equipping))
 	{
 		return false;
 	}
