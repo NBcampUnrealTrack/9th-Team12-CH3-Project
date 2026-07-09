@@ -83,7 +83,6 @@ public:
 
 	bool bInvincible = false;
 
-	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
 
 	AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }

@@ -13,6 +13,8 @@
 #include "Entity/Player/PlayerAttributeComponent.h"
 #include "Entity/Player/PlayerCameraComponent.h"
 #include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerEquipmentComponent.h"
+#include "Entity/Player/PlayerInventoryComponent.h"
 
 // Sets default values
 APlayerCharacterBase::APlayerCharacterBase()
@@ -55,7 +57,9 @@ APlayerCharacterBase::APlayerCharacterBase()
 	LocomotionComponent = CreateDefaultSubobject<UPlayerLocomotionComponent>(TEXT("LocomotionComponent"));
 	AttributeComponent = CreateDefaultSubobject<UPlayerAttributeComponent>(TEXT("AttributeComponent"));
 	CombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("CombatComponent"));
-	PlayerCameraComponent = CreateDefaultSubobject<UPlayerCameraComponent>(TEXT("PlayerCameraComponent"));
+	CameraComponent = CreateDefaultSubobject<UPlayerCameraComponent>(TEXT("CameraComponent"));
+	InventoryComponent = CreateDefaultSubobject<UPlayerInventoryComponent>(TEXT("InventoryComponent"));
+	EquipmentComponent = CreateDefaultSubobject<UPlayerEquipmentComponent>(TEXT("EquipmentComponent"));
 }
 
 UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
@@ -78,9 +82,19 @@ UPlayerCombatComponent* APlayerCharacterBase::GetCombatComponent() const
 	return CombatComponent;
 }
 
+UPlayerInventoryComponent* APlayerCharacterBase::GetInventoryComponent() const
+{
+	return InventoryComponent;
+}
+
+UPlayerEquipmentComponent* APlayerCharacterBase::GetEquipmentComponent() const
+{
+	return EquipmentComponent;
+}
+
 UPlayerCameraComponent* APlayerCharacterBase::GetPlayerCameraComponent() const
 {
-	return PlayerCameraComponent;
+	return CameraComponent;
 }
 
 USpringArmComponent* APlayerCharacterBase::GetCameraBoom() const
@@ -125,7 +139,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	// Locomotion
 	if (UInputAction* LookAction = PlayerControllerBase->GetLookAction())
 	{
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, PlayerCameraComponent.Get(), &UPlayerCameraComponent::Look);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, CameraComponent.Get(), &UPlayerCameraComponent::Look);
 	}
 	if (UInputAction* MoveAction = PlayerControllerBase->GetMoveAction())
 	{
@@ -152,7 +166,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 	if (UInputAction* LockOnAction = PlayerControllerBase->GetLockOnAction())
 	{
-		EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, PlayerCameraComponent.Get(), &UPlayerCameraComponent::LockOn);
+		EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, CameraComponent.Get(), &UPlayerCameraComponent::LockOn);
 	}
 	if (UInputAction* GuardAction = PlayerControllerBase->GetGuardAction())
 	{
@@ -160,6 +174,8 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Completed, CombatComponent.Get(), &UPlayerCombatComponent::StopGuard);
 		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Canceled, CombatComponent.Get(), &UPlayerCombatComponent::StopGuard);
 	}
+	
+	// TestAction
 	if (UInputAction* TestAction1 = PlayerControllerBase->GetTestAction1())
 	{
 		EnhancedInputComponent->BindAction(TestAction1, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackFront);
@@ -176,6 +192,16 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	{
 		EnhancedInputComponent->BindAction(TestAction4, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackRight);
 	}
+	
+	if (UInputAction* EquipAction = PlayerControllerBase->GetEquipAction())
+	{
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, EquipmentComponent.Get(), &UPlayerEquipmentComponent::ToggleWeaponInput);
+	}
+	
+	// if (UInputAction* UseItemAction = PlayerControllerBase->GetUseItemAction())
+	// {
+	// 	EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Started, InventoryComponent.Get(), &UPlayerInventoryComponent::);
+	// }
 }
 
 void APlayerCharacterBase::AttackAnimationEnd()
