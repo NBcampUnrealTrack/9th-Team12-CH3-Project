@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Combat/CombatTypes.h"
 #include "EnemyAttackDataAsset.generated.h"
 
 USTRUCT(BlueprintType)
@@ -28,10 +29,19 @@ struct FAttackAnimationData
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack", meta = (ClampMin = 1.0f, UIMin = 1.0f))
-	float AttackRange;
+	float AttackRange = 500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack", meta = (ClampMin = 0.1f, UIMin = 0.1f, ClampMax = 10.0f, UIMax = 10.0f))
-	float AttackCooldown;
+	float AttackCooldown = 1.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack", meta = (ClampMin = 0.1f, UIMin = 0.1f))
+	float DamageRate = 1.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack", meta = (ClampMin = 0.1f, UIMin = 0.1f))
+	float PostureDamageRate = 1.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack")
+	FAttackInfo AttackInfo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack | Montage")
 	TObjectPtr<UAnimMontage> Montage;

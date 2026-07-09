@@ -13,6 +13,9 @@
 #include "GameFramework/Character.h"
 #include "Framework/DataAsset/EnemyAttackDataAsset.h"
 #include "Kismet/GameplayStatics.h"
+#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerCharacterBase.h"
+#include "Combat/CombatTypes.h"
 
 // Sets default values for this component's properties
 UEnemyAttackComponent::UEnemyAttackComponent()
@@ -160,21 +163,24 @@ void UEnemyAttackComponent::FinishAttack()
 
 void UEnemyAttackComponent::StartHitCheck()
 {
-	const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
-	
-	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
-	
-	for (FHitBoxData HitBoxData : HitBoxDatas)
+	if (bUseDebugColliderDraw)
 	{
-		USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
-		if (SkeletalMeshComponent == nullptr)
-			return;
+		const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
+	
+		TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
+	
+		for (FHitBoxData HitBoxData : HitBoxDatas)
+		{
+			USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
+			if (SkeletalMeshComponent == nullptr)
+				return;
 		
-		FName SocketName = HitBoxData.ActiveHitSocket;
-		FVector SocketLocation{};
-		FRotator SocketRotation{};
-		SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
-		DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
+			FName SocketName = HitBoxData.ActiveHitSocket;
+			FVector SocketLocation{};
+			FRotator SocketRotation{};
+			SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
+			DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
+		}
 	}
 	
 	HitActors.Reset();
@@ -196,6 +202,11 @@ void UEnemyAttackComponent::AttackTrace()
 	}
 
 	const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
+	if (AttackAnimationData == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Katana_EnemyAttackComponent_AttackTrace : AttackAnimationData is invalid."));
+		return;
+	}
 	
 	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
 	
@@ -235,11 +246,16 @@ void UEnemyAttackComponent::AttackTrace()
 			
 			if (!bHit)
 			{
-				DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, 150.0f, 16, FColor::Blue, false, 5.0f);
+				if (bUseDebugColliderDraw)
+				{
+					DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, 150.0f, 16, FColor::Blue, false, 5.0f);
+				}
 				continue;
 			}
-
-			DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, 150.0f, 16, FColor::Red, false, 5.0f);
+			if (bUseDebugColliderDraw)
+			{
+				DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, 150.0f, 16, FColor::Red, false, 5.0f);
+			}
 			
 			for (const FHitResult& Hit : HitResults)
 			{
@@ -256,7 +272,9 @@ void UEnemyAttackComponent::AttackTrace()
 				}
 
 				HitActors.Add(HitActor);
-				ProcessHit(Hit);
+				
+				FAttackInfo AttackInfo = AttackAnimationData->AttackInfo;
+				ProcessHit(Hit, AttackInfo);
 			}
 		}
 
@@ -266,21 +284,24 @@ void UEnemyAttackComponent::AttackTrace()
 
 void UEnemyAttackComponent::EndHitCheck()
 {
-	const FAttackAnimationData* AttackAnimationData = AttackData->GetAttackAnimationData(0);
-	
-	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
-	
-	for (FHitBoxData HitBoxData : HitBoxDatas)
+	if (bUseDebugColliderDraw)
 	{
-		USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
-		if (SkeletalMeshComponent == nullptr)
-			return;
+		const FAttackAnimationData* AttackAnimationData = AttackData->GetAttackAnimationData(0);
+	
+		TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
+	
+		for (FHitBoxData HitBoxData : HitBoxDatas)
+		{
+			USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
+			if (SkeletalMeshComponent == nullptr)
+				return;
 		
-		FName SocketName = HitBoxData.ActiveHitSocket;
-		FVector SocketLocation{};
-		FRotator SocketRotation{};
-		SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
-		DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
+			FName SocketName = HitBoxData.ActiveHitSocket;
+			FVector SocketLocation{};
+			FRotator SocketRotation{};
+			SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
+			DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
+		}
 	}
 	
 	HitActors.Reset();
@@ -288,9 +309,9 @@ void UEnemyAttackComponent::EndHitCheck()
 }
 
 // Player에게 데미지 주기 위해 수정 필요
-void UEnemyAttackComponent::ProcessHit(const FHitResult& Hit)
+void UEnemyAttackComponent::ProcessHit(const FHitResult& InHitResult, const FAttackInfo& InAttackInfo)
 {
-	AActor* HitActor = Hit.GetActor();
+	AActor* HitActor = InHitResult.GetActor();
 	if (!HitActor)
 	{
 		return;
@@ -302,15 +323,30 @@ void UEnemyAttackComponent::ProcessHit(const FHitResult& Hit)
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Hit : %s"), *HitActor->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("Katana_EnemyAttackComponent_ProcessHit, Hit : %s"), *HitActor->GetName());
 
-	UGameplayStatics::ApplyDamage(
-		HitActor,
-		25.0f,
-		Owner->GetController(),
-		Owner,
-		nullptr
-	);
+	if (APlayerCharacterBase* PlayerCharacter = Cast<APlayerCharacterBase>(HitActor))
+	{
+		if (UPlayerCombatComponent* PlayerCombatComponent = PlayerCharacter->FindComponentByClass<UPlayerCombatComponent>())
+		{
+			FIncomingAttackContext IncomingAttackContext;
+			IncomingAttackContext.Attacker = GetOwner();
+			IncomingAttackContext.Hit = InHitResult;
+			IncomingAttackContext.AttackInfo = InAttackInfo;
+			
+			PlayerCombatComponent->ResolveIncomingAttack(IncomingAttackContext);	
+		}
+	}
+	else
+	{
+		UGameplayStatics::ApplyDamage(
+			HitActor,
+			25.0f,
+			Owner->GetController(),
+			Owner,
+			nullptr
+		);
+	}
 }
 
 void UEnemyAttackComponent::StopAttackMontage()

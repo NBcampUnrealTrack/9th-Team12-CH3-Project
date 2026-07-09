@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "EnemyAttackComponent.generated.h"
 
+struct FAttackInfo;
 struct FHitResult;
 struct FHitBoxData;
 struct FAttackAnimationData;
@@ -49,7 +50,7 @@ public:
 	void EndHitCheck();
 	
 private:
-	void ProcessHit(const FHitResult& Hit);
+	void ProcessHit(const FHitResult& InHitResult, const FAttackInfo& InAttackInfo);
 	const FAttackAnimationData* GetCurrentPatternData();
 	const FAttackAnimationData* GetSelectedPatternData(int32 InSelectedAction, int32 InSelectedPattern);
 	
@@ -75,6 +76,8 @@ protected:
 	UPROPERTY()
 	EEnemyAttackPattern CurrentPlayingMontage;
 	
+	UPROPERTY(EditAnywhere,	BlueprintReadOnly, Category = "Attack|Debug")
+	bool bUseDebugColliderDraw = true;
 private:
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
