@@ -19,7 +19,6 @@
 UPlayerCombatComponent::UPlayerCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	
 }
 
 void UPlayerCombatComponent::BeginPlay()
@@ -226,9 +225,9 @@ void UPlayerCombatComponent::StartGuard(const FInputActionValue& Value)
 		LocomotionComponent->RefreshMovementSettings();
 	}
 
-	if (GuardStartMontage)
+	if (MontageData->GuardStartMontage)
 	{
-		OwnerCharacter->PlayAnimMontage(GuardStartMontage);
+		OwnerCharacter->PlayAnimMontage(MontageData->GuardStartMontage);
 	}
 }
 
@@ -247,7 +246,7 @@ void UPlayerCombatComponent::StopGuard(const FInputActionValue& Value)
 		CombatTags::State_Combat_Parry
 	);
 
-	if (GuardStartMontage)
+	if (MontageData->GuardStartMontage)
 	{
 		if (USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh())
 		{
@@ -255,7 +254,7 @@ void UPlayerCombatComponent::StopGuard(const FInputActionValue& Value)
 			{
 				AnimInstance->Montage_Stop(
 					GuardMontageBlendOutTime,
-					GuardStartMontage
+					MontageData->GuardStartMontage
 				);
 			}
 		}
@@ -355,17 +354,17 @@ void UPlayerCombatComponent::PlayParryReaction(
 	switch (AttackDirection)
 	{
 	case EHitReactionDirection::Left:
-		MontageToPlay = ParryLeftMontage;
+		MontageToPlay = MontageData->ParryLeftMontage;
 		break;
 
 	case EHitReactionDirection::Right:
-		MontageToPlay = ParryRightMontage;
+		MontageToPlay = MontageData->ParryRightMontage;
 		break;
 
 	default:
-		MontageToPlay = ParryRightMontage
-			? ParryRightMontage
-			: ParryLeftMontage;
+		MontageToPlay = MontageData->ParryRightMontage
+			? MontageData->ParryRightMontage
+			: MontageData->ParryLeftMontage;
 		break;
 	}
 
@@ -383,17 +382,17 @@ void UPlayerCombatComponent::PlayGuardHitReaction(
 	switch (AttackDirection)
 	{
 	case EHitReactionDirection::Left:
-		MontageToPlay = GuardHitLeftMontage;
+		MontageToPlay = MontageData->GuardHitLeftMontage;
 		break;
 
 	case EHitReactionDirection::Right:
-		MontageToPlay = GuardHitRightMontage;
+		MontageToPlay = MontageData->GuardHitRightMontage;
 		break;
 
 	default:
-		MontageToPlay = GuardHitRightMontage
-			? GuardHitRightMontage
-			: GuardHitLeftMontage;
+		MontageToPlay = MontageData->GuardHitRightMontage
+			? MontageData->GuardHitRightMontage
+			: MontageData->GuardHitLeftMontage;
 		break;
 	}
 
@@ -403,37 +402,42 @@ void UPlayerCombatComponent::PlayGuardHitReaction(
 	}
 }
 
-void UPlayerCombatComponent::PlayHitReaction(
-	EHitReactionDirection ReactionDirection)
+UAnimMontage* UPlayerCombatComponent::GetHitMontage(
+	EHitReactionDirection ReactionDirection) const
 {
-	UAnimMontage* MontageToPlay = nullptr;
+	if (!MontageData)
+	{
+		return nullptr;
+	}
 
 	switch (ReactionDirection)
 	{
 	case EHitReactionDirection::Left:
-		MontageToPlay = HitLeftMontage
-			? HitLeftMontage
-			: HitFrontMontage;
-		break;
+		return MontageData->HitLeftMontage
+			? MontageData->HitLeftMontage
+			: MontageData->HitFrontMontage;
 
 	case EHitReactionDirection::Right:
-		MontageToPlay = HitRightMontage
-			? HitRightMontage
-			: HitFrontMontage;
-		break;
+		return MontageData->HitRightMontage
+			? MontageData->HitRightMontage
+			: MontageData->HitFrontMontage;
 
 	case EHitReactionDirection::Back:
-		MontageToPlay = HitBackMontage
-			? HitBackMontage
-			: HitFrontMontage;
-		break;
+		return MontageData->HitBackMontage
+			? MontageData->HitBackMontage
+			: MontageData->HitFrontMontage;
 
 	case EHitReactionDirection::Front:
 	default:
-		MontageToPlay = HitFrontMontage;
-		break;
+		return MontageData->HitFrontMontage;
 	}
+}
 
+void UPlayerCombatComponent::PlayHitReaction(
+	EHitReactionDirection ReactionDirection)
+{
+	UAnimMontage* MontageToPlay = GetHitMontage(ReactionDirection);
+	
 	if (MontageToPlay && OwnerCharacter)
 	{
 		OwnerCharacter->PlayAnimMontage(MontageToPlay);
@@ -859,11 +863,11 @@ void UPlayerCombatComponent::StartAttack(EAttackType AttackType)
 	switch (AttackType)
 	{
 	case EAttackType::Light:
-		AttackMontage = LightAttackMontage;
+		AttackMontage = MontageData->LightAttackMontage;
 		break;
 
 	case EAttackType::Heavy:
-		AttackMontage = HeavyAttackMontage;
+		AttackMontage = MontageData->HeavyAttackMontage;
 		break;
 	}
 
@@ -982,8 +986,8 @@ void UPlayerCombatComponent::ContinueCombo()
 
 	UAnimMontage* CurrentMontage =
 		CurrentAttackType == EAttackType::Light
-			? LightAttackMontage
-			: HeavyAttackMontage;
+			? MontageData->LightAttackMontage
+			: MontageData->HeavyAttackMontage;
 
 	if (!CurrentMontage)
 	{
@@ -1093,19 +1097,55 @@ void UPlayerCombatComponent::Debug_ReceiveTestAttack(
 	);
 }
 
+void UPlayerCombatComponent::PlayCombatFeedback(
+	const FIncomingAttackContext& Context,
+	const FCombatFeedbackData& Feedback)
+{
+	const FVector Location =
+		MakeCombatEffectLocation(Context, Feedback.LocationMode);
+
+	const FRotator Rotation =
+		MakeCombatEffectRotation(Context, Feedback.RotationMode);
+
+	if (Feedback.Effect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			Feedback.Effect,
+			Location,
+			Rotation
+		);
+	}
+
+	if (Feedback.Sound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			Feedback.Sound,
+			Location
+		);
+	}
+
+	TriggerCombatHitStop(
+		Context,
+		Feedback.HitStopDuration,
+		Feedback.HitStopTimeDilation
+	);
+}
+
 void UPlayerCombatComponent::HandleParrySuccess(
 	const FIncomingAttackContext& Context,
 	EHitReactionDirection ReactionDirection)
 {
 	PlayParryReaction(ReactionDirection);
 
-	SpawnParryEffect(Context);
-
-	TriggerCombatHitStop(
-		Context,
-		ParryHitStopDuration,
-		ParryHitStopTimeDilation
-	);
+	if (FeedbackData)
+	{
+		PlayCombatFeedback(
+			Context,
+			FeedbackData->ParryFeedback
+		);
+	}
 }
 
 void UPlayerCombatComponent::HandleGuardSuccess(
@@ -1128,13 +1168,13 @@ void UPlayerCombatComponent::HandleGuardSuccess(
 		);
 	}
 
-	SpawnGuardHitEffect(Context);
-
-	TriggerCombatHitStop(
-		Context,
-		GuardHitStopDuration,
-		GuardHitStopTimeDilation
-	);
+	if (FeedbackData)
+	{
+		PlayCombatFeedback(
+			Context,
+			FeedbackData->GuardFeedback
+		);
+	}
 }
 
 void UPlayerCombatComponent::HandleDirectHit(
@@ -1162,107 +1202,11 @@ void UPlayerCombatComponent::HandleDirectHit(
 		);
 	}
 
-	SpawnHitEffect(Context);
-
-	TriggerCombatHitStop(
-		Context,
-		HitStopDuration,
-		HitStopTimeDilation
-	);
-}
-
-void UPlayerCombatComponent::SpawnParryEffect(
-	const FIncomingAttackContext& Context)
-{
-	const FVector Location =
-		GetWeaponClashEffectLocation(Context);
-
-	const FRotator Rotation =
-		MakeCombatEffectRotation(
+	if (FeedbackData)
+	{
+		PlayCombatFeedback(
 			Context,
-			ECombatEffectRotationMode::OppositeAttackDirection
-		);
-
-	if (ParryEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			ParryEffect,
-			Location,
-			Rotation
-		);
-	}
-
-	if (ParrySound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			ParrySound,
-			Location
-		);
-	}
-}
-
-void UPlayerCombatComponent::SpawnGuardHitEffect(
-	const FIncomingAttackContext& Context)
-{
-	const FVector Location =
-		GetWeaponClashEffectLocation(Context);
-
-	const FRotator Rotation =
-		MakeCombatEffectRotation(
-			Context,
-			ECombatEffectRotationMode::OppositeAttackDirection
-		);
-
-	if (GuardHitEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			GuardHitEffect,
-			Location,
-			Rotation
-		);
-	}
-
-	if (GuardHitSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			GuardHitSound,
-			Location
-		);
-	}
-}
-
-void UPlayerCombatComponent::SpawnHitEffect(
-	const FIncomingAttackContext& Context)
-{
-	const FVector Location =
-		GetHitEffectLocation(Context);
-
-	const FRotator Rotation =
-		MakeCombatEffectRotation(
-			Context,
-			ECombatEffectRotationMode::ImpactNormal
-		);
-
-	if (HitEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			HitEffect,
-			Location,
-			Rotation
-		);
-	}
-
-	if (HitSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			HitSound,
-			Location
+			FeedbackData->HitFeedback
 		);
 	}
 }
@@ -1340,52 +1284,6 @@ void UPlayerCombatComponent::ResetCombatHitStop()
 	HitStopActors.Reset();
 }
 
-FVector UPlayerCombatComponent::GetFeedbackLocation(
-	const FIncomingAttackContext& Context) const
-{
-	if (!OwnerCharacter)
-	{
-		return FVector::ZeroVector;
-	}
-
-	if (!Context.Hit.ImpactPoint.IsNearlyZero())
-	{
-		return Context.Hit.ImpactPoint;
-	}
-
-	return OwnerCharacter->GetActorLocation()
-		+ OwnerCharacter->GetActorForwardVector() * FeedbackEffectForwardOffset
-		+ FVector(0.0f, 0.0f, FeedbackEffectHeightOffset);
-}
-
-FRotator UPlayerCombatComponent::GetFeedbackRotation(
-	const FIncomingAttackContext& Context) const
-{
-	if (!OwnerCharacter)
-	{
-		return FRotator::ZeroRotator;
-	}
-
-	if (!Context.AttackWorldDirection.IsNearlyZero())
-	{
-		return Context.AttackWorldDirection.Rotation();
-	}
-
-	if (Context.Attacker)
-	{
-		const FVector Direction =
-			OwnerCharacter->GetActorLocation()
-			- Context.Attacker->GetActorLocation();
-
-		if (!Direction.IsNearlyZero())
-		{
-			return Direction.Rotation();
-		}
-	}
-
-	return OwnerCharacter->GetActorForwardVector().Rotation();
-}
-
 FVector UPlayerCombatComponent::GetWeaponClashEffectLocation(
 	const FIncomingAttackContext& Context) const
 {
@@ -1394,9 +1292,11 @@ FVector UPlayerCombatComponent::GetWeaponClashEffectLocation(
 		if (UStaticMeshComponent* WeaponMesh =
 			EquippedWeapon->GetWeaponMesh())
 		{
-			if (WeaponMesh->DoesSocketExist(GuardSocketName))
+			if (WeaponMesh->DoesSocketExist(FeedbackData->WeaponClashEffectSocketName))
 			{
-				return WeaponMesh->GetSocketLocation(GuardSocketName);
+				return WeaponMesh->GetSocketLocation(
+					FeedbackData->WeaponClashEffectSocketName
+				);
 			}
 		}
 
@@ -1412,28 +1312,71 @@ FVector UPlayerCombatComponent::GetWeaponClashEffectLocation(
 		}
 	}
 
-	if (!Context.Hit.ImpactPoint.IsNearlyZero())
-	{
-		return Context.Hit.ImpactPoint;
-	}
-
-	return OwnerCharacter
-		? OwnerCharacter->GetActorLocation() + FVector(0.0f, 0.0f, 0.0f)
-		: FVector::ZeroVector;
+	return GetHitImpactEffectLocation(Context);
 }
 
-FVector UPlayerCombatComponent::GetHitEffectLocation(
+FVector UPlayerCombatComponent::GetHitImpactEffectLocation(
 	const FIncomingAttackContext& Context) const
 {
 	if (!Context.Hit.ImpactPoint.IsNearlyZero())
 	{
-		return Context.Hit.ImpactPoint
-			+ Context.Hit.ImpactNormal * 2.0f;
+		if (!Context.Hit.ImpactNormal.IsNearlyZero())
+		{
+			return Context.Hit.ImpactPoint
+				+ Context.Hit.ImpactNormal.GetSafeNormal()
+				* FeedbackData->HitEffectSurfaceOffset;
+		}
+
+		return Context.Hit.ImpactPoint;
 	}
 
-	return OwnerCharacter
-		? OwnerCharacter->GetActorLocation() + FVector(0.0f, 0.0f, 0.0f)
-		: FVector::ZeroVector;
+	return GetFallbackEffectLocation();
+}
+
+FVector UPlayerCombatComponent::GetFallbackEffectLocation() const
+{
+	if (!OwnerCharacter)
+	{
+		return FVector::ZeroVector;
+	}
+
+	return OwnerCharacter->GetActorLocation()
+		+ FVector(0.0f, 0.0f, FeedbackData->FallbackEffectHeightOffset);
+}
+
+FVector UPlayerCombatComponent::MakeCombatEffectLocation(
+	const FIncomingAttackContext& Context,
+	ECombatEffectLocationMode LocationMode) const
+{
+	switch (LocationMode)
+	{
+	case ECombatEffectLocationMode::DefenderWeaponClashSocket:
+		return GetWeaponClashEffectLocation(Context);
+
+	case ECombatEffectLocationMode::DefenderWeaponBladeMiddle:
+		if (EquippedWeapon)
+		{
+			const FVector BladeStart =
+				EquippedWeapon->GetBladeStartLocation();
+
+			const FVector BladeEnd =
+				EquippedWeapon->GetBladeEndLocation();
+
+			if (!BladeStart.IsNearlyZero() && !BladeEnd.IsNearlyZero())
+			{
+				return (BladeStart + BladeEnd) * 0.5f;
+			}
+		}
+
+		return GetWeaponClashEffectLocation(Context);
+
+	case ECombatEffectLocationMode::DefenderActorCenter:
+		return GetFallbackEffectLocation();
+
+	case ECombatEffectLocationMode::HitImpactPoint:
+	default:
+		return GetHitImpactEffectLocation(Context);
+	}
 }
 
 FRotator UPlayerCombatComponent::MakeCombatEffectRotation(
