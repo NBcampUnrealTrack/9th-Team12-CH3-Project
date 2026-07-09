@@ -63,3 +63,24 @@ struct FIncomingAttackContext
 	UPROPERTY()
 	FVector AttackWorldDirection = FVector::ZeroVector;
 };
+
+UENUM(BlueprintType)
+enum class ECombatEffectLocationMode : uint8
+{
+	HitImpactPoint,
+	DefenderWeaponClashSocket,
+	DefenderWeaponBladeMiddle,
+	DefenderActorCenter
+};
+
+UENUM(BlueprintType)
+enum class ECombatEffectRotationMode : uint8
+{
+	None,
+	ImpactNormal,
+	AttackDirection,
+	OppositeAttackDirection,
+	AttackerToDefender,
+	DefenderToAttacker,
+	DefenderForward
+};
