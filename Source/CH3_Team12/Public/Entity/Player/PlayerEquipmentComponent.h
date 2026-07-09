@@ -28,19 +28,19 @@ public:
 	void ToggleWeaponInput(const FInputActionValue& Value);
 	
 	/** AnimNotify에서 호출 */
-	void OnEquipNotify();
+	void AnimNotify_Equip();
 
 	/** AnimNotify에서 호출 */
-	void OnUnequipNotify();
+	void AnimNotify_Unequip();
 	
 	/** 현재 장착된 무기 Actor */
-	AWeaponBase* GetEquippedWeapon() const
+	FORCEINLINE AWeaponBase* GetEquippedWeapon() const
 	{
 		return EquippedWeapon;
 	}
 	
 	/** 현재 장착된 아이템 */
-	UItemInstance* GetEquippedWeaponItem() const
+	FORCEINLINE UItemInstance* GetEquippedWeaponItem() const
 	{
 		return EquippedWeaponItem;
 	}

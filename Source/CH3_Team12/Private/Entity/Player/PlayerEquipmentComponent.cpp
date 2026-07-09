@@ -115,7 +115,7 @@ bool UPlayerEquipmentComponent::Equip(UItemInstance* Item)
 	return true;
 }
 
-void UPlayerEquipmentComponent::OnEquipNotify()
+void UPlayerEquipmentComponent::AnimNotify_Equip()
 {
 	if (!PendingEquipItem)
 	{
@@ -130,7 +130,10 @@ void UPlayerEquipmentComponent::OnEquipNotify()
 		return;
 	}
 	
-	EquipWeapon(PendingEquipItem, WeaponData);
+	if (!EquipWeapon(PendingEquipItem, WeaponData))
+	{
+		PendingEquipItem = nullptr;
+	}
 }
 
 bool UPlayerEquipmentComponent::EquipWeapon(
@@ -225,7 +228,7 @@ void UPlayerEquipmentComponent::Unequip()
 		WeaponData->UnequipMontage);
 }
 
-void UPlayerEquipmentComponent::OnUnequipNotify()
+void UPlayerEquipmentComponent::AnimNotify_Unequip()
 {
 	UnequipWeapon();
 }

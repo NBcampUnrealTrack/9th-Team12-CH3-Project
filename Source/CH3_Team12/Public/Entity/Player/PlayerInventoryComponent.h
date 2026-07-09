@@ -19,6 +19,12 @@ struct FStarterItem
 
 	UPROPERTY(EditAnywhere)
 	int32 Count = 1;
+	
+	UPROPERTY(EditAnywhere)
+	bool bAutoEquip;
+	
+	UPROPERTY(EditAnywhere)
+	bool bRegisterConsumable;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
