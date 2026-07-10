@@ -108,6 +108,7 @@ private:
 	TArray<FName> ComboSectionNames = {
 		TEXT("Attack0"),
 		TEXT("Attack1"),
+		TEXT("Attack2"),
 	};
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Attack")
@@ -120,7 +121,7 @@ private:
 	TObjectPtr<AWeaponBase> EquippedWeapon;
 
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
-	FName WeaponSocketName = TEXT("katana3");
+	FName WeaponSocketName = TEXT("weapon_rSocket");
 
 	FVector PreviousBladeStart = FVector::ZeroVector;
 	FVector PreviousBladeEnd = FVector::ZeroVector;
