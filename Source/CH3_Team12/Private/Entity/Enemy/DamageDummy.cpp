@@ -5,7 +5,8 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerAttributeComponent.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerAttackComponent.h"
+#include "Entity/Player/PlayerDefenseComponent.h"
 #include "TimerManager.h"
 #include "Components/SkeletalMeshComponent.h"
 
@@ -102,10 +103,10 @@ void ADamageDummy::Attack()
 			continue;
 		}
 
-		UPlayerCombatComponent* Combat =
+		UPlayerAttackComponent* AttackComponent =
 			Player->GetCombatComponent();
 
-		if (!Combat)
+		if (!AttackComponent)
 		{
 			continue;
 		}
@@ -147,8 +148,14 @@ void ADamageDummy::Attack()
 			-AttackDirection;
 
 		//------------------------------------
+		UPlayerDefenseComponent* DefenseComponent =
+			Player->GetDefenseComponent();
 
-		Combat->ResolveIncomingAttack(Context);
+		if (!DefenseComponent)
+		{
+			continue;
+		}
+		DefenseComponent->ResolveIncomingAttack(Context);
 	}
 }
 
