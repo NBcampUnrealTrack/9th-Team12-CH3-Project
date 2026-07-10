@@ -7,8 +7,10 @@
 #include "Interface/AnimationAttackInterface.h"
 #include "EnemyCharacterBase.generated.h"
 
+class UStateTagComponent;
 class UEnemyAttackComponent;
 class UBehaviorTree;
+class UEnemyAttributeComponent;
 
 UCLASS()
 class CH3_TEAM12_API AEnemyCharacterBase : public ACharacter, public IAnimationAttackInterface
@@ -18,28 +20,37 @@ class CH3_TEAM12_API AEnemyCharacterBase : public ACharacter, public IAnimationA
 public:
 	// Sets default values for this character's properties
 	AEnemyCharacterBase();
-
-protected:
+	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
 	TObjectPtr<UEnemyAttackComponent> EnemyAttackComponent;
-
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UStateTagComponent> StateTagComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UEnemyAttributeComponent> AttributeComponent;
+	
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 
 	UFUNCTION(BlueprintCallable)
 	UEnemyAttackComponent* GetEnemyAttackComponent() const { return EnemyAttackComponent; }
+	UStateTagComponent* GetStateTagComponent() const { return StateTagComponent;}
+	UEnemyAttributeComponent* GetEnemyAttributeComponent() const { return AttributeComponent;}
 	
 	// Attack Animation Interface's Section
 public:

@@ -153,6 +153,13 @@ void UEnemyAttackComponent::ResetAttackCooldown()
 	bCanAttack = true;
 }
 
+void UEnemyAttackComponent::OnAttackAnimationEnd()
+{
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Attacking);
+	// AActor* Owner = GetOwner();
+	// if (Owner)
+}
+
 void UEnemyAttackComponent::FinishAttack()
 {
 	bCanAttack = true;
