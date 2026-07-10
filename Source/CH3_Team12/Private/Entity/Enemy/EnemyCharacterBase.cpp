@@ -8,6 +8,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 
 // Sets default values
 AEnemyCharacterBase::AEnemyCharacterBase()
@@ -18,6 +19,7 @@ AEnemyCharacterBase::AEnemyCharacterBase()
 	AIControllerClass = AEnemyAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	EnemyAttackComponent = CreateDefaultSubobject<UEnemyAttackComponent>(TEXT("EnemyAttackComponent"));
+	AttributeComponent = CreateDefaultSubobject<UEnemyAttributeComponent>(TEXT("AttributeComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -62,6 +64,17 @@ void AEnemyCharacterBase::Tick(float DeltaTime)
 void AEnemyCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+float AEnemyCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+	AController* EventInstigator, AActor* DamageCauser)
+{
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	
+	// 임의로 체간 게이지는 두배로 받도록 설정
+	AttributeComponent->ApplyAttributeDamage(DamageAmount, DamageAmount * 2);
+	
+	return DamageAmount;
 }
 
 void AEnemyCharacterBase::AttackAnimationEnd()

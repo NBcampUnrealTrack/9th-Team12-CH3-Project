@@ -66,6 +66,8 @@ private:
 	FTimerHandle AttackCooldownTimerHandle;
 	void ResetAttackCooldown();
 	
+	void OnAttackAnimationEnd();
+	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation|Data")
 	TObjectPtr<UEnemyAttackDataAsset> AttackData;
