@@ -9,7 +9,9 @@ class UAnimMontage;
 class APlayerCharacterBase;
 class UStateTagComponent;
 class UCharacterMovementComponent;
-class UPlayerCombatComponent;
+class UPlayerAttackComponent;
+class UPlayerDefenseComponent;
+
 struct FInputActionValue;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -76,7 +78,10 @@ private:
 	TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
 	UPROPERTY()
-	TObjectPtr<UPlayerCombatComponent> CombatComponent;
+	TObjectPtr<UPlayerAttackComponent> CombatComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerDefenseComponent> DefenseComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Data")
 	TObjectPtr<UPlayerLocomotionDataAsset> LocomotionData;

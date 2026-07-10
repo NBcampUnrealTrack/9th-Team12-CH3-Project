@@ -16,10 +16,11 @@ class UStateTagComponent;
 class UPlayerLocomotionComponent;
 class UPlayerAttributeComponent;
 class UPlayerCameraComponent;
-class UPlayerCombatComponent;
+class UPlayerAttackComponent;
 class UPlayerInventoryComponent;
 class UPlayerEquipmentComponent;
 class UPlayerWeaponComponent;
+class UPlayerDefenseComponent;
 
 UCLASS()
 class CH3_TEAM12_API APlayerCharacterBase : public ACharacter, public IAnimationAttackInterface
@@ -33,11 +34,13 @@ public:
 	UPlayerLocomotionComponent* GetLocomotionComponent() const;
 	UPlayerAttributeComponent* GetAttributeComponent() const;
 	UPlayerCameraComponent* GetPlayerCameraComponent() const;
-	UPlayerCombatComponent* GetCombatComponent() const;
+	UPlayerAttackComponent* GetCombatComponent() const;
 	UPlayerInventoryComponent* GetInventoryComponent() const;
 	UPlayerEquipmentComponent* GetEquipmentComponent() const;
 	UPlayerWeaponComponent* GetWeaponComponent() const;
-	
+	UPlayerDefenseComponent* GetDefenseComponent() const;
+	UPlayerAttackComponent* GetAttackComponent() const;
+
 	USpringArmComponent* GetCameraBoom() const;
 	UCameraComponent* GetFollowCamera() const;
 
@@ -60,13 +63,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerCameraComponent> CameraComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
-	TObjectPtr<UPlayerCombatComponent> CombatComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerInventoryComponent> InventoryComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UPlayerDefenseComponent> DefenseComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UPlayerAttackComponent> AttackComponent;
 	
 public:
 	// Called every frame

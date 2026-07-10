@@ -2,9 +2,11 @@
 #include "InputActionValue.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Entity/Player/StateTagComponent.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerAttackComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerCameraComponent.h"
+#include "Entity/Player/PlayerDefenseComponent.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
 
 UPlayerLocomotionComponent::UPlayerLocomotionComponent()
@@ -28,6 +30,7 @@ void UPlayerLocomotionComponent::BeginPlay()
 	StateComponent = OwnerCharacter->GetStateTagComponent();
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
 	CombatComponent = OwnerCharacter->GetCombatComponent();
+	DefenseComponent = OwnerCharacter->GetDefenseComponent();
 	
 	{
 		MovementComponent->bOrientRotationToMovement = true;
@@ -587,7 +590,7 @@ void UPlayerLocomotionComponent::EndDodge()
 
 	if (CombatComponent)
 	{
-		CombatComponent->DisableInvincible();
+		DefenseComponent->DisableInvincible();
 	}
 
 	if (UWorld* World = GetWorld())

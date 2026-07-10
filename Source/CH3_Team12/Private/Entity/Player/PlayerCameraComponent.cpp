@@ -45,7 +45,7 @@ void UPlayerCameraComponent::Look(const FInputActionValue& Value)
 	if (!OwnerActor)
 		return;
 
-	if (IsLockOnMode())
+	if (IsLockOn())
 		return;
 
 	const FVector2D LookInput = Value.Get<FVector2D>();
@@ -100,7 +100,7 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 }
 
 // 현재 락온 모드인지 확인
-bool UPlayerCameraComponent::IsLockOnMode() const
+bool UPlayerCameraComponent::IsLockOn() const
 {
 	return StateTagComponent &&
 		StateTagComponent->HasStateTagExact(
@@ -111,7 +111,7 @@ bool UPlayerCameraComponent::IsLockOnMode() const
 // 락온 상태면 해제, 아니면 락온 시도
 void UPlayerCameraComponent::LockOn()
 {
-	if (IsLockOnMode())
+	if (IsLockOn())
 	{
 		ClearLockOn();
 		return;
@@ -135,7 +135,7 @@ void UPlayerCameraComponent::TickComponent(
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (IsLockOnMode())
+	if (IsLockOn())
 	{
 		UpdateLockOnCamera(DeltaTime);
 	}
@@ -474,6 +474,11 @@ AActor* UPlayerCameraComponent::FindLockOnTarget() const
 void UPlayerCameraComponent::TryLockOn()
 {
 	if (!OwnerActor)
+	{
+		return;
+	}
+	
+	if (!StateTagComponent->HasStateTagExact(CombatTags::State_Combat_Armed))
 	{
 		return;
 	}

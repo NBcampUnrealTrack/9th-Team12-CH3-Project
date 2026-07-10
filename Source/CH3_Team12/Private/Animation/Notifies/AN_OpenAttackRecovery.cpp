@@ -5,7 +5,7 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerAttackComponent.h"
 
 
 void UAN_OpenAttackRecovery::Notify(
@@ -33,7 +33,7 @@ void UAN_OpenAttackRecovery::Notify(
 		return;
 	}
 
-	UPlayerCombatComponent* CombatComponent =
+	UPlayerAttackComponent* CombatComponent =
 		PlayerCharacter->GetCombatComponent();
 
 	if (!CombatComponent)

@@ -6,12 +6,47 @@
 #include "Engine/DataAsset.h"
 #include "PlayerDefenseDataAsset.generated.h"
 
-/**
- * 
- */
-UCLASS()
+class UAnimMontage;
+
+UCLASS(BlueprintType)
 class CH3_TEAM12_API UPlayerDefenseDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
 	
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Guard")
+	TObjectPtr<UAnimMontage> GuardStartMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Parry") 
+	TObjectPtr<UAnimMontage> ParryLeftMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Parry")
+	TObjectPtr<UAnimMontage> ParryRightMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Guard")
+	TObjectPtr<UAnimMontage> GuardHitLeftMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Guard")
+	TObjectPtr<UAnimMontage> GuardHitRightMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
+	TObjectPtr<UAnimMontage> HitFrontMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
+	TObjectPtr<UAnimMontage> HitBackMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
+	TObjectPtr<UAnimMontage> HitLeftMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
+	TObjectPtr<UAnimMontage> HitRightMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Guard")
+	float GuardMontageBlendOutTime = 0.1f;
+
+	UPROPERTY(EditAnywhere, Category="Guard")
+	float GuardChipDamageRate = 0.2f;
+	
+	UPROPERTY(EditAnywhere, Category="Guard")
+	float GuardPostureDamageRate = 1.0f;
 };

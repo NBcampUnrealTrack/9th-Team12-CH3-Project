@@ -26,7 +26,7 @@ public:
 	void LockOn();
 
 	AActor* GetCurrentLockOnTarget() const { return CurrentLockOnTarget; }
-	bool IsLockOnMode() const;
+	bool IsLockOn() const;
 
 protected:
 	virtual void TickComponent(

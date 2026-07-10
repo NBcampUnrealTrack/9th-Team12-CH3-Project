@@ -2,7 +2,7 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerAttackComponent.h"
 
 void UAN_OpenComboWindow::Notify(
 	USkeletalMeshComponent* MeshComp,
@@ -29,7 +29,7 @@ void UAN_OpenComboWindow::Notify(
 		return;
 	}
 
-	UPlayerCombatComponent* CombatComponent =
+	UPlayerAttackComponent* CombatComponent =
 		PlayerCharacter->GetCombatComponent();
 
 	if (!CombatComponent)
