@@ -19,6 +19,7 @@ class UPlayerCameraComponent;
 class UPlayerCombatComponent;
 class UPlayerInventoryComponent;
 class UPlayerEquipmentComponent;
+class UPlayerWeaponComponent;
 
 UCLASS()
 class CH3_TEAM12_API APlayerCharacterBase : public ACharacter, public IAnimationAttackInterface
@@ -35,6 +36,7 @@ public:
 	UPlayerCombatComponent* GetCombatComponent() const;
 	UPlayerInventoryComponent* GetInventoryComponent() const;
 	UPlayerEquipmentComponent* GetEquipmentComponent() const;
+	UPlayerWeaponComponent* GetWeaponComponent() const;
 	
 	USpringArmComponent* GetCameraBoom() const;
 	UCameraComponent* GetFollowCamera() const;
@@ -63,6 +65,8 @@ protected:
 	TObjectPtr<UPlayerInventoryComponent> InventoryComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
 	
 public:
 	// Called every frame

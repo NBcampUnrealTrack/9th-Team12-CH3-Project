@@ -15,6 +15,7 @@
 #include "Entity/Player/PlayerCombatComponent.h"
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Player/PlayerInventoryComponent.h"
+#include "Entity/Player/PlayerWeaponComponent.h"
 
 // Sets default values
 APlayerCharacterBase::APlayerCharacterBase()
@@ -41,6 +42,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	CameraComponent = CreateDefaultSubobject<UPlayerCameraComponent>(TEXT("CameraComponent"));
 	InventoryComponent = CreateDefaultSubobject<UPlayerInventoryComponent>(TEXT("InventoryComponent"));
 	EquipmentComponent = CreateDefaultSubobject<UPlayerEquipmentComponent>(TEXT("EquipmentComponent"));
+	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
 }
 
 UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
@@ -71,6 +73,11 @@ UPlayerInventoryComponent* APlayerCharacterBase::GetInventoryComponent() const
 UPlayerEquipmentComponent* APlayerCharacterBase::GetEquipmentComponent() const
 {
 	return EquipmentComponent;
+}
+
+UPlayerWeaponComponent* APlayerCharacterBase::GetWeaponComponent() const
+{
+	return WeaponComponent;
 }
 
 UPlayerCameraComponent* APlayerCharacterBase::GetPlayerCameraComponent() const
@@ -197,31 +204,31 @@ void APlayerCharacterBase::AttackAnimationEnd()
 
 void APlayerCharacterBase::AttackHitCheckStart()
 {
-	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
 	
-	if (CombatComponent)
+	if (WeaponComponent)
 	{
-		CombatComponent->StartWeaponHitCheck();
+		WeaponComponent->StartWeaponHitCheck();
 	}
 }
 
 void APlayerCharacterBase::AttackHitCheckTick()
 {
-	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
 	
-	if (CombatComponent)
+	if (WeaponComponent)
 	{
-		CombatComponent->WeaponTrace();
+		WeaponComponent->WeaponTrace();
 	}
 }
 
 void APlayerCharacterBase::AttackHitCheckEnd()
 {
-	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
 	
-	if (CombatComponent)
+	if (WeaponComponent)
 	{
-		CombatComponent->EndWeaponHitCheck();
+		WeaponComponent->EndWeaponHitCheck();
 	}
 }
 

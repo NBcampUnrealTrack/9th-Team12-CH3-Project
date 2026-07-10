@@ -13,6 +13,7 @@ class AWeaponBase;
 class UStateTagComponent;
 class UPlayerAttributeComponent;
 class UPlayerEquipmentComponent;
+class UPlayerWeaponComponent;
 class UNiagaraSystem;
 class USoundBase;
 
@@ -49,9 +50,6 @@ public:
 	void OpenComboWindow();
 	void EndAttack();
 	void OpenAttackRecovery();
-	void StartWeaponHitCheck();
-	void WeaponTrace();
-	void EndWeaponHitCheck();
 
 	bool bInvincible = false;
 	void EnableInvincible();
@@ -81,9 +79,6 @@ private:
 	void StartAttack(EAttackType AttackType);
 	void ContinueCombo();
 
-	void ProcessHit(const FHitResult& Hit);
-	void CacheWeaponTraceLocation();
-
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
 
@@ -95,6 +90,8 @@ private:
 	
 	UPROPERTY()
 	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
+	UPROPERTY()
+	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Combo")
 	TArray<FName> ComboSectionNames = {
@@ -105,23 +102,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Attack")
 	float AttackPlayRate = 1.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Weapon")
-	FName WeaponSocketName = TEXT("weapon_rSocket");
-
-	FVector PreviousBladeStart = FVector::ZeroVector;
-	FVector PreviousBladeEnd = FVector::ZeroVector;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
-	float TraceRadius = 8.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
-	int32 TraceSampleCount = 5;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
-	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
-
-	TSet<TWeakObjectPtr<AActor>> HitActors;
 	
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentAttackMontage;
@@ -130,7 +110,6 @@ private:
 
 	bool bComboWindow = false;
 	bool bComboBuffered = false;
-	bool bWeaponHitCheck = false;
 
 	EAttackType CurrentAttackType = EAttackType::Light;
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
