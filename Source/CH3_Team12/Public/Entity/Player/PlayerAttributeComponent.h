@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Framework/DataAsset/PlayerAttributeDataAsset.h"
 #include "PlayerAttributeComponent.generated.h"
 
 class APlayerCharacterBase;
@@ -112,29 +113,19 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UStateTagComponent> StateComponent;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Player|Attribute|Data")
+	TObjectPtr<UPlayerAttributeDataAsset> AttributeData;
 
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Player|Attribute|Health", meta=(AllowPrivateAccess="true"))
-	float MaxHealth = 100.0f;
+	float MaxHealth = 0.0f;
+	float MaxPosture = 0.0f;
+	float PostureRecoveryRate = 0.0f;
+	float PostureRecoveryDelay = 0.0f;
+	float PostureBreakDuration = 0.0f;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Player|Attribute|Health", meta=(AllowPrivateAccess="true"))
-	float CurrentHealth = 100.0f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Player|Attribute|Posture", meta=(AllowPrivateAccess="true"))
-	float MaxPosture = 100.0f;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Player|Attribute|Posture", meta=(AllowPrivateAccess="true"))
+	float CurrentHealth = 0.0f;
 	float CurrentPosture = 0.0f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Player|Attribute|Posture", meta=(AllowPrivateAccess="true"))
-	float PostureRecoveryRate = 20.0f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Player|Attribute|Posture", meta=(AllowPrivateAccess="true"))
-	float PostureRecoveryDelay = 2.0f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Player|Attribute|Posture", meta=(AllowPrivateAccess="true"))
-	float PostureBreakDuration = 1.5f;
-
 private:
 	float LastPostureDamageTime = -999.0f;
 

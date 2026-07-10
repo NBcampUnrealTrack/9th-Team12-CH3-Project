@@ -29,6 +29,31 @@ void UPlayerLocomotionComponent::BeginPlay()
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
 	CombatComponent = OwnerCharacter->GetCombatComponent();
 	
+	{
+		MovementComponent->bOrientRotationToMovement = true;
+		MovementComponent->bUseControllerDesiredRotation = false;
+		MovementComponent->RotationRate = FRotator(0.0f, 1000.0f, 0.0f);
+		MovementComponent->MaxAcceleration = 2048.0f;
+		MovementComponent->GroundFriction = 4.0f;
+		MovementComponent->BrakingDecelerationWalking = 200.0f;
+		MovementComponent->GravityScale = 1.0f;
+	}
+	
+	{
+		// Speed
+		NormalWalkSpeed = LocomotionData->NormalWalkSpeed;
+		WalkSpeed = LocomotionData->WalkSpeed;
+		SprintSpeed = LocomotionData->SprintSpeed;
+		LockOnWalkSpeed = LocomotionData->LockOnWalkSpeed;
+		GuardWalkSpeed = LocomotionData->GuardWalkSpeed;
+	
+		// Dodge
+		SprintHoldThreshold = LocomotionData->SprintHoldThreshold;
+		DodgeBufferDuration = LocomotionData->DodgeBufferDuration;
+		DodgeBlendOutTime = LocomotionData->DodgeBlendOutTime;
+		
+	}
+	
 	RefreshMovementSettings();
 }
 
@@ -107,14 +132,14 @@ void UPlayerLocomotionComponent::OpenDodgeRecovery()
 
 	RefreshMovementSettings();
 
-	if (DodgeMontage)
+	if (LocomotionData->DodgeMontage)
 	{
 		if (UAnimInstance* AnimInstance =
 			OwnerCharacter->GetMesh()->GetAnimInstance())
 		{
 			AnimInstance->Montage_Stop(
 				DodgeBlendOutTime,
-				DodgeMontage
+				LocomotionData->DodgeMontage
 			);
 		}
 	}
@@ -199,6 +224,26 @@ void UPlayerLocomotionComponent::RefreshMovementSettings()
 	MovementComponent->bUseControllerDesiredRotation = bShouldStrafe;
 }
 
+bool UPlayerLocomotionComponent::CanMove() const
+{
+	if (!StateComponent)
+	{
+		return false;
+	}
+
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	// BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
+
+	return !StateComponent->HasAnyStateTags(BlockTags);
+}
+
 bool UPlayerLocomotionComponent::CanSprint() const
 {
 	if (!StateComponent || !MovementComponent)
@@ -244,11 +289,6 @@ bool UPlayerLocomotionComponent::CanDodge() const
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }
 
-void UPlayerLocomotionComponent::DoStopMove()
-{
-	LastMovementInput = FVector2D::ZeroVector;
-}
-
 void UPlayerLocomotionComponent::DoStartJump(const FInputActionValue& value)
 {
 	if (!OwnerCharacter) return;
@@ -277,7 +317,7 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 
 	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
 
-	if (StateComp->HasStateTagExact(CombatTags::State_Movement_Locked))
+	if (!CanMove())
 	{
 		return;
 	}
@@ -311,6 +351,11 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 	);
 	
 	// UE_LOG(LogTemp, Warning, TEXT("Move Input Called"));
+}
+
+void UPlayerLocomotionComponent::DoStopMove()
+{
+	LastMovementInput = FVector2D::ZeroVector;
 }
 
 void UPlayerLocomotionComponent::DoStartSprint()
@@ -488,7 +533,7 @@ void UPlayerLocomotionComponent::ClearDodgeBuffer()
 void UPlayerLocomotionComponent::StartDodge(
 	const FVector& DodgeDirection)
 {
-	if (!OwnerCharacter || !StateComponent || !DodgeMontage)
+	if (!OwnerCharacter || !StateComponent || !LocomotionData->DodgeMontage)
 	{
 		return;
 	}
@@ -517,7 +562,7 @@ void UPlayerLocomotionComponent::StartDodge(
 	RefreshMovementSettings();
 
 	const float Duration =
-		OwnerCharacter->PlayAnimMontage(DodgeMontage);
+		OwnerCharacter->PlayAnimMontage(LocomotionData->DodgeMontage);
 
 	if (Duration <= 0.0f)
 	{

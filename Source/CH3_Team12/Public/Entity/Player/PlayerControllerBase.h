@@ -42,6 +42,10 @@ protected:
 	TObjectPtr<UInputAction> TestAction3;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> TestAction4;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> EquipAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> UseItemAction;
 	
 	virtual void BeginPlay() override;
 	
@@ -61,4 +65,7 @@ public:
 	FORCEINLINE TObjectPtr<UInputAction> GetTestAction2() const { return TestAction2; }
 	FORCEINLINE TObjectPtr<UInputAction> GetTestAction3() const { return TestAction3; }
 	FORCEINLINE TObjectPtr<UInputAction> GetTestAction4() const { return TestAction4; }
+	
+	FORCEINLINE TObjectPtr<UInputAction> GetEquipAction() const { return EquipAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetUseItemAction() const { return UseItemAction; }
 };
