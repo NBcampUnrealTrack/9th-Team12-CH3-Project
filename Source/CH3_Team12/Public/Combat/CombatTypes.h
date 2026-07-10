@@ -63,3 +63,14 @@ struct FIncomingAttackContext
 	UPROPERTY()
 	FVector AttackWorldDirection = FVector::ZeroVector;
 };
+
+
+UENUM(BlueprintType)
+enum class EDefenseResult : uint8
+{
+	None,
+	Parry,
+	Guard,
+	Hit,
+	Invincible
+};

@@ -19,6 +19,11 @@ void UPlayerItemUseComponent::BeginPlay()
 
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+	
 	Inventory =
 		OwnerCharacter->FindComponentByClass<UPlayerInventoryComponent>();
 }

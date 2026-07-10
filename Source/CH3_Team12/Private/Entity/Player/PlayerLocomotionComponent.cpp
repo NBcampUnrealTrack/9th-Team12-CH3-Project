@@ -316,12 +316,7 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 	}
 
 	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
-
-	if (!CanMove())
-	{
-		return;
-	}
-
+	
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (MovementVector.IsNearlyZero())
@@ -330,6 +325,11 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 	}
 
 	LastMovementInput = MovementVector;
+	
+	if (!CanMove())
+	{
+		return;
+	}
 
 	const FRotator Rotation = OwnerCharacter->GetControlRotation();
 	const FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
