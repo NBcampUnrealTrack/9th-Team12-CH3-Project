@@ -2,7 +2,7 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerDefenseComponent.h"
 
 void UANS_DodgeInvincible::NotifyBegin(
 	USkeletalMeshComponent* MeshComp,
@@ -31,15 +31,15 @@ void UANS_DodgeInvincible::NotifyBegin(
 		return;
 	}
 
-	UPlayerCombatComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent();
+	UPlayerDefenseComponent* DefenseComponent =
+		PlayerCharacter->GetDefenseComponent();
 
-	if (!CombatComponent)
+	if (!DefenseComponent)
 	{
 		return;
 	}
 
-	CombatComponent->EnableInvincible();
+	DefenseComponent->EnableInvincible();
 }
 
 void UANS_DodgeInvincible::NotifyEnd(
@@ -67,13 +67,13 @@ void UANS_DodgeInvincible::NotifyEnd(
 		return;
 	}
 
-	UPlayerCombatComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent();
+	UPlayerDefenseComponent* DefenseComponent =
+		PlayerCharacter->GetDefenseComponent();
 
-	if (!CombatComponent)
+	if (!DefenseComponent)
 	{
 		return;
 	}
 
-	CombatComponent->DisableInvincible();
+	DefenseComponent->DisableInvincible();
 }

@@ -1,23 +1,19 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "PlayerCombatMontageDataAsset.generated.h"
+#include "PlayerDefenseDataAsset.generated.h"
 
 class UAnimMontage;
 
 UCLASS(BlueprintType)
-class CH3_TEAM12_API UPlayerCombatMontageDataAsset : public UDataAsset
+class CH3_TEAM12_API UPlayerDefenseDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
-
+	
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Attack")
-	TObjectPtr<UAnimMontage> LightAttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Attack")
-	TObjectPtr<UAnimMontage> HeavyAttackMontage;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Guard")
 	TObjectPtr<UAnimMontage> GuardStartMontage;
 
@@ -44,4 +40,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
 	TObjectPtr<UAnimMontage> HitRightMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Guard")
+	float GuardMontageBlendOutTime = 0.1f;
+
+	UPROPERTY(EditAnywhere, Category="Guard")
+	float GuardChipDamageRate = 0.2f;
+	
+	UPROPERTY(EditAnywhere, Category="Guard")
+	float GuardPostureDamageRate = 1.0f;
 };

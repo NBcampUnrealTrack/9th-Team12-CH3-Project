@@ -13,7 +13,7 @@
 #include "GameFramework/Character.h"
 #include "Framework/DataAsset/EnemyAttackDataAsset.h"
 #include "Kismet/GameplayStatics.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerDefenseComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Combat/CombatTypes.h"
 
@@ -116,7 +116,6 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		return false;
 	}
 
-
 	GetWorld()->GetTimerManager().SetTimer(
 		AttackCooldownTimerHandle,
 		this,
@@ -151,6 +150,13 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 void UEnemyAttackComponent::ResetAttackCooldown()
 {
 	bCanAttack = true;
+}
+
+void UEnemyAttackComponent::OnAttackAnimationEnd()
+{
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Attacking);
+	// AActor* Owner = GetOwner();
+	// if (Owner)
 }
 
 void UEnemyAttackComponent::FinishAttack()
@@ -327,14 +333,14 @@ void UEnemyAttackComponent::ProcessHit(const FHitResult& InHitResult, const FAtt
 
 	if (APlayerCharacterBase* PlayerCharacter = Cast<APlayerCharacterBase>(HitActor))
 	{
-		if (UPlayerCombatComponent* PlayerCombatComponent = PlayerCharacter->FindComponentByClass<UPlayerCombatComponent>())
+		if (UPlayerDefenseComponent* PlayerDefenseComponent = PlayerCharacter->FindComponentByClass<UPlayerDefenseComponent>())
 		{
 			FIncomingAttackContext IncomingAttackContext;
 			IncomingAttackContext.Attacker = GetOwner();
 			IncomingAttackContext.Hit = InHitResult;
 			IncomingAttackContext.AttackInfo = InAttackInfo;
 			
-			PlayerCombatComponent->ResolveIncomingAttack(IncomingAttackContext);	
+			PlayerDefenseComponent->ResolveIncomingAttack(IncomingAttackContext);	
 		}
 	}
 	else

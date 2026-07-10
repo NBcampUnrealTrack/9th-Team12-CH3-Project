@@ -5,7 +5,7 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerDefenseComponent.h"
 
 void UANS_ParryWindow::NotifyBegin(
 	USkeletalMeshComponent* MeshComp,
@@ -34,10 +34,10 @@ void UANS_ParryWindow::NotifyBegin(
 		return;
 	}
 
-	if (UPlayerCombatComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent())
+	if (UPlayerDefenseComponent* DefenseComponent =
+		PlayerCharacter->GetDefenseComponent())
 	{
-		CombatComponent->OpenParryWindow();
+		DefenseComponent->OpenParryWindow();
 	}
 }
 
@@ -66,9 +66,9 @@ void UANS_ParryWindow::NotifyEnd(
 		return;
 	}
 
-	if (UPlayerCombatComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent())
+	if (UPlayerDefenseComponent* DefenseComponent =
+		PlayerCharacter->GetDefenseComponent())
 	{
-		CombatComponent->CloseParryWindow();
+		DefenseComponent->CloseParryWindow();
 	}
 }
