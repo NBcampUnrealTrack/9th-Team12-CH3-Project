@@ -29,19 +29,9 @@ APlayerCharacterBase::APlayerCharacterBase()
 	
 		CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 		CameraBoom->SetupAttachment(RootComponent);
-		CameraBoom->TargetArmLength = 400.0f;
-		CameraBoom->bUsePawnControlRotation = true;
-		CameraBoom->bEnableCameraLag = true;
-		CameraBoom->CameraLagSpeed = 4.0f;
-		CameraBoom->CameraLagMaxDistance = 200.0f;
-		CameraBoom->bEnableCameraRotationLag = true;
-		CameraBoom->CameraRotationLagSpeed = 12.0f;
-		CameraBoom->bDoCollisionTest = false;
 
 		FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 		FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-		FollowCamera->bUsePawnControlRotation = false; // 카메라는 암의 회전을 따라가기만 함
-		
 	}
 	
 	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateComponent"));
