@@ -40,9 +40,9 @@ public:
 	}
 	
 	/** 현재 장착된 아이템 */
-	FORCEINLINE UItemInstance* GetEquippedWeaponItem() const
+	FORCEINLINE UItemInstance* GetEquippedWeaponInstance() const
 	{
-		return EquippedWeaponItem;
+		return CurrentWeaponInstance;
 	}
 
 private:
@@ -55,6 +55,8 @@ private:
 	bool EquipWeapon(UItemInstance* Item, const UWeaponDataAsset* WeaponData);
 	
 	void UnequipWeapon();
+	
+	void SpawnWeaponToSheath();
 	
 	void OnEquipMontageEnded(
 		UAnimMontage* Montage,
@@ -75,8 +77,11 @@ private:
 	
 	/** 현재 장착중인 ItemInstance */
 	UPROPERTY()
-	TObjectPtr<UItemInstance> EquippedWeaponItem;
+	TObjectPtr<UItemInstance> CurrentWeaponInstance;
 
+	UPROPERTY()
+	TObjectPtr<const UWeaponDataAsset> CurrentWeaponData;
+	
 	/** 현재 장착중인 무기 Actor */
 	UPROPERTY()
 	TObjectPtr<AWeaponBase> EquippedWeapon;
