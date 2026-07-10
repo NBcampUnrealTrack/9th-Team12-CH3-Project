@@ -12,9 +12,12 @@
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "Entity/Player/PlayerAttributeComponent.h"
 #include "Entity/Player/PlayerCameraComponent.h"
-#include "Entity/Player/PlayerCombatComponent.h"
+#include "Entity/Player/PlayerAttackComponent.h"
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Player/PlayerInventoryComponent.h"
+#include "Entity/Player/PlayerWeaponComponent.h"
+#include "Entity/Player/PlayerDefenseComponent.h"
+#include "Entity/Player/PlayerAttackComponent.h"
 
 // Sets default values
 APlayerCharacterBase::APlayerCharacterBase()
@@ -37,10 +40,13 @@ APlayerCharacterBase::APlayerCharacterBase()
 	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateComponent"));
 	LocomotionComponent = CreateDefaultSubobject<UPlayerLocomotionComponent>(TEXT("LocomotionComponent"));
 	AttributeComponent = CreateDefaultSubobject<UPlayerAttributeComponent>(TEXT("AttributeComponent"));
-	CombatComponent = CreateDefaultSubobject<UPlayerCombatComponent>(TEXT("CombatComponent"));
+	AttackComponent = CreateDefaultSubobject<UPlayerAttackComponent>(TEXT("CombatComponent"));
 	CameraComponent = CreateDefaultSubobject<UPlayerCameraComponent>(TEXT("CameraComponent"));
 	InventoryComponent = CreateDefaultSubobject<UPlayerInventoryComponent>(TEXT("InventoryComponent"));
 	EquipmentComponent = CreateDefaultSubobject<UPlayerEquipmentComponent>(TEXT("EquipmentComponent"));
+	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
+	DefenseComponent = CreateDefaultSubobject<UPlayerDefenseComponent>(TEXT("DefenseComponent"));
+	AttackComponent = CreateDefaultSubobject<UPlayerAttackComponent>(TEXT("AttackComponent"));
 }
 
 UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
@@ -58,9 +64,9 @@ UPlayerAttributeComponent* APlayerCharacterBase::GetAttributeComponent() const
 	return AttributeComponent;
 }
 
-UPlayerCombatComponent* APlayerCharacterBase::GetCombatComponent() const
+UPlayerAttackComponent* APlayerCharacterBase::GetCombatComponent() const
 {
-	return CombatComponent;
+	return AttackComponent;
 }
 
 UPlayerInventoryComponent* APlayerCharacterBase::GetInventoryComponent() const
@@ -71,6 +77,21 @@ UPlayerInventoryComponent* APlayerCharacterBase::GetInventoryComponent() const
 UPlayerEquipmentComponent* APlayerCharacterBase::GetEquipmentComponent() const
 {
 	return EquipmentComponent;
+}
+
+UPlayerWeaponComponent* APlayerCharacterBase::GetWeaponComponent() const
+{
+	return WeaponComponent;
+}
+
+UPlayerDefenseComponent* APlayerCharacterBase::GetDefenseComponent() const
+{
+	return DefenseComponent;
+}
+
+UPlayerAttackComponent* APlayerCharacterBase::GetAttackComponent() const
+{
+	return AttackComponent;
 }
 
 UPlayerCameraComponent* APlayerCharacterBase::GetPlayerCameraComponent() const
@@ -143,7 +164,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	// Combat
 	if (UInputAction* AttackAction = PlayerControllerBase->GetAttackAction())
 	{
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Attack);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, AttackComponent.Get(), &UPlayerAttackComponent::Attack);
 	}
 	if (UInputAction* LockOnAction = PlayerControllerBase->GetLockOnAction())
 	{
@@ -151,28 +172,28 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 	if (UInputAction* GuardAction = PlayerControllerBase->GetGuardAction())
 	{
-		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::StartGuard);
-		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Completed, CombatComponent.Get(), &UPlayerCombatComponent::StopGuard);
-		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Canceled, CombatComponent.Get(), &UPlayerCombatComponent::StopGuard);
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::StartGuard);
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Completed, DefenseComponent.Get(), &UPlayerDefenseComponent::StopGuard);
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Canceled, DefenseComponent.Get(), &UPlayerDefenseComponent::StopGuard);
 	}
 	
-	// TestAction
-	if (UInputAction* TestAction1 = PlayerControllerBase->GetTestAction1())
-	{
-		EnhancedInputComponent->BindAction(TestAction1, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackFront);
-	}
-	if (UInputAction* TestAction2 = PlayerControllerBase->GetTestAction2())
-	{
-		EnhancedInputComponent->BindAction(TestAction2, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackBack);
-	}
-	if (UInputAction* TestAction3 = PlayerControllerBase->GetTestAction3())
-	{
-		EnhancedInputComponent->BindAction(TestAction3, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackLeft);
-	}
-	if (UInputAction* TestAction4 = PlayerControllerBase->GetTestAction4())
-	{
-		EnhancedInputComponent->BindAction(TestAction4, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackRight);
-	}
+	// // TestAction
+	// if (UInputAction* TestAction1 = PlayerControllerBase->GetTestAction1())
+	// {
+	// 	EnhancedInputComponent->BindAction(TestAction1, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackFront);
+	// }
+	// if (UInputAction* TestAction2 = PlayerControllerBase->GetTestAction2())
+	// {
+	// 	EnhancedInputComponent->BindAction(TestAction2, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackBack);
+	// }
+	// if (UInputAction* TestAction3 = PlayerControllerBase->GetTestAction3())
+	// {
+	// 	EnhancedInputComponent->BindAction(TestAction3, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackLeft);
+	// }
+	// if (UInputAction* TestAction4 = PlayerControllerBase->GetTestAction4())
+	// {
+	// 	EnhancedInputComponent->BindAction(TestAction4, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackRight);
+	// }
 	
 	if (UInputAction* EquipAction = PlayerControllerBase->GetEquipAction())
 	{
@@ -187,41 +208,41 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void APlayerCharacterBase::AttackAnimationEnd()
 {
-	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	ensureMsgf(AttackComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
 	
-	if (CombatComponent)
+	if (AttackComponent)
 	{
-		CombatComponent->EndAttack();
+		AttackComponent->EndAttack();
 	}	
 }
 
 void APlayerCharacterBase::AttackHitCheckStart()
 {
-	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
 	
-	if (CombatComponent)
+	if (WeaponComponent)
 	{
-		CombatComponent->StartWeaponHitCheck();
+		WeaponComponent->StartWeaponHitCheck();
 	}
 }
 
 void APlayerCharacterBase::AttackHitCheckTick()
 {
-	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
 	
-	if (CombatComponent)
+	if (WeaponComponent)
 	{
-		CombatComponent->WeaponTrace();
+		WeaponComponent->WeaponTrace();
 	}
 }
 
 void APlayerCharacterBase::AttackHitCheckEnd()
 {
-	ensureMsgf(CombatComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
 	
-	if (CombatComponent)
+	if (WeaponComponent)
 	{
-		CombatComponent->EndWeaponHitCheck();
+		WeaponComponent->EndWeaponHitCheck();
 	}
 }
 
