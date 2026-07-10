@@ -3,6 +3,11 @@
 #include "Components/Button.h"
 #include "UI/Settings/SoundSettingsWidget.h"
 
+USoundSettingsWidget* UMainMenuSettingsWidget::GetSoundSettings() const
+{
+	return SoundSettingsWidget.Get();
+}
+
 void UMainMenuSettingsWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
@@ -33,6 +38,4 @@ void UMainMenuSettingsWidget::HandleVisibilitySoundSettingsChanged(const ESlateV
 		if (BtnSoundSettings)
 			BtnSoundSettings->SetIsEnabled(true);
 	}
-
-	OnVisibilitySoundSettingsChanged.ExecuteIfBound(InVisibility, SoundSettingsWidget);
 }

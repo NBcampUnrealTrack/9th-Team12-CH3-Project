@@ -7,8 +7,6 @@
 class UButton;
 class USoundSettingsWidget;
 
-DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnVisibilityChanged, ESlateVisibility, InVisibility, UUserWidget*, InWidget);
-
 /**
  *
  */
@@ -21,7 +19,7 @@ public:
 	//닫기 키 입력 추가
 	//단축키로 닫기 키를 누르게 유도 내부 들어가서는 결정과 뒤로 를 표시
 
-	FOnVisibilityChanged OnVisibilitySoundSettingsChanged;
+	USoundSettingsWidget* GetSoundSettings() const;
 
 protected:
 	UFUNCTION()

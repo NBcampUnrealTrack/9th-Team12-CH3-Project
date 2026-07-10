@@ -5,8 +5,6 @@
 #include "UObject/Object.h"
 #include "MainMenuSettingsPresenter.generated.h"
 
-class UUserWidget;
-enum class ESlateVisibility : uint8;
 class UMainMenuSettingsWidget;
 /**
  *
@@ -23,7 +21,4 @@ public:
 private:
 	UPROPERTY()
 	TWeakObjectPtr<UMainMenuSettingsWidget> MainMenuSettingsWidget;
-
-	UFUNCTION()
-	void HandleVisibilitySoundSettingsChanged(ESlateVisibility InVisibility, UUserWidget* InWidget);
 };

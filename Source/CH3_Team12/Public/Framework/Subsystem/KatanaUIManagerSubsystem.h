@@ -35,6 +35,7 @@ public:
 
 	void ShowInGameMenuWidget();
 	void HideInGameMenuWidget();
+	bool HasInGameMenuWidget() const;
 
 	void RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
 	void UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget);

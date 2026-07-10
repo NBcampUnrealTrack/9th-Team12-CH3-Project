@@ -15,6 +15,8 @@ class CH3_TEAM12_API UInGameMenuWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
+public:
+	USoundSettingsWidget* GetSoundSettings() const;
 
 protected:
 	UFUNCTION()

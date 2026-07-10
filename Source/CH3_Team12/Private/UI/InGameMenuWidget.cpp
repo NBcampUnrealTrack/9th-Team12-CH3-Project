@@ -3,6 +3,11 @@
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
 
+USoundSettingsWidget* UInGameMenuWidget::GetSoundSettings() const
+{
+	return SoundSettingsWidget.Get();
+}
+
 void UInGameMenuWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
@@ -37,7 +42,6 @@ void UInGameMenuWidget::HandleBtnChildGraphicsSettingsClicked()
 void UInGameMenuWidget::WidgetSwitcherChanged(const int32 ActiveWidgetIndex)
 {
 	WidgetSwitcher->SetActiveWidgetIndex(ActiveWidgetIndex);
-
 }
 
 void UInGameMenuWidget::SettingsWidgetSwitcherChanged(const int32 ActiveWidgetIndex)

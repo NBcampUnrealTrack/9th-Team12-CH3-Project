@@ -2,6 +2,8 @@
 
 #include "Framework/KatanaSystemSettings.h"
 #include "Framework/PresenterInterface.h"
+#include "UI/InGameMenuPresenter.h"
+#include "UI/InGameMenuWidget.h"
 #include "UI/LoadingPresenter.h"
 #include "UI/LoadingWidget.h"
 #include "UI/MainMenuPresenter.h"
@@ -104,9 +106,47 @@ void UKatanaUIManagerSubsystem::HideMainMenuSettingsWidget()
 	OpHideUI(MainMenuSettingsWidgetName);
 }
 
+void UKatanaUIManagerSubsystem::ShowInGameMenuWidget()
+{
+	const FName WidgetName = InGameMenuWidgetName;
+	UInGameMenuWidget* ActiveView = OpShowUI<UInGameMenuWidget>(WidgetName);
+	if (!ActiveView)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	UInGameMenuPresenter* NewPresenter = NewObject<UInGameMenuPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("%s 생성."), *WidgetName.ToString());
+
+	NewPresenter->Initialize(ActiveView);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::HideInGameMenuWidget()
+{
+	OpHideUI(InGameMenuWidgetName);
+}
+
+bool UKatanaUIManagerSubsystem::HasInGameMenuWidget() const
+{
+	return ActiveViews.Contains(InGameMenuWidgetName) && ActivePresenters.Contains(InGameMenuWidgetName);
+}
+
 void UKatanaUIManagerSubsystem::RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget)
 {
 	const FName WidgetName = SoundSettingsWidgetName;
+	if (!InWidget)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 이 유효하지 않습니다."), *WidgetName.ToString());
+		return;
+	}
 
 	USoundSettingsPresenter* NewPresenter = NewObject<USoundSettingsPresenter>(this);
 	if (!NewPresenter)

@@ -2,30 +2,14 @@
 
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
 #include "UI/Settings/MainMenuSettingsWidget.h"
-#include "UI/Settings/SoundSettingsWidget.h"
 
 void UMainMenuSettingsPresenter::Initialize(UMainMenuSettingsWidget* InWidget)
 {
 	MainMenuSettingsWidget = InWidget;
 
-	if (MainMenuSettingsWidget.IsValid())
-		MainMenuSettingsWidget->OnVisibilitySoundSettingsChanged.BindDynamic(
-			this, &UMainMenuSettingsPresenter::HandleVisibilitySoundSettingsChanged);
-}
-
-void UMainMenuSettingsPresenter::Dispose()
-{
-	if (MainMenuSettingsWidget.IsValid())
-		MainMenuSettingsWidget->OnVisibilitySoundSettingsChanged.Unbind();
-}
-
-void UMainMenuSettingsPresenter::HandleVisibilitySoundSettingsChanged(const ESlateVisibility InVisibility,
-                                                                      UUserWidget* InWidget)
-{
-	USoundSettingsWidget* SoundSettingsWidget = Cast<USoundSettingsWidget>(InWidget);
-	if (!SoundSettingsWidget)
+	if (!MainMenuSettingsWidget.IsValid())
 	{
-		UE_LOG(LogTemp, Error, TEXT("SoundSettingsWidget is not valid"));
+		UE_LOG(LogTemp, Error, TEXT("MainMenuSettingsWidget is not valid"));
 		return;
 	}
 
@@ -36,19 +20,23 @@ void UMainMenuSettingsPresenter::HandleVisibilitySoundSettingsChanged(const ESla
 		return;
 	}
 
-	switch (InVisibility)
+	UIManager->RegisterSoundSettingsWidget(MainMenuSettingsWidget->GetSoundSettings());
+}
+
+void UMainMenuSettingsPresenter::Dispose()
+{
+	if (!MainMenuSettingsWidget.IsValid())
 	{
-	case ESlateVisibility::Visible:
-		{
-			UIManager->RegisterSoundSettingsWidget(SoundSettingsWidget);
-			break;
-		}
-	case ESlateVisibility::Collapsed:
-		{
-			UIManager->UnregisterSoundSettingsWidget(SoundSettingsWidget);
-			break;
-		}
-	default:
-		break;
+		UE_LOG(LogTemp, Error, TEXT("MainMenuSettingsWidget is not valid"));
+		return;
 	}
+
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
+	if (!UIManager)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UIManager is not valid"));
+		return;
+	}
+
+	UIManager->UnregisterSoundSettingsWidget(MainMenuSettingsWidget->GetSoundSettings());
 }
