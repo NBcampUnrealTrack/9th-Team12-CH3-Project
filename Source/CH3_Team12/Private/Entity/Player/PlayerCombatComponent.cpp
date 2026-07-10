@@ -3,6 +3,7 @@
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "Entity/Player/PlayerAttributeComponent.h"
+#include "Entity/Player/PlayerEquipmentComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 
 #include "InputActionValue.h"
@@ -44,54 +45,11 @@ void UPlayerCombatComponent::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : AttributeComponent is nullptr"));
 	}
-
-	EquipWeapon(DefaultWeaponClass);
-}
-
-void UPlayerCombatComponent::EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass)
-{
-	if (!OwnerCharacter || !WeaponClass)
+	
+	EquipmentComponent = OwnerCharacter->GetEquipmentComponent();
+	if (!EquipmentComponent)
 	{
-		return;
-	}
-
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->Destroy();
-		EquippedWeapon = nullptr;
-	}
-
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		return;
-	}
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = OwnerCharacter;
-	SpawnParams.Instigator = OwnerCharacter;
-
-	EquippedWeapon = World->SpawnActor<AWeaponBase>(
-		WeaponClass,
-		OwnerCharacter->GetActorLocation(),
-		OwnerCharacter->GetActorRotation(),
-		SpawnParams
-	);
-
-	if (!EquippedWeapon)
-	{
-		return;
-	}
-
-	EquippedWeapon->AttachToComponent(
-		OwnerCharacter->GetMesh(),
-		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-		WeaponSocketName
-	);
-
-	if (StateComponent)
-	{
-		StateComponent->AddStateTag(CombatTags::State_Combat_Armed);
+		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : EquipmentComponent is nullptr"));
 	}
 }
 
@@ -175,13 +133,13 @@ bool UPlayerCombatComponent::IsParrying() const
 
 void UPlayerCombatComponent::CacheWeaponTraceLocation()
 {
-	if (!EquippedWeapon)
+	if (!EquipmentComponent->GetEquippedWeapon())
 	{
 		return;
 	}
 
-	PreviousBladeStart = EquippedWeapon->GetBladeStartLocation();
-	PreviousBladeEnd = EquippedWeapon->GetBladeEndLocation();
+	PreviousBladeStart = EquipmentComponent->GetEquippedWeapon()->GetBladeStartLocation();
+	PreviousBladeEnd = EquipmentComponent->GetEquippedWeapon()->GetBladeEndLocation();
 }
 
 void UPlayerCombatComponent::OnAttackMontageEnded(
@@ -324,7 +282,7 @@ bool UPlayerCombatComponent::CanGuard() const
 		return false;
 	}
 
-	if (!EquippedWeapon)
+	if (!EquipmentComponent->GetEquippedWeapon())
 	{
 		return false;
 	}
@@ -600,7 +558,7 @@ void UPlayerCombatComponent::OpenAttackRecovery()
 
 void UPlayerCombatComponent::StartWeaponHitCheck()
 {
-	if (!EquippedWeapon)
+	if (!EquipmentComponent->GetEquippedWeapon())
 	{
 		return;
 	}
@@ -670,7 +628,7 @@ void UPlayerCombatComponent::ProcessHit(const FHitResult& Hit)
 
 void UPlayerCombatComponent::WeaponTrace()
 {
-	if (!bWeaponHitCheck || !EquippedWeapon || !OwnerCharacter)
+	if (!bWeaponHitCheck || !EquipmentComponent->GetEquippedWeapon() || !OwnerCharacter)
 	{
 		return;
 	}
@@ -682,14 +640,14 @@ void UPlayerCombatComponent::WeaponTrace()
 	}
 
 	const FVector CurrentBladeStart =
-		EquippedWeapon->GetBladeStartLocation();
+		EquipmentComponent->GetEquippedWeapon()->GetBladeStartLocation();
 
 	const FVector CurrentBladeEnd =
-		EquippedWeapon->GetBladeEndLocation();
+		EquipmentComponent->GetEquippedWeapon()->GetBladeEndLocation();
 
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(OwnerCharacter);
-	Params.AddIgnoredActor(EquippedWeapon);
+	Params.AddIgnoredActor(EquipmentComponent->GetEquippedWeapon());
 
 	const FCollisionShape CollisionShape =
 		FCollisionShape::MakeSphere(TraceRadius);
@@ -794,7 +752,7 @@ bool UPlayerCombatComponent::CanAttack() const
 		return false;
 	}
 
-	if (!EquippedWeapon)
+	if (!EquipmentComponent->GetEquippedWeapon())
 	{
 		return false;
 	}
@@ -1287,10 +1245,10 @@ void UPlayerCombatComponent::ResetCombatHitStop()
 FVector UPlayerCombatComponent::GetWeaponClashEffectLocation(
 	const FIncomingAttackContext& Context) const
 {
-	if (EquippedWeapon)
+	if (EquipmentComponent->GetEquippedWeapon())
 	{
 		if (UStaticMeshComponent* WeaponMesh =
-			EquippedWeapon->GetWeaponMesh())
+			EquipmentComponent->GetEquippedWeapon()->GetWeaponMesh())
 		{
 			if (WeaponMesh->DoesSocketExist(FeedbackData->WeaponClashEffectSocketName))
 			{
@@ -1301,10 +1259,10 @@ FVector UPlayerCombatComponent::GetWeaponClashEffectLocation(
 		}
 
 		const FVector BladeStart =
-			EquippedWeapon->GetBladeStartLocation();
+			EquipmentComponent->GetEquippedWeapon()->GetBladeStartLocation();
 
 		const FVector BladeEnd =
-			EquippedWeapon->GetBladeEndLocation();
+			EquipmentComponent->GetEquippedWeapon()->GetBladeEndLocation();
 
 		if (!BladeStart.IsNearlyZero() && !BladeEnd.IsNearlyZero())
 		{
@@ -1354,13 +1312,13 @@ FVector UPlayerCombatComponent::MakeCombatEffectLocation(
 		return GetWeaponClashEffectLocation(Context);
 
 	case ECombatEffectLocationMode::DefenderWeaponBladeMiddle:
-		if (EquippedWeapon)
+		if (EquipmentComponent->GetEquippedWeapon())
 		{
 			const FVector BladeStart =
-				EquippedWeapon->GetBladeStartLocation();
+				EquipmentComponent->GetEquippedWeapon()->GetBladeStartLocation();
 
 			const FVector BladeEnd =
-				EquippedWeapon->GetBladeEndLocation();
+				EquipmentComponent->GetEquippedWeapon()->GetBladeEndLocation();
 
 			if (!BladeStart.IsNearlyZero() && !BladeEnd.IsNearlyZero())
 			{

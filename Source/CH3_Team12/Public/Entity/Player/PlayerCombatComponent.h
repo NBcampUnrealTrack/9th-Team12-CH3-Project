@@ -12,21 +12,12 @@ class APlayerCharacterBase;
 class AWeaponBase;
 class UStateTagComponent;
 class UPlayerAttributeComponent;
+class UPlayerEquipmentComponent;
 class UNiagaraSystem;
 class USoundBase;
 
 struct FInputActionValue;
 struct FHitResult;
-
-UENUM(BlueprintType)
-enum class EDefenseResult : uint8
-{
-	None,
-	Parry,
-	Guard,
-	Hit,
-	Invincible
-};
 
 UENUM(BlueprintType)
 enum class EAttackType : uint8
@@ -78,8 +69,6 @@ public:
 	TObjectPtr<UPlayerCombatFeedbackDataAsset> FeedbackData;
 
 private:
-	void EquipWeapon(TSubclassOf<AWeaponBase> WeaponClass);
-	AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
 	bool IsGuarding() const;
 	bool IsParrying() const;
 	
@@ -103,6 +92,9 @@ private:
 	
 	UPROPERTY()
 	TObjectPtr<UPlayerAttributeComponent> AttributeComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Combo")
 	TArray<FName> ComboSectionNames = {
@@ -113,12 +105,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Attack")
 	float AttackPlayRate = 1.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Weapon")
-	TSubclassOf<AWeaponBase> DefaultWeaponClass;
-
-	UPROPERTY(VisibleInstanceOnly, Category="Weapon")
-	TObjectPtr<AWeaponBase> EquippedWeapon;
 
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName WeaponSocketName = TEXT("weapon_rSocket");
