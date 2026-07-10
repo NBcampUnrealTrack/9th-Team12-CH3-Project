@@ -8,7 +8,6 @@
 #include "UI/MainMenuWidget.h"
 #include "UI/HUD/PlayerPresenter.h"
 #include "UI/HUD/PlayerWidget.h"
-#include "UI/Settings/InGameSettingsPresenter.h"
 #include "UI/Settings/MainMenuSettingsPresenter.h"
 #include "UI/Settings/MainMenuSettingsWidget.h"
 #include "UI/Settings/SoundSettingsPresenter.h"

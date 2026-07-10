@@ -37,7 +37,7 @@ private:
 	//TODO GraphicSettingsWidget 추가
 
 	UFUNCTION()
-	void HandleClickedBtnSoundSettings();
+	void HandleBtnSoundSettingsClicked();
 
 	UFUNCTION()
 	void HandleVisibilitySoundSettingsChanged(ESlateVisibility InVisibility);

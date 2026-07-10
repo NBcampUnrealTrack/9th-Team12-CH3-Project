@@ -8,7 +8,7 @@ void UMainMenuSettingsWidget::NativeOnInitialized()
 	Super::NativeOnInitialized();
 
 	if (BtnSoundSettings)
-		BtnSoundSettings->OnClicked.AddDynamic(this, &UMainMenuSettingsWidget::HandleClickedBtnSoundSettings);
+		BtnSoundSettings->OnClicked.AddDynamic(this, &UMainMenuSettingsWidget::HandleBtnSoundSettingsClicked);
 
 	if (SoundSettingsWidget)
 	{
@@ -17,7 +17,7 @@ void UMainMenuSettingsWidget::NativeOnInitialized()
 	}
 }
 
-void UMainMenuSettingsWidget::HandleClickedBtnSoundSettings()
+void UMainMenuSettingsWidget::HandleBtnSoundSettingsClicked()
 {
 	if (BtnSoundSettings)
 		BtnSoundSettings->SetIsEnabled(false);

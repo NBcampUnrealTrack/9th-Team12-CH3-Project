@@ -33,6 +33,9 @@ public:
 	void ShowMainMenuSettingsWidget();
 	void HideMainMenuSettingsWidget();
 
+	void ShowInGameMenuWidget();
+	void HideInGameMenuWidget();
+
 	void RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
 	void UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
 
@@ -45,9 +48,11 @@ public:
 private:
 	const FName MainMenuWidgetName = FName("MainMenuWidget");
 	const FName MainMenuSettingsWidgetName = FName("MainMenuSettingsWidget");
-	const FName LoadingWidgetName = FName("LoadingWidget");
+	const FName InGameMenuWidgetName = FName("InGameMenuWidget");
 
 	const FName SoundSettingsWidgetName = FName("SoundSettingsWidget");
+
+	const FName LoadingWidgetName = FName("LoadingWidget");
 
 	const FName PlayerWidgetName = FName("PlayerWidget");
 

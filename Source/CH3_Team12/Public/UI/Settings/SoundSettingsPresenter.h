@@ -34,4 +34,10 @@ private:
 
 	UFUNCTION()
 	void HandleSFXVolumeChanged(float NewVolume) const;
+
+	UFUNCTION()
+	void HandleBtnResetClicked() const;
+
+	UFUNCTION()
+	void HandleBtnDoneClicked() const;
 };
