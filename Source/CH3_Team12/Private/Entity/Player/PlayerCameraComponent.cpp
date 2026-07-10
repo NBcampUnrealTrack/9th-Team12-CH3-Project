@@ -3,6 +3,7 @@
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
+#include "Framework/DataAsset/PlayerCameraDataAsset.h"
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -90,9 +91,9 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 	OwnerActor->bUseControllerRotationYaw = false;
 
 	// OnLockOnStateChanged.Broadcast(true);
-	
+
 	if (UPlayerLocomotionComponent* LocomotionComponent =
-	OwnerActor->GetLocomotionComponent())
+		OwnerActor->GetLocomotionComponent())
 	{
 		LocomotionComponent->RefreshMovementSettings();
 	}
@@ -158,34 +159,37 @@ void UPlayerCameraComponent::UpdateNormalCamera(float DeltaTime)
 	// 락온 중에 보정되었던 카메라 값을
 	// 노말 카메라 기본값으로 부드럽게 되돌린다.
 
+	const FNormalCameraSettings& Normal = CameraData->Normal;
+	const float InterpSpeed = CameraData->NormalCameraInterpSpeed;
+
 	CameraBoom->SetRelativeLocation(
 		FMath::VInterpTo(
 			CameraBoom->GetRelativeLocation(),
-			NormalCameraBoomRelativeLocation,
+			Normal.CameraBoomRelativeLocation,
 			DeltaTime,
-			CameraInterpSpeed
+			InterpSpeed
 		)
 	);
 
 	CameraBoom->TargetArmLength = FMath::FInterpTo(
 		CameraBoom->TargetArmLength,
-		NormalTargetArmLength,
+		Normal.TargetArmLength,
 		DeltaTime,
-		CameraInterpSpeed
+		InterpSpeed
 	);
 
 	CameraBoom->SocketOffset = FMath::VInterpTo(
 		CameraBoom->SocketOffset,
-		NormalSocketOffset,
+		Normal.SocketOffset,
 		DeltaTime,
-		CameraInterpSpeed
+		InterpSpeed
 	);
 
 	CameraBoom->TargetOffset = FMath::VInterpTo(
 		CameraBoom->TargetOffset,
-		NormalTargetOffset,
+		Normal.TargetOffset,
 		DeltaTime,
-		CameraInterpSpeed
+		InterpSpeed
 	);
 }
 
@@ -196,16 +200,24 @@ void UPlayerCameraComponent::ApplyNormalCameraInstant()
 		return;
 	}
 
-	CameraBoom->TargetArmLength = NormalTargetArmLength;
-	CameraBoom->SetRelativeLocation(NormalCameraBoomRelativeLocation);
-	CameraBoom->SetRelativeRotation(NormalCameraBoomRelativeRotation);
-	CameraBoom->SocketOffset = NormalSocketOffset;
-	CameraBoom->TargetOffset = NormalTargetOffset;
+	const FNormalCameraSettings& Normal = CameraData->Normal;
+
+	CameraBoom->TargetArmLength = Normal.TargetArmLength;
+	CameraBoom->SetRelativeLocation(Normal.CameraBoomRelativeLocation);
+	CameraBoom->SetRelativeRotation(Normal.CameraBoomRelativeRotation);
+	CameraBoom->SocketOffset = Normal.SocketOffset;
+	CameraBoom->TargetOffset = Normal.TargetOffset;
+	CameraBoom->CameraLagSpeed = 4.0f;
+	CameraBoom->CameraLagMaxDistance = 200.0f;
+	CameraBoom->CameraRotationLagSpeed = 12.0f;
 
 	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->bInheritPitch = true;
 	CameraBoom->bInheritYaw = true;
 	CameraBoom->bInheritRoll = false;
+	CameraBoom->bDoCollisionTest = false;
+	CameraBoom->bEnableCameraRotationLag = true;
 	CameraBoom->bDoCollisionTest = false;
 
 	FollowCamera->bUsePawnControlRotation = false;
@@ -267,6 +279,8 @@ void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 		return;
 	}
 
+	const FLockOnCameraSettings& LockOn = CameraData->LockOn;
+
 	AController* OwnerController = OwnerActor->GetController();
 	if (!OwnerController)
 	{
@@ -278,15 +292,15 @@ void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 		CurrentLockOnTarget->GetActorLocation()
 	);
 
-	if (DistanceToTarget > LockOnBreakDistance)
+	if (DistanceToTarget > LockOn.BreakDistance)
 	{
 		ClearLockOn();
 		return;
 	}
 
 	const float DistanceAlpha = FMath::Clamp(
-		(DistanceToTarget - LockOnNearDistance) /
-		(LockOnFarDistance - LockOnNearDistance),
+		(DistanceToTarget - LockOn.NearDistance) /
+		(LockOn.FarDistance - LockOn.NearDistance),
 		0.0f,
 		1.0f
 	);
@@ -301,28 +315,28 @@ void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 		TargetHalfHeight - MyHalfHeight;
 
 	const float DesiredArmLength = FMath::Lerp(
-		LockOnCloseArmLength,
-		LockOnFarArmLength,
+		LockOn.CloseArmLength,
+		LockOn.FarArmLength,
 		DistanceAlpha
 	);
 
 	float DesiredPivotHeight = FMath::Lerp(
-		LockOnClosePivotHeight,
-		LockOnFarPivotHeight,
+		LockOn.ClosePivotHeight,
+		LockOn.FarPivotHeight,
 		DistanceAlpha
 	);
 
 	DesiredPivotHeight += FMath::Clamp(
-		HeightDifference * LockOnHeightDifferencePivotScale,
-		LockOnMinHeightAdjustment,
-		LockOnMaxHeightAdjustment
+		HeightDifference * LockOn.HeightDifferencePivotScale,
+		LockOn.MinHeightAdjustment,
+		LockOn.MaxHeightAdjustment
 	);
 
 	CameraBoom->TargetArmLength = FMath::FInterpTo(
 		CameraBoom->TargetArmLength,
 		DesiredArmLength,
 		DeltaTime,
-		LockOnCameraInterpSpeed
+		LockOn.CameraInterpSpeed
 	);
 
 	FVector TargetOffset = CameraBoom->TargetOffset;
@@ -331,25 +345,25 @@ void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 		TargetOffset.Z,
 		DesiredPivotHeight,
 		DeltaTime,
-		LockOnCameraInterpSpeed
+		LockOn.CameraInterpSpeed
 	);
 
 	CameraBoom->TargetOffset = TargetOffset;
 
 	const float TargetHeightRatio =
-		TargetHalfHeight > MyHalfHeight * LargeTargetThreshold
-			? LargeTargetFocusHeightRatio
-			: NormalTargetFocusHeightRatio;
+		TargetHalfHeight > MyHalfHeight * LockOn.LargeTargetThreshold
+			? LockOn.LargeTargetFocusHeightRatio
+			: LockOn.NormalTargetFocusHeightRatio;
 
 	const FVector PlayerFocus =
-		GetLockOnFocusLocation(OwnerActor, PlayerFocusHeightRatio);
+		GetLockOnFocusLocation(OwnerActor, LockOn.PlayerFocusHeightRatio);
 
 	const FVector TargetFocus =
 		GetLockOnFocusLocation(CurrentLockOnTarget, TargetHeightRatio);
 
 	const float FocusBias = FMath::Lerp(
-		LockOnCloseFocusBias,
-		LockOnFarFocusBias,
+		LockOn.CloseFocusBias,
+		LockOn.FarFocusBias,
 		DistanceAlpha
 	);
 
@@ -370,8 +384,8 @@ void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 
 	DesiredRotation.Pitch = FMath::Clamp(
 		DesiredRotation.Pitch,
-		MinLockOnPitch,
-		MaxLockOnPitch
+		LockOn.MinPitch,
+		LockOn.MaxPitch
 	);
 
 	DesiredRotation.Roll = 0.0f;
@@ -380,7 +394,7 @@ void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 		OwnerController->GetControlRotation(),
 		DesiredRotation,
 		DeltaTime,
-		LockOnRotationInterpSpeed
+		LockOn.RotationInterpSpeed
 	);
 
 	OwnerController->SetControlRotation(SmoothRotation);
@@ -399,13 +413,15 @@ AActor* UPlayerCameraComponent::FindLockOnTarget() const
 		return nullptr;
 	}
 
+	const FLockOnTraceSettings& Trace = CameraData->Trace;
+
 	TArray<FHitResult> HitResults;
 
 	const FVector StartLocation = OwnerActor->GetActorLocation();
 	const FVector EndLocation = StartLocation;
 
 	const FCollisionShape Sphere =
-		FCollisionShape::MakeSphere(LockOnTraceRadius);
+		FCollisionShape::MakeSphere(Trace.TraceRadius);
 
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(OwnerActor);
@@ -434,7 +450,7 @@ AActor* UPlayerCameraComponent::FindLockOnTarget() const
 				continue;
 			}
 
-			if (!HitActor->ActorHasTag(EnemyTagName))
+			if (!HitActor->ActorHasTag(Trace.EnemyTagName))
 			{
 				continue;
 			}
