@@ -28,5 +28,8 @@ public:
 	TObjectPtr<UAnimMontage> UnequipMontage;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FName EquipSocket = TEXT("katana3");
+	FName EquipSocket = TEXT("weapon_rSocket");
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName UnequipSocket = TEXT("Scabbard_Target01Socket");
 };

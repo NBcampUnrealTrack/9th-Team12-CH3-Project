@@ -31,6 +31,16 @@ void UPlayerEquipmentComponent::BeginPlay()
 	Inventory = OwnerCharacter->FindComponentByClass<UPlayerInventoryComponent>();
 	
 	StateComp = OwnerCharacter->FindComponentByClass<UStateTagComponent>();
+	
+	if (!Inventory)
+	{
+		return;
+	}
+	
+	if (Inventory->GetCurrentWeapon())
+	{
+		SpawnWeaponToSheath();
+	}
 }
 
 void UPlayerEquipmentComponent::ToggleWeaponInput(
@@ -46,13 +56,6 @@ void UPlayerEquipmentComponent::ToggleWeaponInput(
 		return;
 	}
 	
-	// 이미 장착 중이면 해제
-	if (EquippedWeaponItem)
-	{
-		Unequip();
-		return;
-	}
-	
 	// 인벤토리의 현재 무기 슬롯 사용
 	UItemInstance* WeaponItem = Inventory->GetCurrentWeapon();
 
@@ -60,8 +63,16 @@ void UPlayerEquipmentComponent::ToggleWeaponInput(
 	{
 		return;
 	}
-
-	Equip(WeaponItem);
+	
+	// 이미 장착 중이면 해제
+	if (StateComp->HasStateTag(CombatTags::State_Combat_Armed))
+	{
+		Unequip();
+	}
+	else
+	{
+		Equip(WeaponItem);
+	}
 }
 
 bool UPlayerEquipmentComponent::Equip(UItemInstance* Item)
@@ -70,11 +81,8 @@ bool UPlayerEquipmentComponent::Equip(UItemInstance* Item)
 	{
 		return false;
 	}
-	
-	const UWeaponDataAsset* WeaponData =
-		Cast<UWeaponDataAsset>(Item->GetItemData());
 
-	if (!WeaponData || !WeaponData->EquipMontage)
+	if (!CurrentWeaponData || !CurrentWeaponData->EquipMontage)
 	{
 		return false;
 	}
@@ -94,7 +102,7 @@ bool UPlayerEquipmentComponent::Equip(UItemInstance* Item)
 	}
 	
 	const float Duration =
-		AnimInstance->Montage_Play(WeaponData->EquipMontage);
+		AnimInstance->Montage_Play(CurrentWeaponData->EquipMontage);
 
 	if (Duration <= 0.f)
 	{
@@ -110,27 +118,27 @@ bool UPlayerEquipmentComponent::Equip(UItemInstance* Item)
 	
 	AnimInstance->Montage_SetEndDelegate(
 		EndDelegate,
-		WeaponData->EquipMontage);
+		CurrentWeaponData->EquipMontage);
 	
 	return true;
 }
 
-void UPlayerEquipmentComponent::OnEquipNotify()
+void UPlayerEquipmentComponent::AnimNotify_Equip()
 {
 	if (!PendingEquipItem)
 	{
 		return;
 	}
 
-	const UWeaponDataAsset* WeaponData =
-		Cast<UWeaponDataAsset>(PendingEquipItem->GetItemData());
-
-	if (!WeaponData)
+	if (!CurrentWeaponData)
 	{
 		return;
 	}
 	
-	EquipWeapon(PendingEquipItem, WeaponData);
+	if (!EquipWeapon(PendingEquipItem, CurrentWeaponData))
+	{
+		PendingEquipItem = nullptr;
+	}
 }
 
 bool UPlayerEquipmentComponent::EquipWeapon(
@@ -142,38 +150,34 @@ bool UPlayerEquipmentComponent::EquipWeapon(
 		return false;
 	}
 
-	if (EquippedWeapon)
+	if (!EquippedWeapon)
 	{
-		UnequipWeapon();
-	}
-	
-	if (!WeaponData || !WeaponData->WeaponClass)
-	{
-		return false;
-	}
-	
-	FActorSpawnParameters Params;
+		if (!WeaponData || !WeaponData->WeaponClass)
+		{
+			return false;
+		}
+		
+		FActorSpawnParameters Params;
+		Params.Owner = OwnerCharacter;
+		Params.Instigator = OwnerCharacter;
 
-	Params.Owner = OwnerCharacter;
-	Params.Instigator = OwnerCharacter;
-	
-	AWeaponBase* NewWeapon =
-	GetWorld()->SpawnActor<AWeaponBase>(
-		WeaponData->WeaponClass,
-		Params);
+		EquippedWeapon =
+			GetWorld()->SpawnActor<AWeaponBase>(
+				WeaponData->WeaponClass,
+				Params);
 
-	if (!NewWeapon)
-	{
-		return false;
+		if (!EquippedWeapon)
+		{
+			return false;
+		}
 	}
 
-	NewWeapon->AttachToComponent(
+	EquippedWeapon->AttachToComponent(
 	OwnerCharacter->GetMesh(),
 		FAttachmentTransformRules::SnapToTargetIncludingScale,
 		WeaponData->EquipSocket);
 
-	EquippedWeapon = NewWeapon;
-	EquippedWeaponItem = Item;
+	CurrentWeaponInstance = Item;
 
 	StateComp->AddStateTag(CombatTags::State_Combat_Armed);
 	
@@ -182,15 +186,12 @@ bool UPlayerEquipmentComponent::EquipWeapon(
 
 void UPlayerEquipmentComponent::Unequip()
 {
-	if (!EquippedWeaponItem)
+	if (!CurrentWeaponInstance)
 	{
 		return;
 	}
-
-	const UWeaponDataAsset* WeaponData =
-		Cast<UWeaponDataAsset>(EquippedWeaponItem->GetItemData());
-
-	if (!WeaponData || !WeaponData->UnequipMontage)
+	
+	if (!CurrentWeaponData || !CurrentWeaponData->UnequipMontage)
 	{
 		return;
 	}
@@ -207,7 +208,7 @@ void UPlayerEquipmentComponent::Unequip()
 	}
 	
 	const float Duration =
-		AnimInstance->Montage_Play(WeaponData->UnequipMontage);
+		AnimInstance->Montage_Play(CurrentWeaponData->UnequipMontage);
 	
 	if (Duration <= 0.f)
 	{
@@ -222,24 +223,33 @@ void UPlayerEquipmentComponent::Unequip()
 
 	AnimInstance->Montage_SetEndDelegate(
 		EndDelegate,
-		WeaponData->UnequipMontage);
+		CurrentWeaponData->UnequipMontage);
 }
 
-void UPlayerEquipmentComponent::OnUnequipNotify()
+void UPlayerEquipmentComponent::AnimNotify_Unequip()
 {
 	UnequipWeapon();
 }
 
 void UPlayerEquipmentComponent::UnequipWeapon()
 {
-	if (EquippedWeapon)
+	if (!EquippedWeapon)
 	{
-		EquippedWeapon->Destroy();
-		EquippedWeapon = nullptr;
+		return;
 	}
-
-	EquippedWeaponItem = nullptr;
 	
+	if (!CurrentWeaponData)
+	{
+		return;
+	}
+	
+	EquippedWeapon->AttachToComponent(
+		OwnerCharacter->GetMesh(),
+		FAttachmentTransformRules::SnapToTargetIncludingScale,
+		CurrentWeaponData->UnequipSocket);
+
+	CurrentWeaponInstance = nullptr;
+
 	if (StateComp->HasStateTag(CombatTags::State_Combat_Armed))
 	{
 		StateComp->RemoveStateTag(CombatTags::State_Combat_Armed);
@@ -308,4 +318,35 @@ bool UPlayerEquipmentComponent::CanChangeWeapon() const
 	}
 
 	return true;
+}
+
+void UPlayerEquipmentComponent::SpawnWeaponToSheath()
+{
+	UItemInstance* Item = Inventory->GetCurrentWeapon();
+
+	if (!Item)
+	{
+		return;
+	}
+	
+	CurrentWeaponInstance = Item;
+	CurrentWeaponData = Cast<UWeaponDataAsset>(Item->GetItemData());
+	
+	if (!CurrentWeaponData)
+	{
+		return;
+	}
+	
+	FActorSpawnParameters Params;
+	Params.Owner = OwnerCharacter;
+
+	EquippedWeapon =
+		GetWorld()->SpawnActor<AWeaponBase>(
+			CurrentWeaponData->WeaponClass,
+			Params);
+
+	EquippedWeapon->AttachToComponent(
+		OwnerCharacter->GetMesh(),
+		FAttachmentTransformRules::SnapToTargetIncludingScale,
+		CurrentWeaponData->UnequipSocket);
 }
