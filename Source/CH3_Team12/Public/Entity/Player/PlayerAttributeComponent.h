@@ -58,7 +58,7 @@ public:
 	FOnPlayerPostureRecovered OnPostureRecovered;
 
 	UPROPERTY(BlueprintAssignable, Category="Player|Attribute")
-	FOnPlayerDeath OnDeath;
+	FOnPlayerDeath OnDead;
 
 public:
 	UFUNCTION(BlueprintCallable, Category="Player|Attribute")

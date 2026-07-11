@@ -344,5 +344,5 @@ void UPlayerAttributeComponent::Die()
 		MaxPosture
 	);
 
-	OnDeath.Broadcast();
+	OnDead.Broadcast();
 }

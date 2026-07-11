@@ -78,7 +78,7 @@ private:
 	TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
 	UPROPERTY()
-	TObjectPtr<UPlayerAttackComponent> CombatComponent;
+	TObjectPtr<UPlayerAttackComponent> AttackComponent;
 	
 	UPROPERTY()
 	TObjectPtr<UPlayerDefenseComponent> DefenseComponent;

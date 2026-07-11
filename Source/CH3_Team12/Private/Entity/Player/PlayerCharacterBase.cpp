@@ -40,13 +40,12 @@ APlayerCharacterBase::APlayerCharacterBase()
 	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateComponent"));
 	LocomotionComponent = CreateDefaultSubobject<UPlayerLocomotionComponent>(TEXT("LocomotionComponent"));
 	AttributeComponent = CreateDefaultSubobject<UPlayerAttributeComponent>(TEXT("AttributeComponent"));
-	AttackComponent = CreateDefaultSubobject<UPlayerAttackComponent>(TEXT("CombatComponent"));
+	AttackComponent = CreateDefaultSubobject<UPlayerAttackComponent>(TEXT("AttackComponent"));
 	CameraComponent = CreateDefaultSubobject<UPlayerCameraComponent>(TEXT("CameraComponent"));
 	InventoryComponent = CreateDefaultSubobject<UPlayerInventoryComponent>(TEXT("InventoryComponent"));
 	EquipmentComponent = CreateDefaultSubobject<UPlayerEquipmentComponent>(TEXT("EquipmentComponent"));
 	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
 	DefenseComponent = CreateDefaultSubobject<UPlayerDefenseComponent>(TEXT("DefenseComponent"));
-	AttackComponent = CreateDefaultSubobject<UPlayerAttackComponent>(TEXT("AttackComponent"));
 }
 
 UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
@@ -62,11 +61,6 @@ UPlayerLocomotionComponent* APlayerCharacterBase::GetLocomotionComponent() const
 UPlayerAttributeComponent* APlayerCharacterBase::GetAttributeComponent() const
 {
 	return AttributeComponent;
-}
-
-UPlayerAttackComponent* APlayerCharacterBase::GetCombatComponent() const
-{
-	return AttackComponent;
 }
 
 UPlayerInventoryComponent* APlayerCharacterBase::GetInventoryComponent() const
@@ -177,23 +171,23 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Canceled, DefenseComponent.Get(), &UPlayerDefenseComponent::StopGuard);
 	}
 	
-	// // TestAction
-	// if (UInputAction* TestAction1 = PlayerControllerBase->GetTestAction1())
-	// {
-	// 	EnhancedInputComponent->BindAction(TestAction1, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackFront);
-	// }
-	// if (UInputAction* TestAction2 = PlayerControllerBase->GetTestAction2())
-	// {
-	// 	EnhancedInputComponent->BindAction(TestAction2, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackBack);
-	// }
-	// if (UInputAction* TestAction3 = PlayerControllerBase->GetTestAction3())
-	// {
-	// 	EnhancedInputComponent->BindAction(TestAction3, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackLeft);
-	// }
-	// if (UInputAction* TestAction4 = PlayerControllerBase->GetTestAction4())
-	// {
-	// 	EnhancedInputComponent->BindAction(TestAction4, ETriggerEvent::Started, CombatComponent.Get(), &UPlayerCombatComponent::Debug_ReceiveTestAttackRight);
-	// }
+	// TestAction
+	if (UInputAction* TestAction1 = PlayerControllerBase->GetTestAction1())
+	{
+		EnhancedInputComponent->BindAction(TestAction1, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::Debug_ReceiveTestAttackFront);
+	}
+	if (UInputAction* TestAction2 = PlayerControllerBase->GetTestAction2())
+	{
+		EnhancedInputComponent->BindAction(TestAction2, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::Debug_ReceiveTestAttackBack);
+	}
+	if (UInputAction* TestAction3 = PlayerControllerBase->GetTestAction3())
+	{
+		EnhancedInputComponent->BindAction(TestAction3, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::Debug_ReceiveTestAttackLeft);
+	}
+	if (UInputAction* TestAction4 = PlayerControllerBase->GetTestAction4())
+	{
+		EnhancedInputComponent->BindAction(TestAction4, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::Debug_ReceiveTestAttackRight);
+	}
 	
 	if (UInputAction* EquipAction = PlayerControllerBase->GetEquipAction())
 	{
@@ -208,7 +202,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void APlayerCharacterBase::AttackAnimationEnd()
 {
-	ensureMsgf(AttackComponent, TEXT("Katana_PlayerCharacterBase. CombatComponent is invalid."));
+	ensureMsgf(AttackComponent, TEXT("Katana_PlayerCharacterBase. DefenseComponent is invalid."));
 	
 	if (AttackComponent)
 	{

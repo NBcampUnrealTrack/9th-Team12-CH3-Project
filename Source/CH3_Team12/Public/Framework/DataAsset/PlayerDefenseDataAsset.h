@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Combat/CombatTypes.h"
 #include "PlayerDefenseDataAsset.generated.h"
 
 class UAnimMontage;
@@ -41,6 +42,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
 	TObjectPtr<UAnimMontage> HitRightMontage;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Dead")
+	TObjectPtr<UAnimMontage> DeadMontage;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Guard")
 	float GuardMontageBlendOutTime = 0.1f;
 
@@ -49,4 +53,22 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category="Guard")
 	float GuardPostureDamageRate = 1.0f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Dead")
+	float DeadMontagePlayRate = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Dead")
+	bool bFreezePoseAfterDead = true;
+	
+	UAnimMontage* GetParryReactionMontage(
+		EHitReactionDirection ReactionDirection
+	) const;
+
+	UAnimMontage* GetGuardHitMontage(
+		EHitReactionDirection ReactionDirection
+	) const;
+
+	UAnimMontage* GetHitReactionMontage(
+		EHitReactionDirection ReactionDirection
+	) const;
 };
