@@ -45,10 +45,6 @@ public:
 		return CurrentWeaponInstance;
 	}
 
-	FORCEINLINE const UWeaponDataAsset* GetEquippedWeaponData() const
-	{
-		return CurrentWeaponData;
-	}
 private:
 	bool CanChangeWeapon() const;
 	

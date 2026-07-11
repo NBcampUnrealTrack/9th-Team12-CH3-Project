@@ -1,16 +1,20 @@
+// Fill out your copyright notice in the Description page of Project Settings.
 #include "Entity/Player/PlayerWeaponComponent.h"
-#include "Entity/Player/PlayerAttackComponent.h"
+
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
 
 #include "Kismet/GameplayStatics.h"
 
+// Sets default values for this component's properties
 UPlayerWeaponComponent::UPlayerWeaponComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+
+// Called when the game starts
 void UPlayerWeaponComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -18,23 +22,14 @@ void UPlayerWeaponComponent::BeginPlay()
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 	if (!OwnerCharacter)
 	{
-		UE_LOG(LogTemp, Error, TEXT(
-			"PlayerWeaponComponent : OwnerCharacter is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : OwnerCharacter is nullptr"));
 		return;
 	}
 	
 	EquipmentComponent = OwnerCharacter->GetEquipmentComponent();
 	if (!EquipmentComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT(
-			"PlayerWeaponComponent : EquipmentComponent is nullptr"));
-	}
-	
-	AttackComponent = OwnerCharacter->GetAttackComponent();
-	if (!AttackComponent)
-	{
-		UE_LOG(LogTemp, Error, TEXT(
-			"PlayerWeaponComponent : AttackComponent is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : EquipmentComponent is nullptr"));
 	}
 }
 
@@ -76,40 +71,25 @@ void UPlayerWeaponComponent::CacheWeaponTraceLocation()
 void UPlayerWeaponComponent::ProcessHit(const FHitResult& Hit)
 {
 	AActor* HitActor = Hit.GetActor();
-	if (!HitActor || 
-		!OwnerCharacter ||
-		!AttackComponent
-		)
+	if (!HitActor || !OwnerCharacter)
 	{
 		return;
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Hit : %s"), *HitActor->GetName());
 
-	const FAttackStepData* Step =
-		AttackComponent->GetCurrentStep();
-
-	if (!Step)
-	{
-		return;
-	}
-	
 	UGameplayStatics::ApplyDamage(
 		HitActor,
-		Step->Damage,
+		25.0f,
 		OwnerCharacter->GetController(),
 		OwnerCharacter,
-		nullptr);
+		nullptr
+	);
 }
 
 void UPlayerWeaponComponent::WeaponTrace()
 {
-	AWeaponBase* Weapon =
-	EquipmentComponent->GetEquippedWeapon();
-	
-	if (!bWeaponHitCheck	||
-		!Weapon				||
-		!OwnerCharacter)
+	if (!bWeaponHitCheck || !EquipmentComponent->GetEquippedWeapon() || !OwnerCharacter)
 	{
 		return;
 	}
@@ -121,14 +101,14 @@ void UPlayerWeaponComponent::WeaponTrace()
 	}
 
 	const FVector CurrentBladeStart =
-		Weapon->GetBladeStartLocation();
+		EquipmentComponent->GetEquippedWeapon()->GetBladeStartLocation();
 
 	const FVector CurrentBladeEnd =
-		Weapon->GetBladeEndLocation();
+		EquipmentComponent->GetEquippedWeapon()->GetBladeEndLocation();
 
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(OwnerCharacter);
-	Params.AddIgnoredActor(Weapon);
+	Params.AddIgnoredActor(EquipmentComponent->GetEquippedWeapon());
 
 	const FCollisionShape CollisionShape =
 		FCollisionShape::MakeSphere(TraceRadius);
