@@ -148,11 +148,14 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStartJump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopJump);
 	}
-	if (UInputAction* SprintDodgeAction = PlayerControllerBase->GetSprintDodgeAction())
+	if (UInputAction* DodgeAction = PlayerControllerBase->GetDodgeAction())
 	{
-		EnhancedInputComponent->BindAction(SprintDodgeAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnSprintDodgePressed);
-		EnhancedInputComponent->BindAction(SprintDodgeAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnSprintDodgeReleased);
-		EnhancedInputComponent->BindAction(SprintDodgeAction, ETriggerEvent::Canceled, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnSprintDodgeReleased);
+		EnhancedInputComponent->BindAction(
+			DodgeAction,
+			ETriggerEvent::Started,
+			LocomotionComponent.Get(),
+			&UPlayerLocomotionComponent::Dodge
+		);
 	}
 	
 	// Combat
