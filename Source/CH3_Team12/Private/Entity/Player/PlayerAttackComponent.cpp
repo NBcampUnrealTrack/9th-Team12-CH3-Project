@@ -6,13 +6,15 @@
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Player/PlayerWeaponComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
-
+#include "Framework/DataAsset/PlayerAttackDataAsset.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
+#include "Entity/Item/ItemInstance.h"
+#include "Framework/DataAsset/WeaponDataAsset.h"
 
 UPlayerAttackComponent::UPlayerAttackComponent()
 {
@@ -94,6 +96,46 @@ void UPlayerAttackComponent::OpenAttackRecovery()
 	}
 }
 
+const UPlayerAttackDataAsset* UPlayerAttackComponent::GetAttackData() const
+{
+	if (!EquipmentComponent)
+	{
+		return nullptr;
+	}
+
+	const UWeaponDataAsset* WeaponData = 
+		EquipmentComponent->GetEquippedWeaponData();
+
+	if (!WeaponData)
+	{
+		return nullptr;
+	}
+	
+	return WeaponData->AttackData;
+}
+
+const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType AttackType) const
+{
+	const UPlayerAttackDataAsset* Data = GetAttackData();
+
+	if (!Data)
+	{
+		return nullptr;
+	}
+
+	switch (AttackType)
+	{
+	case EAttackType::Light:
+		return &Data->LightAttack;
+
+	case EAttackType::Heavy:
+		return &Data->HeavyAttack;
+
+	default:
+		return nullptr;
+	}
+}
+
 void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 {
 	if (IsAttacking())
@@ -120,7 +162,8 @@ void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 		return;
 	}
 
-	StartAttack(EAttackType::Light);
+	StartAttack(
+		GetAttackDataByType(EAttackType::Light));
 }
 
 void UPlayerAttackComponent::HeavyAttack(const FInputActionValue& Value)
@@ -130,7 +173,8 @@ void UPlayerAttackComponent::HeavyAttack(const FInputActionValue& Value)
 		return;
 	}
 
-	StartAttack(EAttackType::Heavy);
+	StartAttack(
+		GetAttackDataByType(EAttackType::Heavy));
 }
 
 bool UPlayerAttackComponent::CanAttack() const
@@ -174,98 +218,73 @@ bool UPlayerAttackComponent::IsAttacking() const
 	);
 }
 
-bool UPlayerAttackComponent::IsBusy() const
-{
-	if (!StateComponent)
-	{
-		return true;
-	}
-
-	FGameplayTagContainer BusyTags;
-	BusyTags.AddTag(CombatTags::State_Combat_Attacking);
-	BusyTags.AddTag(CombatTags::State_Combat_Dodging);
-	BusyTags.AddTag(CombatTags::State_Combat_Guarding);
-	BusyTags.AddTag(CombatTags::State_Hit_PostureBroken);
-	BusyTags.AddTag(CombatTags::State_Hit_Dead);
-
-	return StateComponent->HasAnyStateTags(BusyTags);
-}
-
 bool UPlayerAttackComponent::CanContinueCombo() const
 {
-	const int32 NextComboIndex = ComboIndex + 1;
-	return AttackData->ComboSectionNames.IsValidIndex(NextComboIndex);
+	if (!CurrentAttackData)
+	{
+		return false;
+	}
+	
+	return CurrentAttackData->Steps.IsValidIndex(ComboIndex + 1); 
 }
 
-void UPlayerAttackComponent::StartAttack(EAttackType AttackType)
+void UPlayerAttackComponent::StartAttack(
+	const FAttackDefinition* AttackInfo)
 {
-	if (!OwnerCharacter || !StateComponent)
-	{
-		return;
-	}
-
-	UAnimMontage* AttackMontage = nullptr;
-
-	switch (AttackType)
-	{
-	case EAttackType::Light:
-		AttackMontage = AttackData->LightAttackMontage;
-		break;
-
-	case EAttackType::Heavy:
-		AttackMontage = AttackData->HeavyAttackMontage;
-		break;
-	}
-
-	if (!AttackMontage)
+	if (!OwnerCharacter ||
+		!StateComponent ||
+		!AttackInfo		||
+		!AttackInfo->Montage ||
+		AttackInfo->Steps.IsEmpty())
 	{
 		return;
 	}
 
 	UAnimInstance* AnimInstance =
-		OwnerCharacter->GetMesh()
-			? OwnerCharacter->GetMesh()->GetAnimInstance()
-			: nullptr;
+		OwnerCharacter->GetMesh()->GetAnimInstance();
 
 	if (!AnimInstance)
 	{
 		return;
 	}
 
-	CurrentAttackType = AttackType;
-	CurrentAttackMontage = AttackMontage;
-
+	CurrentAttackData = AttackInfo;
+	CurrentAttackMontage = AttackInfo->Montage;
 	ComboIndex = 0;
+	CurrentStep = &CurrentAttackData->Steps[ComboIndex];
+	
 	bComboWindow = false;
 	bComboBuffered = false;
 
-	StateComponent->AddStateTag(CombatTags::State_Combat_Attacking);
-	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+	StateComponent->AddStateTag(
+		CombatTags::State_Combat_Attacking);
 
+	StateComponent->AddStateTag(
+		CombatTags::State_Movement_Locked);
+	
 	const float Duration =
-		AnimInstance->Montage_Play(AttackMontage, AttackData->AttackPlayRate);
+		AnimInstance->Montage_Play(
+			AttackInfo->Montage,
+			CurrentStep->PlayRate);
 
-	if (Duration <= 0.0f)
+	if (Duration <= 0.f)
 	{
 		EndAttack();
 		return;
 	}
-
 	AnimInstance->Montage_JumpToSection(
-		AttackData->ComboSectionNames[ComboIndex],
-		AttackMontage
-	);
+			CurrentStep->SectionName,
+			AttackInfo->Montage);
 
-	FOnMontageEnded EndDelegate;
-	EndDelegate.BindUObject(
+	FOnMontageEnded Delegate;
+
+	Delegate.BindUObject(
 		this,
-		&UPlayerAttackComponent::OnAttackMontageEnded
-	);
+		&UPlayerAttackComponent::OnAttackMontageEnded);
 
 	AnimInstance->Montage_SetEndDelegate(
-		EndDelegate,
-		AttackMontage
-	);
+		Delegate,
+		AttackInfo->Montage);
 }
 
 void UPlayerAttackComponent::EndAttack()
@@ -273,15 +292,20 @@ void UPlayerAttackComponent::EndAttack()
 	WeaponComponent->EndWeaponHitCheck();
 
 	CurrentAttackMontage = nullptr;
-
+	CurrentAttackData = nullptr;
+	CurrentStep = nullptr;
+	
 	ComboIndex = 0;
+	
 	bComboWindow = false;
 	bComboBuffered = false;
 
 	if (StateComponent)
 	{
-		StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
-		StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
+		StateComponent->RemoveStateTag(
+			CombatTags::State_Combat_Attacking);
+		StateComponent->RemoveStateTag(
+			CombatTags::State_Movement_Locked);
 	}
 
 	if (OwnerCharacter)
@@ -312,7 +336,9 @@ void UPlayerAttackComponent::OpenComboWindow()
 
 void UPlayerAttackComponent::ContinueCombo()
 {
-	if (!OwnerCharacter || !StateComponent)
+	if (!OwnerCharacter ||
+		!StateComponent ||
+		!CurrentAttackData)
 	{
 		return;
 	}
@@ -326,19 +352,11 @@ void UPlayerAttackComponent::ContinueCombo()
 
 	++ComboIndex;
 
+	CurrentStep = &CurrentAttackData->Steps[ComboIndex];
+	
 	bComboBuffered = false;
 	bComboWindow = false;
-
-	UAnimMontage* CurrentMontage =
-		CurrentAttackType == EAttackType::Light
-			? AttackData->LightAttackMontage
-			: AttackData->HeavyAttackMontage;
-
-	if (!CurrentMontage)
-	{
-		return;
-	}
-
+	
 	UAnimInstance* AnimInstance =
 		OwnerCharacter->GetMesh()
 			? OwnerCharacter->GetMesh()->GetAnimInstance()
@@ -349,10 +367,19 @@ void UPlayerAttackComponent::ContinueCombo()
 		return;
 	}
 
-	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+	StateComponent->AddStateTag(
+		CombatTags::State_Movement_Locked);
+
+	AnimInstance->Montage_SetPlayRate(
+		CurrentAttackMontage,
+		CurrentStep->PlayRate);
 
 	AnimInstance->Montage_JumpToSection(
-		AttackData->ComboSectionNames[ComboIndex],
-		CurrentMontage
-	);
+		CurrentStep->SectionName,
+		CurrentAttackMontage);
+}
+
+const FAttackStepData* UPlayerAttackComponent::GetCurrentStep() const
+{
+	return CurrentStep;
 }

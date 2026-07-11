@@ -8,9 +8,12 @@ APlayerControllerBase::APlayerControllerBase() :
 	JumpAction(nullptr),
 	LookAction(nullptr),
 	AttackAction(nullptr),
+	HeavyAttackAction(nullptr),
 	LockOnAction(nullptr),
 	DodgeAction(nullptr),
-	GuardAction(nullptr)
+	GuardAction(nullptr),
+	EquipAction(nullptr),
+	UseItemAction(nullptr)
 {
 }
 
