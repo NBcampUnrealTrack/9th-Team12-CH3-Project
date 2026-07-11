@@ -44,6 +44,12 @@ struct FEvadeMontageData
 	{
 		return Montage != nullptr;
 	}
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float BlendInTime = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float BlendOutTime = 0.0f;
 };
 
 USTRUCT(BlueprintType)
