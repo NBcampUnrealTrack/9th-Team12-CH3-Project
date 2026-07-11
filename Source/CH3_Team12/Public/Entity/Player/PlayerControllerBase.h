@@ -29,6 +29,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> AttackAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> HeavyAttackAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> LockOnAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> DodgeAction;
@@ -57,6 +59,7 @@ public:
 	FORCEINLINE TObjectPtr<UInputAction> GetLookAction() const { return LookAction; }
 	FORCEINLINE TObjectPtr<UInputAction> GetSprintDodgeAction() const { return SprintDodgeAction; }
 	FORCEINLINE TObjectPtr<UInputAction> GetAttackAction() const { return AttackAction; }
+	FORCEINLINE TObjectPtr<UInputAction> GetHeavyAttackAction() const { return HeavyAttackAction; }
 	FORCEINLINE TObjectPtr<UInputAction> GetLockOnAction() const { return LockOnAction; }
 	FORCEINLINE TObjectPtr<UInputAction> GetDodgeAction() const { return DodgeAction; }
 	FORCEINLINE TObjectPtr<UInputAction> GetGuardAction() const { return GuardAction; }
