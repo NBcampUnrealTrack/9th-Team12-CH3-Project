@@ -90,7 +90,6 @@ void UPlayerAttackComponent::OpenAttackRecovery()
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerCharacter->GetLocomotionComponent())
 	{
-		LocomotionComponent->OpenDodgeBufferWindow();
 		LocomotionComponent->RefreshMovementSettings();
 	}
 }
@@ -290,7 +289,6 @@ void UPlayerAttackComponent::EndAttack()
 		if (UPlayerLocomotionComponent* LocomotionComponent =
 			OwnerCharacter->GetLocomotionComponent())
 		{
-			LocomotionComponent->CloseDodgeBufferWindow();
 			LocomotionComponent->RefreshMovementSettings();
 		}
 	}

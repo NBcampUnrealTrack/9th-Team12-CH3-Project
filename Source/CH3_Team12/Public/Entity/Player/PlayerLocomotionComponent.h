@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Framework/DataAsset/PlayerLocomotionDataAsset.h"
+#include "Framework/DataAsset/PlayerDodgeDataAsset.h"
 #include "PlayerLocomotionComponent.generated.h"
 
 class UAnimMontage;
@@ -34,18 +35,11 @@ public:
 	void DoMove(const FInputActionValue& Value);
 	void DoStopMove();
 
-	// Sprint / Dodge shared input
-	void OnSprintDodgePressed(const FInputActionValue& Value);
-	void OnSprintDodgeReleased(const FInputActionValue& Value);
-
 	// Sprint
 	void DoStartSprint();
 	void DoStopSprint();
 
-	// Dodge notify / buffer
-	void OpenDodgeBufferWindow();
-	void CloseDodgeBufferWindow();
-	void ConsumeDodgeBuffer();
+	void Dodge(const FInputActionValue& Value);
 	void EndDodge();
 
 	// Getter
@@ -55,7 +49,6 @@ public:
 
 	FVector GetDodgeWorldDirectionFromLastInput() const;
 
-	void OpenDodgeRecovery();
 	void RefreshMovementSettings();
 
 private:
@@ -63,11 +56,14 @@ private:
 	bool CanSprint() const;
 	bool CanDodge() const;
 
-	void TryStartSprintByHold();
-	void RequestDodge();
-	void StartDodge(const FVector& DodgeDirection);
-	void ClearDodgeBuffer();
+	void StartDodge();
+	void PlayDodgeMontage(const FEvadeMontageData& EvadeData);
+	void OnDodgeMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	EDodgeDirection CalculateDodgeDirectionFromInput(
+		const FVector2D& InputValue
+	) const;
+	
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
 
@@ -86,21 +82,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Data")
 	TObjectPtr<UPlayerLocomotionDataAsset> LocomotionData;
 	
-private:
+	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Dodge|Data")
+	TObjectPtr<UPlayerDodgeDataAsset> DodgeData;
+	
 	FVector2D LastMovementInput = FVector2D::ZeroVector;
-
-	bool bSprintDodgeHeld = false;
-	bool bSprintStartedByHold = false;
-	float SprintDodgePressedTime = 0.0f;
-
-	FTimerHandle SprintHoldTimerHandle;
-
-	bool bDodgeBufferWindowOpen = false;
-	bool bDodgeBuffered = false;
-	FVector BufferedDodgeDirection = FVector::ZeroVector;
-
-	FTimerHandle DodgeBufferTimerHandle;
-	FTimerHandle DodgeEndTimerHandle;
 
 	// Speed
 	float NormalWalkSpeed = 0.0f;
@@ -109,8 +94,8 @@ private:
 	float LockOnWalkSpeed = 0.0f;
 	float GuardWalkSpeed = 0.0f;
 	
-	// Dodge
-	float SprintHoldThreshold = 0.0f;
-	float DodgeBufferDuration = 0.0f;
-	float DodgeBlendOutTime = 0.0f;
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentDodgeMontage;
+
+	bool ShouldUseDirectionalDodge() const;
 };
