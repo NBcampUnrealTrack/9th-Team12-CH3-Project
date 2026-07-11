@@ -29,13 +29,13 @@ void UAN_OpenComboWindow::Notify(
 		return;
 	}
 
-	UPlayerAttackComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent();
+	UPlayerAttackComponent* AttackComponent =
+		PlayerCharacter->GetAttackComponent();
 
-	if (!CombatComponent)
+	if (!AttackComponent)
 	{
 		return;
 	}
 
-	CombatComponent->OpenComboWindow();
+	AttackComponent->OpenComboWindow();
 }

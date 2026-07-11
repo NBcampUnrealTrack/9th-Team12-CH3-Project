@@ -16,7 +16,7 @@ void UKatanaPlayerPresenter::Initialize(UPlayerAttributeComponent* InAttributeCo
 	AttributeComponent->OnPostureChanged.AddDynamic(this, &UKatanaPlayerPresenter::OnModelPostureChanged);
 	AttributeComponent->OnPostureBroken.AddDynamic(this, &UKatanaPlayerPresenter::OnModelPostureBroken);
 	AttributeComponent->OnPostureRecovered.AddDynamic(this, &UKatanaPlayerPresenter::OnModelPostureRecovered);
-	AttributeComponent->OnDeath.AddDynamic(this, &UKatanaPlayerPresenter::OnModelDeath);
+	AttributeComponent->OnDead.AddDynamic(this, &UKatanaPlayerPresenter::OnModelDeath);
 
 	OnModelHealthChanged(AttributeComponent->GetCurrentHealth(), AttributeComponent->GetMaxHealth());
 	OnModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
@@ -31,7 +31,7 @@ void UKatanaPlayerPresenter::Dispose()
 	AttributeComponent->OnPostureChanged.RemoveDynamic(this, &UKatanaPlayerPresenter::OnModelPostureChanged);
 	AttributeComponent->OnPostureBroken.RemoveDynamic(this, &UKatanaPlayerPresenter::OnModelPostureBroken);
 	AttributeComponent->OnPostureRecovered.RemoveDynamic(this, &UKatanaPlayerPresenter::OnModelPostureRecovered);
-	AttributeComponent->OnDeath.RemoveDynamic(this, &UKatanaPlayerPresenter::OnModelDeath);
+	AttributeComponent->OnDead.RemoveDynamic(this, &UKatanaPlayerPresenter::OnModelDeath);
 }
 
 void UKatanaPlayerPresenter::OnModelHealthChanged(const float CurrentHealth, const float MaxHealth) const

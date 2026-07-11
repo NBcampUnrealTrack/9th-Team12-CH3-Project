@@ -29,7 +29,7 @@ void UPlayerLocomotionComponent::BeginPlay()
 
 	StateComponent = OwnerCharacter->GetStateTagComponent();
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
-	CombatComponent = OwnerCharacter->GetCombatComponent();
+	AttackComponent = OwnerCharacter->GetAttackComponent();
 	DefenseComponent = OwnerCharacter->GetDefenseComponent();
 	
 	{
@@ -588,7 +588,7 @@ void UPlayerLocomotionComponent::EndDodge()
 		CombatTags::State_Movement_Locked
 	);
 
-	if (CombatComponent)
+	if (AttackComponent)
 	{
 		DefenseComponent->DisableInvincible();
 	}

@@ -34,7 +34,6 @@ public:
 	UPlayerLocomotionComponent* GetLocomotionComponent() const;
 	UPlayerAttributeComponent* GetAttributeComponent() const;
 	UPlayerCameraComponent* GetPlayerCameraComponent() const;
-	UPlayerAttackComponent* GetCombatComponent() const;
 	UPlayerInventoryComponent* GetInventoryComponent() const;
 	UPlayerEquipmentComponent* GetEquipmentComponent() const;
 	UPlayerWeaponComponent* GetWeaponComponent() const;
