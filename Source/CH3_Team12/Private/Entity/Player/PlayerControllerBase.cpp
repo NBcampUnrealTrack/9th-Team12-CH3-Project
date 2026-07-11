@@ -7,7 +7,6 @@ APlayerControllerBase::APlayerControllerBase() :
 	MoveAction(nullptr),
 	JumpAction(nullptr),
 	LookAction(nullptr),
-	SprintDodgeAction(nullptr),
 	AttackAction(nullptr),
 	HeavyAttackAction(nullptr),
 	LockOnAction(nullptr),

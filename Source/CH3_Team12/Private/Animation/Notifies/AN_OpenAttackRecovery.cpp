@@ -33,13 +33,13 @@ void UAN_OpenAttackRecovery::Notify(
 		return;
 	}
 
-	UPlayerAttackComponent* CombatComponent =
-		PlayerCharacter->GetCombatComponent();
+	UPlayerAttackComponent* AttackComponent =
+		PlayerCharacter->GetAttackComponent();
 
-	if (!CombatComponent)
+	if (!AttackComponent)
 	{
 		return;
 	}
 
-	CombatComponent->OpenAttackRecovery();
+	AttackComponent->OpenAttackRecovery();
 }

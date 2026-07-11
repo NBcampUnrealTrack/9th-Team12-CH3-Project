@@ -17,9 +17,9 @@ UENUM(BlueprintType)
 enum class EHitReactionDirection : uint8
 {
 	Front,
+	Back,
 	Left,
 	Right,
-	Back
 };
 
 USTRUCT(BlueprintType)

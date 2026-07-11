@@ -9,13 +9,14 @@
 #include "Framework/DataAsset/PlayerCombatFeedbackDataAsset.h"
 #include "PlayerDefenseComponent.generated.h"
 
-class UAnimMontage;
 class APlayerCharacterBase;
 class AWeaponBase;
 class UStateTagComponent;
 class UPlayerAttributeComponent;
 class UPlayerEquipmentComponent;
 class UPlayerWeaponComponent;
+
+class UAnimMontage;
 class UNiagaraSystem;
 class USoundBase;
 
@@ -34,6 +35,7 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	UPROPERTY()
@@ -69,10 +71,14 @@ private:
 	
 	void PlayParryReaction(EHitReactionDirection AttackDirection);
 	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
-	UAnimMontage* GetHitMontage(EHitReactionDirection ReactionDirection) const;
 	void PlayHitReaction(EHitReactionDirection ReactionDirection);
 	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void EndHitReaction();
+	
+	bool PlayMontageSafe(
+		UAnimMontage* Montage,
+		float PlayRate = 1.0f
+	) const;
 	
 public:
 	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
@@ -129,20 +135,20 @@ private:
 	
 	FRotator MakeCombatEffectRotation(const FIncomingAttackContext& Context,
 									  ECombatEffectRotationMode RotationMode) const;
-	
+
 public:
 	// Debug
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackFront();
 
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
+	void Debug_ReceiveTestAttackBack();
+	
+	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackLeft();
 
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackRight();
-
-	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
-	void Debug_ReceiveTestAttackBack();
 
 	void Debug_ReceiveTestAttack(EHitReactionDirection Direction);
 	
@@ -152,4 +158,22 @@ public:
 	UPROPERTY(EditAnywhere, Category="Combat|Debug")
 	float DebugAttackPostureDamage = 10.0f;
 	
+private:
+	// Dead
+	bool bDeadHandled = false;
+	
+	UFUNCTION()
+	void HandleOwnerDead();
+
+	void PlayDeadMontage();
+
+	void ClearTransientCombatStatesForDead();
+
+	void OnDeadMontageEnded(
+		UAnimMontage* Montage,
+		bool bInterrupted
+	);
+	
+public:
+	void FinalizeDead();
 };

@@ -1,23 +1,28 @@
-#include "Entity/Player/PlayerAttributeComponent.h"
+// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Entity/Player/PlayerCharacterBase.h"
+
+#include "Entity/Enemy/Component/EnemyAttributeComponent.h"
+
+#include "Engine/World.h"
+#include "TimerManager.h"
+#include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 
-UPlayerAttributeComponent::UPlayerAttributeComponent()
+UEnemyAttributeComponent::UEnemyAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UPlayerAttributeComponent::BeginPlay()
+void UEnemyAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
+	OwnerCharacter = Cast<AEnemyCharacterBase>(GetOwner());
 
 	if (!OwnerCharacter)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerAttributeComponent owner is not PlayerCharacterBase."));
+		UE_LOG(LogTemp, Error, TEXT("EnemyAttributeComponent owner is not EnemyCharacterBase."));
 		return;
 	}
 
@@ -25,7 +30,7 @@ void UPlayerAttributeComponent::BeginPlay()
 
 	if (!StateComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerAttributeComponent could not find StateTagComponent."));
+		UE_LOG(LogTemp, Error, TEXT("EnemyAttributeComponent could not find StateTagComponent."));
 	}
 	
 	if (AttributeData)
@@ -40,7 +45,7 @@ void UPlayerAttributeComponent::BeginPlay()
 	ResetAttributes();
 }
 
-void UPlayerAttributeComponent::TickComponent(
+void UEnemyAttributeComponent::TickComponent(
 	float DeltaTime,
 	ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction
@@ -55,7 +60,7 @@ void UPlayerAttributeComponent::TickComponent(
 	UpdatePostureRecovery(DeltaTime);
 }
 
-void UPlayerAttributeComponent::ResetAttributes()
+void UEnemyAttributeComponent::ResetAttributes()
 {
 	bIsDead = false;
 	bIsPostureBroken = false;
@@ -69,18 +74,18 @@ void UPlayerAttributeComponent::ResetAttributes()
 		StateComponent->RemoveStateTag(CombatTags::State_Hit_PostureBroken);
 	}
 
-	OnHealthChanged.Broadcast(
+	OnEnemyHealthChanged.Broadcast(
 		CurrentHealth,
 		MaxHealth
 	);
 
-	OnPostureChanged.Broadcast(
+	OnEnemyPostureChanged.Broadcast(
 		CurrentPosture,
 		MaxPosture
 	);
 }
 
-void UPlayerAttributeComponent::ApplyAttributeDamage(
+void UEnemyAttributeComponent::ApplyAttributeDamage(
 	float HealthDamage,
 	float PostureDamage
 )
@@ -100,7 +105,7 @@ void UPlayerAttributeComponent::ApplyAttributeDamage(
 	ApplyPostureDamage(PostureDamage);
 }
 
-void UPlayerAttributeComponent::ApplyHealthDamage(float HealthDamage)
+void UEnemyAttributeComponent::ApplyHealthDamage(float HealthDamage)
 {
 	if (bIsDead)
 	{
@@ -118,7 +123,7 @@ void UPlayerAttributeComponent::ApplyHealthDamage(float HealthDamage)
 		MaxHealth
 	);
 
-	OnHealthChanged.Broadcast(
+	OnEnemyHealthChanged.Broadcast(
 		CurrentHealth,
 		MaxHealth
 	);
@@ -129,7 +134,7 @@ void UPlayerAttributeComponent::ApplyHealthDamage(float HealthDamage)
 	}
 }
 
-void UPlayerAttributeComponent::ApplyPostureDamage(float PostureDamage)
+void UEnemyAttributeComponent::ApplyPostureDamage(float PostureDamage)
 {
 	if (bIsDead || bIsPostureBroken)
 	{
@@ -151,7 +156,7 @@ void UPlayerAttributeComponent::ApplyPostureDamage(float PostureDamage)
 		? GetWorld()->GetTimeSeconds()
 		: 0.0f;
 
-	OnPostureChanged.Broadcast(
+	OnEnemyPostureChanged.Broadcast(
 		CurrentPosture,
 		MaxPosture
 	);
@@ -162,7 +167,7 @@ void UPlayerAttributeComponent::ApplyPostureDamage(float PostureDamage)
 	}
 }
 
-void UPlayerAttributeComponent::Heal(float HealAmount)
+void UEnemyAttributeComponent::Heal(float HealAmount)
 {
 	if (bIsDead)
 	{
@@ -180,13 +185,13 @@ void UPlayerAttributeComponent::Heal(float HealAmount)
 		MaxHealth
 	);
 
-	OnHealthChanged.Broadcast(
+	OnEnemyHealthChanged.Broadcast(
 		CurrentHealth,
 		MaxHealth
 	);
 }
 
-void UPlayerAttributeComponent::RecoverPosture(float RecoveryAmount)
+void UEnemyAttributeComponent::RecoverPosture(float RecoveryAmount)
 {
 	if (bIsDead || bIsPostureBroken)
 	{
@@ -204,13 +209,13 @@ void UPlayerAttributeComponent::RecoverPosture(float RecoveryAmount)
 		MaxPosture
 	);
 
-	OnPostureChanged.Broadcast(
+	OnEnemyPostureChanged.Broadcast(
 		CurrentPosture,
 		MaxPosture
 	);
 }
 
-void UPlayerAttributeComponent::UpdatePostureRecovery(float DeltaTime)
+void UEnemyAttributeComponent::UpdatePostureRecovery(float DeltaTime)
 {
 	if (bIsDead || bIsPostureBroken)
 	{
@@ -242,7 +247,7 @@ void UPlayerAttributeComponent::UpdatePostureRecovery(float DeltaTime)
 	RecoverPosture(RecoveryAmount);
 }
 
-void UPlayerAttributeComponent::BreakPosture()
+void UEnemyAttributeComponent::BreakPosture()
 {
 	if (bIsDead || bIsPostureBroken)
 	{
@@ -259,26 +264,26 @@ void UPlayerAttributeComponent::BreakPosture()
 		);
 	}
 
-	OnPostureChanged.Broadcast(
+	OnEnemyPostureChanged.Broadcast(
 		CurrentPosture,
 		MaxPosture
 	);
 
-	OnPostureBroken.Broadcast();
-
+	OnEnemyPostureBroken.Broadcast();
+	
 	if (GetWorld())
 	{
 		GetWorld()->GetTimerManager().SetTimer(
 			PostureBreakTimerHandle,
 			this,
-			&UPlayerAttributeComponent::RecoverFromPostureBreak,
+			&UEnemyAttributeComponent::RecoverFromPostureBreak,
 			PostureBreakDuration,
 			false
 		);
 	}
 }
 
-void UPlayerAttributeComponent::RecoverFromPostureBreak()
+void UEnemyAttributeComponent::RecoverFromPostureBreak()
 {
 	if (bIsDead)
 	{
@@ -295,15 +300,15 @@ void UPlayerAttributeComponent::RecoverFromPostureBreak()
 		);
 	}
 
-	OnPostureChanged.Broadcast(
+	OnEnemyPostureChanged.Broadcast(
 		CurrentPosture,
 		MaxPosture
 	);
 
-	OnPostureRecovered.Broadcast();
+	OnEnemyPostureRecovered.Broadcast();
 }
 
-void UPlayerAttributeComponent::Die()
+void UEnemyAttributeComponent::Die()
 {
 	if (bIsDead)
 	{
@@ -334,15 +339,15 @@ void UPlayerAttributeComponent::Die()
 		);
 	}
 
-	OnHealthChanged.Broadcast(
+	OnEnemyHealthChanged.Broadcast(
 		CurrentHealth,
 		MaxHealth
 	);
 
-	OnPostureChanged.Broadcast(
+	OnEnemyPostureChanged.Broadcast(
 		CurrentPosture,
 		MaxPosture
 	);
 
-	OnDead.Broadcast();
+	OnEnemyDeath.Broadcast();
 }
