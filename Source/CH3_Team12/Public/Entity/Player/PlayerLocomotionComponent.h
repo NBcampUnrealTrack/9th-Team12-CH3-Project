@@ -41,6 +41,7 @@ public:
 
 	void Dodge(const FInputActionValue& Value);
 	void EndDodge();
+	void OpenDodgeMove();
 
 	// Getter
 	FORCEINLINE float GetNormalWalkSpeed() const { return NormalWalkSpeed; }

@@ -191,7 +191,8 @@ bool UPlayerLocomotionComponent::CanMove() const
 
 	FGameplayTagContainer BlockTags;
 	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
-	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	// 여기서는 Dodging을 막지 않는다.
+	// BlockTags.AddTag(CombatTags::State_Combat_Dodging);
 	BlockTags.AddTag(CombatTags::State_Combat_Parry);
 	BlockTags.AddTag(CombatTags::State_Movement_Locked);
 	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
@@ -601,6 +602,26 @@ void UPlayerLocomotionComponent::EndDodge()
 	{
 		DefenseComponent->DisableInvincible();
 	}
+
+	RefreshMovementSettings();
+}
+
+void UPlayerLocomotionComponent::OpenDodgeMove()
+{
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	if (!StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Dodging))
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked
+	);
 
 	RefreshMovementSettings();
 }
