@@ -330,8 +330,7 @@ void UPlayerEquipmentComponent::SpawnWeaponToSheath()
 	}
 	
 	CurrentWeaponInstance = Item;
-	CurrentWeaponData = 
-		Cast<UWeaponDataAsset>(Item->GetItemData());
+	CurrentWeaponData = Cast<UWeaponDataAsset>(Item->GetItemData());
 	
 	if (!CurrentWeaponData)
 	{

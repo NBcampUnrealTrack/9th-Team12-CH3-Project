@@ -4,7 +4,6 @@
 #include "Framework/DataAsset/EquipmentDataAsset.h"
 #include "WeaponDataAsset.generated.h"
 
-class UPlayerAttackDataAsset;
 class UAnimMontage;
 class AWeaponBase;
 
@@ -33,8 +32,4 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FName UnequipSocket = TEXT("Scabbard_Target01Socket");
-	
-	/** 공격 데이터 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat")
-	TObjectPtr<UPlayerAttackDataAsset> AttackData;
 };

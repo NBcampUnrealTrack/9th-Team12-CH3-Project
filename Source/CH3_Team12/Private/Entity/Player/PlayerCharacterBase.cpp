@@ -163,10 +163,6 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	{
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, AttackComponent.Get(), &UPlayerAttackComponent::Attack);
 	}
-	if (UInputAction* HeavyAttackAction = PlayerControllerBase->GetHeavyAttackAction())
-	{
-		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, AttackComponent.Get(), &UPlayerAttackComponent::HeavyAttack);
-	}
 	if (UInputAction* LockOnAction = PlayerControllerBase->GetLockOnAction())
 	{
 		EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, CameraComponent.Get(), &UPlayerCameraComponent::LockOn);
