@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Combat/CombatTypes.h"
 #include "EnemyAttackComponent.generated.h"
 
-struct FAttackInfo;
 struct FHitResult;
 struct FHitBoxData;
 struct FAttackAnimationData;
+class UStateTagComponent;
 class UEnemyAttackDataAsset;
 class UAnimMontage;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackFinished);
@@ -52,6 +53,10 @@ public:
 	
 private:
 	void ProcessHit(const FHitResult& InHitResult, const FAttackInfo& InAttackInfo);
+	void ProcessDefenseResult(EDefenseResult InDefenseResult);
+	
+	void OnAttackParried();
+	
 	const FAttackAnimationData* GetCurrentPatternData();
 	const FAttackAnimationData* GetSelectedPatternData(int32 InSelectedAction, int32 InSelectedPattern);
 	
@@ -84,11 +89,14 @@ protected:
 	bool bCanAttack = true;
 	
 	UPROPERTY()
-	EEnemyAttackPattern CurrentPlayingMontage;
+	EEnemyAttackPattern CurrentPlayingPattern;
 	
 	UPROPERTY(EditAnywhere,	BlueprintReadOnly, Category = "Attack|Debug")
 	bool bUseDebugColliderDraw = true;
 private:
+	UPROPERTY()
+	TObjectPtr<UStateTagComponent> StateComponent;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
 	
