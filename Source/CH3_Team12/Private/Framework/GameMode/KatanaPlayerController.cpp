@@ -31,7 +31,8 @@ void AKatanaPlayerController::BeginPlay()
 	if (!UIManager)
 		return;
 
-	UIManager->ShowEnemyWidget(EnemyCharacterBase->GetEnemyAttributeComponent());
+	//TODO 제대로 된 이름을 받아오게 수정 필요
+	UIManager->ShowEnemyWidget(EnemyCharacterBase->GetName(), EnemyCharacterBase->GetEnemyAttributeComponent());
 }
 
 void AKatanaPlayerController::OnPossess(APawn* InPawn)

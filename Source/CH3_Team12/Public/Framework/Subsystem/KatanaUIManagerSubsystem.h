@@ -45,7 +45,7 @@ public:
 	void ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent);
 	void HidePlayerWidget();
 
-	void ShowEnemyWidget(UEnemyAttributeComponent* InAttributeComponent);
+	void ShowEnemyWidget(const FString& InName, UEnemyAttributeComponent* InAttributeComponent);
 	void HideEnemyWidget();
 
 	void RegisterInventoryWidget(UInventoryWidget* InWidget);

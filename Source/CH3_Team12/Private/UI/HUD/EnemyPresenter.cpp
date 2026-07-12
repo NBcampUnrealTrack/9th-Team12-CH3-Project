@@ -3,7 +3,7 @@
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "UI/HUD/EnemyWidget.h"
 
-void UEnemyPresenter::Initialize(UEnemyAttributeComponent* InAttributeComponent,
+void UEnemyPresenter::Initialize(const FString& InName, UEnemyAttributeComponent* InAttributeComponent,
                                        UEnemyWidget* InWidget)
 {
 	AttributeComponent = InAttributeComponent;
@@ -18,6 +18,7 @@ void UEnemyPresenter::Initialize(UEnemyAttributeComponent* InAttributeComponent,
 	AttributeComponent->OnEnemyPostureRecovered.AddDynamic(this, &UEnemyPresenter::OnModelPostureRecovered);
 	AttributeComponent->OnEnemyDeath.AddDynamic(this, &UEnemyPresenter::OnModelDeath);
 
+	EnemyWidget->UpdateName(InName);
 	OnModelHealthChanged(AttributeComponent->GetCurrentHealth(), AttributeComponent->GetMaxHealth());
 	OnModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
 }

@@ -16,7 +16,7 @@ class CH3_TEAM12_API UEnemyPresenter : public UObject, public IPresenterInterfac
 	GENERATED_BODY()
 
 public:
-	void Initialize(UEnemyAttributeComponent* InAttributeComponent, UEnemyWidget* InWidget);
+	void Initialize(const FString& InName, UEnemyAttributeComponent* InAttributeComponent, UEnemyWidget* InWidget);
 	virtual void Dispose() override;
 
 private:

@@ -190,7 +190,7 @@ void UKatanaUIManagerSubsystem::HidePlayerWidget()
 	OpHideUI(PlayerWidgetName);
 }
 
-void UKatanaUIManagerSubsystem::ShowEnemyWidget(UEnemyAttributeComponent* InAttributeComponent)
+void UKatanaUIManagerSubsystem::ShowEnemyWidget(const FString& InName, UEnemyAttributeComponent* InAttributeComponent)
 {
 	const FName WidgetName = EnemyWidgetName;
 	UEnemyWidget* ActiveView = OpShowUI<UEnemyWidget>(WidgetName);
@@ -203,7 +203,7 @@ void UKatanaUIManagerSubsystem::ShowEnemyWidget(UEnemyAttributeComponent* InAttr
 		return;
 	}
 
-	NewPresenter->Initialize(InAttributeComponent, ActiveView);
+	NewPresenter->Initialize(InName, InAttributeComponent, ActiveView);
 	ActivePresenters.Add(WidgetName, NewPresenter);
 }
 
