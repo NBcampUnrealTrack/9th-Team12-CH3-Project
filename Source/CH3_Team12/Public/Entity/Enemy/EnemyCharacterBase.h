@@ -46,6 +46,9 @@ protected:
 	TObjectPtr<UEnemyAttributeComponent> AttributeComponent;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
+	TObjectPtr<UAnimMontage> HitMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
 	TObjectPtr<UAnimMontage> DeadMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
