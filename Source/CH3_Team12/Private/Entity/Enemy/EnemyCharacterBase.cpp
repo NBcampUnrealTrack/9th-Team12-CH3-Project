@@ -85,7 +85,7 @@ float AEnemyCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& Da
 	// 임의로 체간 게이지는 두배로 받도록 설정
 	AttributeComponent->ApplyAttributeDamage(DamageAmount, DamageAmount * 2);
 
-	if (StateTagComponent->HasStateTag(CombatTags::State_Hit_Dead) == false)
+	if (IsCommonState())
 	{
 		USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
 		if (SkeletalMeshComponent)
@@ -165,6 +165,17 @@ void AEnemyCharacterBase::SetEnemyDestroyTimer()
 void AEnemyCharacterBase::DestroyEnemy()
 {
 	Destroy();
+}
+
+bool AEnemyCharacterBase::IsCommonState()
+{
+	bool Result = true;
+	FGameplayTagContainer UncommonState;
+	UncommonState.AddTag(CombatTags::State_Hit_Dead);
+	UncommonState.AddTag(CombatTags::State_Combat_Attacking);
+	Result = !(StateTagComponent->HasAnyStateTags(UncommonState));
+	
+	return Result;
 }
 
 void AEnemyCharacterBase::AttackAnimationEnd()

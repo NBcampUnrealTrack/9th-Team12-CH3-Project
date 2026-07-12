@@ -64,6 +64,8 @@ protected:
 	virtual void DestroyEnemy();
 	
 public:
+	bool IsCommonState();
+	
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 
 	UFUNCTION(BlueprintCallable)

@@ -17,6 +17,8 @@
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Combat/CombatTypes.h"
 #include "Entity/Enemy/EnemyCharacterBase.h"
+#include "GameplayTags/CombatGameplayTags.h"
+#include "Entity/Player/StateTagComponent.h"
 
 // Sets default values for this component's properties
 UEnemyAttackComponent::UEnemyAttackComponent()
@@ -132,6 +134,7 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		return false;
 	}
 
+	StateComponent->AddStateTag(CombatTags::State_Combat_Attacking);
 	GetWorld()->GetTimerManager().SetTimer(
 		AttackCooldownTimerHandle,
 		this,
@@ -181,6 +184,7 @@ void UEnemyAttackComponent::FinishAttack()
 	OnAttackFinished.Broadcast();
 	
 	CurrentPlayingPattern = EEnemyAttackPattern::End;
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
 }
 
 void UEnemyAttackComponent::CancelAttack()
