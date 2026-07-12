@@ -1,10 +1,19 @@
 #include "Framework/GameMode/KatanaPlayerController.h"
 
+#include "EngineUtils.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Entity/Player/PlayerAttributeComponent.h"
+#include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
+
+APlayerCharacterBase* AKatanaPlayerController::GetPlayerCharacter() const
+{
+	if (!PlayerCharacterBase.IsValid())
+		return nullptr;
+
+	return PlayerCharacterBase.Get();
+}
 
 void AKatanaPlayerController::BeginPlay()
 {
@@ -13,27 +22,35 @@ void AKatanaPlayerController::BeginPlay()
 	bShowMouseCursor = false;
 	const FInputModeGameOnly InputMode;
 	SetInputMode(InputMode);
+
+	const AEnemyCharacterBase* EnemyCharacterBase = FindEnemyCharacter();
+	if (!EnemyCharacterBase)
+		return;
+
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
+	if (!UIManager)
+		return;
+
+	UIManager->ShowEnemyWidget(EnemyCharacterBase->GetEnemyAttributeComponent());
 }
 
 void AKatanaPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	const APlayerCharacterBase* PlayerCharacter = Cast<APlayerCharacterBase>(InPawn);
-	if (!PlayerCharacter)
+	PlayerCharacterBase = Cast<APlayerCharacterBase>(InPawn);
+	if (!PlayerCharacterBase.IsValid())
 		return;
 
-	UPlayerAttributeComponent* AttributeComponent = PlayerCharacter->GetAttributeComponent();
+	UPlayerAttributeComponent* AttributeComponent = PlayerCharacterBase->GetAttributeComponent();
 	// AttributeComponentTest->ApplyHealthDamage(FMath::RandRange(0, 20));
 	// AttributeComponentTest->ApplyPostureDamage(FMath::RandRange(20, 50));
 
-	UKatanaUIManagerSubsystem* UIManager = GetLocalPlayer()->GetSubsystem<UKatanaUIManagerSubsystem>();
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
 		return;
 
 	UIManager->ShowPlayerWidget(AttributeComponent);
-
-	//TODO 여기서 록온 이벤트를 받아오도록 설정
 }
 
 void AKatanaPlayerController::SetupInputComponent()
@@ -60,6 +77,27 @@ void AKatanaPlayerController::SetupInputComponent()
 	                                   &AKatanaPlayerController::ToggleInGameMenu);
 
 	UE_LOG(LogTemp, Warning, TEXT("UI 단축키 등록 완료!"));
+}
+
+
+AEnemyCharacterBase* AKatanaPlayerController::FindEnemyCharacter() const
+{
+	UE_LOG(LogTemp, Warning, TEXT("FindEnemyCharacter! 1"));
+
+	const UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	for (TActorIterator<AEnemyCharacterBase> It(World); It; ++It)
+	{
+		AEnemyCharacterBase* FoundActor = *It;
+		if (!FoundActor)
+			continue;
+		UE_LOG(LogTemp, Warning, TEXT("FindEnemyCharacter! 2"));
+		return  FoundActor;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("FindEnemyCharacter! 3"));
+	return nullptr;
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

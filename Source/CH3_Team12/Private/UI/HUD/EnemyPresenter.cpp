@@ -1,8 +1,9 @@
 #include "UI/HUD/EnemyPresenter.h"
 
+#include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "UI/HUD/EnemyWidget.h"
 
-void UEnemyPresenter::Initialize(UObject* InAttributeComponent,
+void UEnemyPresenter::Initialize(UEnemyAttributeComponent* InAttributeComponent,
                                        UEnemyWidget* InWidget)
 {
 	AttributeComponent = InAttributeComponent;
@@ -11,16 +12,14 @@ void UEnemyPresenter::Initialize(UObject* InAttributeComponent,
 	if (!AttributeComponent.IsValid() || !EnemyWidget.IsValid())
 		return;
 
-	//TODO 이름 설정
+	AttributeComponent->OnEnemyHealthChanged.AddDynamic(this, &UEnemyPresenter::OnModelHealthChanged);
+	AttributeComponent->OnEnemyPostureChanged.AddDynamic(this, &UEnemyPresenter::OnModelPostureChanged);
+	AttributeComponent->OnEnemyPostureBroken.AddDynamic(this, &UEnemyPresenter::OnModelPostureBroken);
+	AttributeComponent->OnEnemyPostureRecovered.AddDynamic(this, &UEnemyPresenter::OnModelPostureRecovered);
+	AttributeComponent->OnEnemyDeath.AddDynamic(this, &UEnemyPresenter::OnModelDeath);
 
-	// AttributeComponent->OnHealthChanged.AddDynamic(this, &UKatanaEnemyPresenter::OnModelHealthChanged);
-	// AttributeComponent->OnPostureChanged.AddDynamic(this, &UKatanaEnemyPresenter::OnModelPostureChanged);
-	// AttributeComponent->OnPostureBroken.AddDynamic(this, &UKatanaEnemyPresenter::OnModelPostureBroken);
-	// AttributeComponent->OnPostureRecovered.AddDynamic(this, &UKatanaEnemyPresenter::OnModelPostureRecovered);
-	// AttributeComponent->OnDeath.AddDynamic(this, &UKatanaEnemyPresenter::OnModelDeath);
-	//
-	// OnModelHealthChanged(AttributeComponent->GetCurrentHealth(), AttributeComponent->GetMaxHealth());
-	// OnModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
+	OnModelHealthChanged(AttributeComponent->GetCurrentHealth(), AttributeComponent->GetMaxHealth());
+	OnModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
 }
 
 void UEnemyPresenter::Dispose()
@@ -28,11 +27,11 @@ void UEnemyPresenter::Dispose()
 	if (!AttributeComponent.IsValid())
 		return;
 
-	// AttributeComponent->OnHealthChanged.RemoveDynamic(this, &UKatanaEnemyPresenter::OnModelHealthChanged);
-	// AttributeComponent->OnPostureChanged.RemoveDynamic(this, &UKatanaEnemyPresenter::OnModelPostureChanged);
-	// AttributeComponent->OnPostureBroken.RemoveDynamic(this, &UKatanaEnemyPresenter::OnModelPostureBroken);
-	// AttributeComponent->OnPostureRecovered.RemoveDynamic(this, &UKatanaEnemyPresenter::OnModelPostureRecovered);
-	// AttributeComponent->OnDeath.RemoveDynamic(this, &UKatanaEnemyPresenter::OnModelDeath);
+	AttributeComponent->OnEnemyHealthChanged.RemoveDynamic(this, &UEnemyPresenter::OnModelHealthChanged);
+	AttributeComponent->OnEnemyPostureChanged.RemoveDynamic(this, &UEnemyPresenter::OnModelPostureChanged);
+	AttributeComponent->OnEnemyPostureBroken.RemoveDynamic(this, &UEnemyPresenter::OnModelPostureBroken);
+	AttributeComponent->OnEnemyPostureRecovered.RemoveDynamic(this, &UEnemyPresenter::OnModelPostureRecovered);
+	AttributeComponent->OnEnemyDeath.RemoveDynamic(this, &UEnemyPresenter::OnModelDeath);
 }
 
 void UEnemyPresenter::OnModelHealthChanged(const float CurrentHealth, const float MaxHealth) const

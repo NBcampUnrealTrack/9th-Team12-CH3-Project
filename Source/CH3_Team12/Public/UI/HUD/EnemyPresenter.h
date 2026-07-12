@@ -5,6 +5,7 @@
 #include "UObject/Object.h"
 #include "EnemyPresenter.generated.h"
 
+class UEnemyAttributeComponent;
 class UEnemyWidget;
 /**
  *
@@ -15,12 +16,12 @@ class CH3_TEAM12_API UEnemyPresenter : public UObject, public IPresenterInterfac
 	GENERATED_BODY()
 
 public:
-	void Initialize(UObject* InAttributeComponent, UEnemyWidget* InWidget);
+	void Initialize(UEnemyAttributeComponent* InAttributeComponent, UEnemyWidget* InWidget);
 	virtual void Dispose() override;
 
 private:
 	UPROPERTY()
-	TWeakObjectPtr<UObject> AttributeComponent; //Model
+	TWeakObjectPtr<UEnemyAttributeComponent> AttributeComponent; //Model
 
 	UPROPERTY()
 	TWeakObjectPtr<UEnemyWidget> EnemyWidget; //View
