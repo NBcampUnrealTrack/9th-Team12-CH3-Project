@@ -5,7 +5,32 @@
 #include "UObject/Object.h"
 #include "InventoryPresenter.generated.h"
 
+class UPlayerInventoryComponent;
+class UTexture2D;
 class UInventoryWidget;
+
+USTRUCT(BlueprintType)
+struct CH3_TEAM12_API FInventoryItemData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UTexture2D* Icon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 Count;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 MaxCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText Description;
+};
+
 /**
  *
  */
@@ -21,4 +46,10 @@ public:
 private:
 	UPROPERTY()
 	TWeakObjectPtr<UInventoryWidget> InventoryWidget;
+
+	UPROPERTY()
+	TMap<FName, FInventoryItemData> InventoryItemDataMap;
+
+	UFUNCTION()
+	UPlayerInventoryComponent* GetPlayerInventoryComponent() const;
 };

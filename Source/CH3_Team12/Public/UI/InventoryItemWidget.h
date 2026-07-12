@@ -16,7 +16,7 @@ class CH3_TEAM12_API UInventoryItemWidget : public UUserWidget
 
 public:
 	UFUNCTION()
-	void SetInfo(UTexture2D* Texture, int32 Count, const FString& Name);
+	void UpdateData(const FText& Name, UTexture2D* Icon, int32 Count);
 
 private:
 	UPROPERTY(meta=(BindWidget))

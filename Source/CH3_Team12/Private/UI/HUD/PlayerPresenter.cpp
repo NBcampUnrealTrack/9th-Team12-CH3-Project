@@ -16,7 +16,7 @@ void UPlayerPresenter::Initialize(UPlayerAttributeComponent* InAttributeComponen
 	AttributeComponent->OnPostureChanged.AddDynamic(this, &UPlayerPresenter::OnModelPostureChanged);
 	AttributeComponent->OnPostureBroken.AddDynamic(this, &UPlayerPresenter::OnModelPostureBroken);
 	AttributeComponent->OnPostureRecovered.AddDynamic(this, &UPlayerPresenter::OnModelPostureRecovered);
-	AttributeComponent->OnDeath.AddDynamic(this, &UPlayerPresenter::OnModelDeath);
+	AttributeComponent->OnDead.AddDynamic(this, &UPlayerPresenter::OnModelDeath);
 
 	OnModelHealthChanged(AttributeComponent->GetCurrentHealth(), AttributeComponent->GetMaxHealth());
 	OnModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
@@ -31,7 +31,7 @@ void UPlayerPresenter::Dispose()
 	AttributeComponent->OnPostureChanged.RemoveDynamic(this, &UPlayerPresenter::OnModelPostureChanged);
 	AttributeComponent->OnPostureBroken.RemoveDynamic(this, &UPlayerPresenter::OnModelPostureBroken);
 	AttributeComponent->OnPostureRecovered.RemoveDynamic(this, &UPlayerPresenter::OnModelPostureRecovered);
-	AttributeComponent->OnDeath.RemoveDynamic(this, &UPlayerPresenter::OnModelDeath);
+	AttributeComponent->OnDead.RemoveDynamic(this, &UPlayerPresenter::OnModelDeath);
 }
 
 void UPlayerPresenter::OnModelHealthChanged(const float CurrentHealth, const float MaxHealth) const

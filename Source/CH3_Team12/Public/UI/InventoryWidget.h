@@ -17,10 +17,13 @@ class CH3_TEAM12_API UInventoryWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UInventoryItemWidget* AddAndItemWidget();
+	void ClearItemWidgets();
+
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<UInventoryItemWidget> ItemWidget;
 
-protected:
 	virtual void NativeOnInitialized() override;
 
 private:
@@ -32,9 +35,6 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> TxtDetailName;
-
-	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UTextBlock> TxtDetailUseCount;
 
 	UPROPERTY(meta=(BindWidget))
 	TSoftObjectPtr<UTextBlock> TxtDetailCapacity;

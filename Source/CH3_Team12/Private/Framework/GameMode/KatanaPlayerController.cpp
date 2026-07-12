@@ -43,8 +43,6 @@ void AKatanaPlayerController::OnPossess(APawn* InPawn)
 		return;
 
 	UPlayerAttributeComponent* AttributeComponent = PlayerCharacterBase->GetAttributeComponent();
-	// AttributeComponentTest->ApplyHealthDamage(FMath::RandRange(0, 20));
-	// AttributeComponentTest->ApplyPostureDamage(FMath::RandRange(20, 50));
 
 	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
@@ -82,8 +80,6 @@ void AKatanaPlayerController::SetupInputComponent()
 
 AEnemyCharacterBase* AKatanaPlayerController::FindEnemyCharacter() const
 {
-	UE_LOG(LogTemp, Warning, TEXT("FindEnemyCharacter! 1"));
-
 	const UWorld* World = GetWorld();
 	if (!World) return nullptr;
 
@@ -92,11 +88,9 @@ AEnemyCharacterBase* AKatanaPlayerController::FindEnemyCharacter() const
 		AEnemyCharacterBase* FoundActor = *It;
 		if (!FoundActor)
 			continue;
-		UE_LOG(LogTemp, Warning, TEXT("FindEnemyCharacter! 2"));
 		return  FoundActor;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("FindEnemyCharacter! 3"));
 	return nullptr;
 }
 
