@@ -13,6 +13,8 @@ void UMainMenuSettingsPresenter::Initialize(UMainMenuSettingsWidget* InWidget)
 		return;
 	}
 
+	MainMenuSettingsWidget->OnBtnBackClicked.BindDynamic(this, &UMainMenuSettingsPresenter::HandleBtnBackClicked);
+
 	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
 	{
@@ -39,4 +41,16 @@ void UMainMenuSettingsPresenter::Dispose()
 	}
 
 	UIManager->UnregisterSoundSettingsWidget(MainMenuSettingsWidget->GetSoundSettings());
+}
+
+void UMainMenuSettingsPresenter::HandleBtnBackClicked()
+{
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
+	if (!UIManager)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UIManager is not valid"));
+		return;
+	}
+
+	UIManager->HideMainMenuSettingsWidget();
 }

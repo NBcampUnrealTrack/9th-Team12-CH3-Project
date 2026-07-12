@@ -15,10 +15,14 @@ class CH3_TEAM12_API UMainMenuSettingsPresenter : public UObject, public IPresen
 	GENERATED_BODY()
 
 public:
+	UFUNCTION()
 	void Initialize(UMainMenuSettingsWidget* InWidget);
 	virtual void Dispose() override;
 
 private:
 	UPROPERTY()
 	TWeakObjectPtr<UMainMenuSettingsWidget> MainMenuSettingsWidget;
+
+	UFUNCTION()
+	void HandleBtnBackClicked();
 };

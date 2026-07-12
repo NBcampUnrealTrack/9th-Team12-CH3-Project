@@ -12,14 +12,15 @@ void UMainMenuSettingsWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	if (BtnSoundSettings)
-		BtnSoundSettings->OnClicked.AddDynamic(this, &UMainMenuSettingsWidget::HandleBtnSoundSettingsClicked);
+	BtnBack->OnClicked.AddDynamic(this, &UMainMenuSettingsWidget::HandleBtnBackClicked);
+	BtnSoundSettings->OnClicked.AddDynamic(this, &UMainMenuSettingsWidget::HandleBtnSoundSettingsClicked);
+	SoundSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
+	SoundSettingsWidget->OnVisibilityChanged.AddDynamic(this, &UMainMenuSettingsWidget::HandleVisibilitySoundSettingsChanged);
+}
 
-	if (SoundSettingsWidget)
-	{
-		SoundSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
-		SoundSettingsWidget->OnVisibilityChanged.AddDynamic(this, &UMainMenuSettingsWidget::HandleVisibilitySoundSettingsChanged);
-	}
+void UMainMenuSettingsWidget::HandleBtnBackClicked()
+{
+	(void)OnBtnBackClicked.ExecuteIfBound();
 }
 
 void UMainMenuSettingsWidget::HandleBtnSoundSettingsClicked()

@@ -13,15 +13,15 @@ void UMainMenuWidget::NativeConstruct()
 
 void UMainMenuWidget::HandlePlayButtonClicked() const
 {
-	OnPlayButtonClicked.Broadcast();
+	(void)OnPlayButtonClicked.ExecuteIfBound();
 }
 
 void UMainMenuWidget::HandleSettingsButtonClicked() const
 {
-	OnSettingsButtonClicked.Broadcast();
+	(void)OnSettingsButtonClicked.ExecuteIfBound();
 }
 
 void UMainMenuWidget::HandleQuitButtonClicked() const
 {
-	OnQuitButtonClicked.Broadcast();
+	(void)OnQuitButtonClicked.ExecuteIfBound();
 }

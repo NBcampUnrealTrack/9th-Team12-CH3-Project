@@ -1,11 +1,23 @@
 #include "UI/Settings/SoundSettingsPresenter.h"
 
 #include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
-#include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
 #include "UI/Settings/SoundSettingsWidget.h"
 
 void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 {
+	SoundSettingsWidget = InWidget;
+
+	if (!SoundSettingsWidget.IsValid())
+	{
+		return;
+	}
+
+	SoundSettingsWidget->OnMasterVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleMasterVolumeChanged);
+	SoundSettingsWidget->OnBGMVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleBGMVolumeChanged);
+	SoundSettingsWidget->OnSFXVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleSFXVolumeChanged);
+	SoundSettingsWidget->OnBtnResetClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnResetClicked);
+	SoundSettingsWidget->OnBtnDoneClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnDoneClicked);
+
 	SoundManagerSubsystem = UKatanaSoundManagerSubsystem::Get(this);
 	if (!SoundManagerSubsystem.IsValid())
 	{
@@ -13,16 +25,9 @@ void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 		return;
 	}
 
-	SoundSettingsWidget = InWidget;
-
-	if (SoundSettingsWidget.IsValid())
-	{
-		SoundSettingsWidget->OnMasterVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleMasterVolumeChanged);
-		SoundSettingsWidget->OnBGMVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleBGMVolumeChanged);
-		SoundSettingsWidget->OnSFXVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleSFXVolumeChanged);
-		SoundSettingsWidget->OnBtnResetClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnResetClicked);
-		SoundSettingsWidget->OnBtnDoneClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnDoneClicked);
-	}
+	SoundSettingsWidget->SetMasterVolumeWidget(SoundManagerSubsystem->GetVolume(EAudioType::Master));
+	SoundSettingsWidget->SetBGMVolumeWidget(SoundManagerSubsystem->GetVolume(EAudioType::BGM));
+	SoundSettingsWidget->SetSFXVolumeWidget(SoundManagerSubsystem->GetVolume(EAudioType::SFX));
 }
 
 void USoundSettingsPresenter::Dispose()
@@ -37,7 +42,7 @@ void USoundSettingsPresenter::Dispose()
 	}
 }
 
-void USoundSettingsPresenter::HandleMasterVolumeChanged(float NewVolume) const
+void USoundSettingsPresenter::HandleMasterVolumeChanged(const float NewVolume) const
 {
 	if (!SoundManagerSubsystem.IsValid())
 		return;
@@ -46,7 +51,7 @@ void USoundSettingsPresenter::HandleMasterVolumeChanged(float NewVolume) const
 	SoundManagerSubsystem->SetVolume(EAudioType::Master, NewVolume);
 }
 
-void USoundSettingsPresenter::HandleBGMVolumeChanged(float NewVolume) const
+void USoundSettingsPresenter::HandleBGMVolumeChanged(const float NewVolume) const
 {
 	if (!SoundManagerSubsystem.IsValid())
 		return;
@@ -55,7 +60,7 @@ void USoundSettingsPresenter::HandleBGMVolumeChanged(float NewVolume) const
 	SoundManagerSubsystem->SetVolume(EAudioType::BGM, NewVolume);
 }
 
-void USoundSettingsPresenter::HandleSFXVolumeChanged(float NewVolume) const
+void USoundSettingsPresenter::HandleSFXVolumeChanged(const float NewVolume) const
 {
 	if (!SoundManagerSubsystem.IsValid())
 		return;
@@ -66,7 +71,6 @@ void USoundSettingsPresenter::HandleSFXVolumeChanged(float NewVolume) const
 
 void USoundSettingsPresenter::HandleBtnResetClicked() const
 {
-	//TODO 기능 확인 필요
 	if (!SoundSettingsWidget.IsValid())
 		return;
 
@@ -75,10 +79,5 @@ void USoundSettingsPresenter::HandleBtnResetClicked() const
 
 void USoundSettingsPresenter::HandleBtnDoneClicked() const
 {
-	//TODO 기능 확인 필요
-	UKatanaUIManagerSubsystem* UIManagerSubsystem = UKatanaUIManagerSubsystem::Get(this);
-	if (!UIManagerSubsystem)
-		return;
-
-	UIManagerSubsystem->UnregisterSoundSettingsWidget(SoundSettingsWidget.Get());
+	SoundSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
 }

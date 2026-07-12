@@ -1,5 +1,6 @@
 #include "UI/Settings/SoundSettingsWidget.h"
 
+#include "Components/Button.h"
 #include "UI/Widget/StepProgressBar.h"
 
 void USoundSettingsWidget::NativeOnInitialized()
@@ -9,14 +10,34 @@ void USoundSettingsWidget::NativeOnInitialized()
 	MasterVolumeStep->OnValueChanged.AddDynamic(this, &USoundSettingsWidget::HandleMasterVolumeChanged);
 	BGMVolumeStep->OnValueChanged.AddDynamic(this, &USoundSettingsWidget::HandleBGMVolumeChanged);
 	SFXVolumeStep->OnValueChanged.AddDynamic(this, &USoundSettingsWidget::HandleSFXVolumeChanged);
+
+	if (BtnReset)
+		BtnReset->OnClicked.AddDynamic(this, &USoundSettingsWidget::HandleBtnResetClicked);
+
+	if (BtnDone)
+		BtnDone->OnClicked.AddDynamic(this, &USoundSettingsWidget::HandleBtnDoneClicked);
+}
+
+void USoundSettingsWidget::SetMasterVolumeWidget(const float Volume) const
+{
+	MasterVolumeStep->SetPercent(Volume);
+}
+
+void USoundSettingsWidget::SetBGMVolumeWidget(const float Volume) const
+{
+	BGMVolumeStep->SetPercent(Volume);
+}
+
+void USoundSettingsWidget::SetSFXVolumeWidget(const float Volume) const
+{
+	SFXVolumeStep->SetPercent(Volume);
 }
 
 void USoundSettingsWidget::ResetVolume() const
 {
-	//TODO 가능 확인 필요
-	MasterVolumeStep->SetPercent(1.0f);
-	BGMVolumeStep->SetPercent(1.0f);
-	SFXVolumeStep->SetPercent(1.0f);
+	SetMasterVolumeWidget(1.0f);
+	SetBGMVolumeWidget(1.0f);
+	SetSFXVolumeWidget(1.0f);
 
 	HandleMasterVolumeChanged(1.0f);
 	HandleBGMVolumeChanged(1.0f);

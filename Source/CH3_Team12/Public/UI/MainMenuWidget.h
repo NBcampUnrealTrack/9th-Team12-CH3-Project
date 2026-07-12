@@ -1,12 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UICommonTypes.h"
 #include "Blueprint/UserWidget.h"
 #include "MainMenuWidget.generated.h"
 
 class UButton;
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnButtonClicked);
 
 /**
  *

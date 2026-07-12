@@ -14,9 +14,9 @@ void UMainMenuPresenter::Initialize(UMainMenuWidget* InWidget)
 	if (!MainMenuWidget.IsValid())
 		return;
 
-	MainMenuWidget->OnPlayButtonClicked.AddDynamic(this, &UMainMenuPresenter::HandlePlayButtonClicked);
-	MainMenuWidget->OnSettingsButtonClicked.AddDynamic(this, &UMainMenuPresenter::HandleSettingsButtonClicked);
-	MainMenuWidget->OnQuitButtonClicked.AddDynamic(this, &UMainMenuPresenter::HandleQuitButtonClicked);
+	MainMenuWidget->OnPlayButtonClicked.BindDynamic(this, &UMainMenuPresenter::HandlePlayButtonClicked);
+	MainMenuWidget->OnSettingsButtonClicked.BindDynamic(this, &UMainMenuPresenter::HandleSettingsButtonClicked);
+	MainMenuWidget->OnQuitButtonClicked.BindDynamic(this, &UMainMenuPresenter::HandleQuitButtonClicked);
 }
 
 void UMainMenuPresenter::Dispose()
@@ -24,9 +24,9 @@ void UMainMenuPresenter::Dispose()
 	if (!MainMenuWidget.IsValid())
 		return;
 
-	MainMenuWidget->OnPlayButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::HandlePlayButtonClicked);
-	MainMenuWidget->OnSettingsButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::HandleSettingsButtonClicked);
-	MainMenuWidget->OnQuitButtonClicked.RemoveDynamic(this, &UMainMenuPresenter::HandleQuitButtonClicked);
+	MainMenuWidget->OnPlayButtonClicked.Unbind();
+	MainMenuWidget->OnSettingsButtonClicked.Unbind();
+	MainMenuWidget->OnQuitButtonClicked.Unbind();
 }
 
 void UMainMenuPresenter::HandlePlayButtonClicked() const

@@ -28,18 +28,21 @@ public:
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Audio|Play")
+	UFUNCTION()
 	UAudioComponent* PlaySound2D(EAudioType AudioType, FString SoundKey, float VolumeMultiplier = 1.0f,
 	                             float PitchMultiplier = 1.0f);
 
-	UFUNCTION(BlueprintCallable, Category = "Audio|Play")
+	UFUNCTION()
 	UAudioComponent* PlaySound3DAtLocation(EAudioType AudioType, FString SoundKey, FVector Location,
 	                                       USoundAttenuation* AttenuationSettings = nullptr);
 
-	UFUNCTION(BlueprintCallable, Category = "Audio|Settings")
+	UFUNCTION()
+	float GetVolume(EAudioType AudioType);
+
+	UFUNCTION()
 	void SetVolume(EAudioType AudioType, float NewVolume);
 
-	UFUNCTION(BlueprintCallable, Category = "Audio|Settings")
+	UFUNCTION()
 	void LoadAudioSettings();
 
 private:
@@ -48,6 +51,8 @@ private:
 
 	UPROPERTY()
 	TMap<EAudioType, TObjectPtr<USoundControlBus>> ControlBusMap;
+
+	const FString SlotName = TEXT("AudioSettingsSlot_Modulation");
 
 	USoundBase* GetOrLoadSound(const FString& SoundKey) const;
 };

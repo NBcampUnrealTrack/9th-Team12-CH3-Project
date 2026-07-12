@@ -2,12 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "UI/UICommonTypes.h"
 #include "SoundSettingsWidget.generated.h"
 
 class UButton;
 class UStepProgressBar;
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnVolumeChanged, const float, Volume);
-DECLARE_DYNAMIC_DELEGATE(FOnBtnClicked);
 
 /**
  *
@@ -21,9 +20,12 @@ public:
 	FOnVolumeChanged OnMasterVolumeChanged;
 	FOnVolumeChanged OnBGMVolumeChanged;
 	FOnVolumeChanged OnSFXVolumeChanged;
-	FOnBtnClicked OnBtnResetClicked;
-	FOnBtnClicked OnBtnDoneClicked;
+	FOnButtonClicked OnBtnResetClicked;
+	FOnButtonClicked OnBtnDoneClicked;
 
+	void SetMasterVolumeWidget(const float Volume) const;
+	void SetBGMVolumeWidget(const float Volume) const;
+	void SetSFXVolumeWidget(const float Volume) const;
 	void ResetVolume() const;
 
 protected:
