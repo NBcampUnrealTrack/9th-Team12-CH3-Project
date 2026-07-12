@@ -19,7 +19,8 @@ void UInGameMenuPresenter::Initialize(UInGameMenuWidget* InWidget)
 		return;
 	}
 
-	KatanaUIManagerSubsystem->RegisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettings());
+	KatanaUIManagerSubsystem->RegisterInventoryWidget(InGameMenuWidget->GetInventoryWidget());
+	KatanaUIManagerSubsystem->RegisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
 }
 
 void UInGameMenuPresenter::Dispose()
@@ -36,5 +37,6 @@ void UInGameMenuPresenter::Dispose()
 		return;
 	}
 
-	KatanaUIManagerSubsystem->UnregisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettings());
+	KatanaUIManagerSubsystem->UnregisterInventoryWidget(InGameMenuWidget->GetInventoryWidget());
+	KatanaUIManagerSubsystem->UnregisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
 }

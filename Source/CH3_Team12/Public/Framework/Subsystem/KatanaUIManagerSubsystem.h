@@ -7,6 +7,8 @@
 #include "UObject/ScriptInterface.h"
 #include "KatanaUIManagerSubsystem.generated.h"
 
+class UEnemyAttributeComponent;
+class UInventoryWidget;
 class USoundSettingsWidget;
 class UKatanaSoundManagerSubsystem;
 class UKatanaLevelSubsystem;
@@ -37,25 +39,33 @@ public:
 	void HideInGameMenuWidget();
 	bool HasInGameMenuWidget() const;
 
-	void RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
-	void UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
-
 	void ShowLoadingWidget();
 	void HideLoadingWidget();
 
 	void ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent);
 	void HidePlayerWidget();
 
+	void ShowEnemyWidget(UEnemyAttributeComponent* InAttributeComponent);
+	void HideEnemyWidget();
+
+	void RegisterInventoryWidget(UInventoryWidget* InWidget);
+	void UnregisterInventoryWidget(UInventoryWidget* InWidget);
+
+	void RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
+	void UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
+
 private:
 	const FName MainMenuWidgetName = FName("MainMenuWidget");
 	const FName MainMenuSettingsWidgetName = FName("MainMenuSettingsWidget");
 	const FName InGameMenuWidgetName = FName("InGameMenuWidget");
 
-	const FName SoundSettingsWidgetName = FName("SoundSettingsWidget");
-
 	const FName LoadingWidgetName = FName("LoadingWidget");
 
 	const FName PlayerWidgetName = FName("PlayerWidget");
+	const FName EnemyWidgetName = FName("EnemyWidget");
+
+	const FName InventoryWidgetName = FName("InventoryWidget");
+	const FName SoundSettingsWidgetName = FName("SoundSettingsWidget");
 
 	UPROPERTY()
 	TSoftObjectPtr<UUIDataAsset> UIDataAsset = nullptr;

@@ -3,7 +3,12 @@
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
 
-USoundSettingsWidget* UInGameMenuWidget::GetSoundSettings() const
+UInventoryWidget* UInGameMenuWidget::GetInventoryWidget() const
+{
+	return InventoryWidget.Get();
+}
+
+USoundSettingsWidget* UInGameMenuWidget::GetSoundSettingsWidget() const
 {
 	return SoundSettingsWidget.Get();
 }

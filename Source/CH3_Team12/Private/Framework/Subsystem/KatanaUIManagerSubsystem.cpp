@@ -1,13 +1,17 @@
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
 
+#include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "Framework/KatanaSystemSettings.h"
 #include "Framework/PresenterInterface.h"
 #include "UI/InGameMenuPresenter.h"
 #include "UI/InGameMenuWidget.h"
+#include "UI/InventoryPresenter.h"
 #include "UI/LoadingPresenter.h"
 #include "UI/LoadingWidget.h"
 #include "UI/MainMenuPresenter.h"
 #include "UI/MainMenuWidget.h"
+#include "UI/HUD/EnemyPresenter.h"
+#include "UI/HUD/EnemyWidget.h"
 #include "UI/HUD/PlayerPresenter.h"
 #include "UI/HUD/PlayerWidget.h"
 #include "UI/Settings/MainMenuSettingsPresenter.h"
@@ -139,31 +143,6 @@ bool UKatanaUIManagerSubsystem::HasInGameMenuWidget() const
 	return ActiveViews.Contains(InGameMenuWidgetName) && ActivePresenters.Contains(InGameMenuWidgetName);
 }
 
-void UKatanaUIManagerSubsystem::RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget)
-{
-	const FName WidgetName = SoundSettingsWidgetName;
-	if (!InWidget)
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s Widget 이 유효하지 않습니다."), *WidgetName.ToString());
-		return;
-	}
-
-	USoundSettingsPresenter* NewPresenter = NewObject<USoundSettingsPresenter>(this);
-	if (!NewPresenter)
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
-		return;
-	}
-
-	NewPresenter->Initialize(InWidget);
-	ActivePresenters.Add(WidgetName, NewPresenter);
-}
-
-void UKatanaUIManagerSubsystem::UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget)
-{
-	OpHideUI(SoundSettingsWidgetName);
-}
-
 void UKatanaUIManagerSubsystem::ShowLoadingWidget()
 {
 	ULoadingWidget* ActiveView = OpShowUI<ULoadingWidget>(LoadingWidgetName);
@@ -191,23 +170,96 @@ void UKatanaUIManagerSubsystem::HideLoadingWidget()
 
 void UKatanaUIManagerSubsystem::ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent)
 {
-	UPlayerWidget* ActiveView = OpShowUI<UPlayerWidget>(PlayerWidgetName);
+	const FName WidgetName = PlayerWidgetName;
+	UPlayerWidget* ActiveView = OpShowUI<UPlayerWidget>(WidgetName);
 	if (!ActiveView) return;
 
 	UPlayerPresenter* NewPresenter = NewObject<UPlayerPresenter>(this);
 	if (!NewPresenter)
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *PlayerWidgetName.ToString());
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
 		return;
 	}
 
 	NewPresenter->Initialize(InAttributeComponent, ActiveView);
-	ActivePresenters.Add(PlayerWidgetName, NewPresenter);
+	ActivePresenters.Add(WidgetName, NewPresenter);
 }
 
 void UKatanaUIManagerSubsystem::HidePlayerWidget()
 {
 	OpHideUI(PlayerWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::ShowEnemyWidget(UEnemyAttributeComponent* InAttributeComponent)
+{
+	const FName WidgetName = EnemyWidgetName;
+	UEnemyWidget* ActiveView = OpShowUI<UEnemyWidget>(WidgetName);
+	if (!ActiveView) return;
+
+	UEnemyPresenter* NewPresenter = NewObject<UEnemyPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(InAttributeComponent, ActiveView);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::HideEnemyWidget()
+{
+	OpHideUI(EnemyWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::RegisterInventoryWidget(UInventoryWidget* InWidget)
+{
+	const FName WidgetName = InventoryWidgetName;
+	if (!InWidget)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 이 유효하지 않습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	UInventoryPresenter* NewPresenter = NewObject<UInventoryPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(InWidget);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::UnregisterInventoryWidget(UInventoryWidget* InWidget)
+{
+	OpHideUI(InventoryWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget)
+{
+	const FName WidgetName = SoundSettingsWidgetName;
+	if (!InWidget)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 이 유효하지 않습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	USoundSettingsPresenter* NewPresenter = NewObject<USoundSettingsPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(InWidget);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget)
+{
+	OpHideUI(SoundSettingsWidgetName);
 }
 
 void UKatanaUIManagerSubsystem::OpHideUI(const FName UIName)

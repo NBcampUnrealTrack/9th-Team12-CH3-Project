@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "InGameMenuWidget.generated.h"
 
+class UInventoryWidget;
 class USoundSettingsWidget;
 class UWidgetSwitcher;
 class UButton;
@@ -16,7 +17,8 @@ class CH3_TEAM12_API UInGameMenuWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	USoundSettingsWidget* GetSoundSettings() const;
+	UInventoryWidget* GetInventoryWidget() const;
+	USoundSettingsWidget* GetSoundSettingsWidget() const;
 
 protected:
 	UFUNCTION()
@@ -32,7 +34,9 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UWidgetSwitcher> WidgetSwitcher;
 
-	//TODO 인벤토리 위젯 추가
+	//인벤토리
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UInventoryWidget> InventoryWidget;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> BtnChildSoundSettings;

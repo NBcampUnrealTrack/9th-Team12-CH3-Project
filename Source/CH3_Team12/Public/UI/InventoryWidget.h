@@ -1,0 +1,44 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
+#include "InventoryWidget.generated.h"
+
+class UInventoryItemWidget;
+class UImage;
+class UTextBlock;
+class UVerticalBox;
+/**
+ *
+ */
+UCLASS()
+class CH3_TEAM12_API UInventoryWidget : public UUserWidget
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UInventoryItemWidget> ItemWidget;
+
+protected:
+	virtual void NativeOnInitialized() override;
+
+private:
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UVerticalBox> VerticalBox;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UImage> ImgDetailIcon;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> TxtDetailName;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> TxtDetailUseCount;
+
+	UPROPERTY(meta=(BindWidget))
+	TSoftObjectPtr<UTextBlock> TxtDetailCapacity;
+
+	UPROPERTY(meta=(BindWidget))
+	TSoftObjectPtr<UTextBlock> TxtDetailDescription;
+};
