@@ -42,7 +42,10 @@ public:
 	void Dodge(const FInputActionValue& Value);
 	void EndDodge();
 	void OpenDodgeMove();
-
+	
+	void OnDodgeSprintPressed(const FInputActionValue& Value);
+	void OnDodgeSprintReleased(const FInputActionValue& Value);
+	
 	// Getter
 	FORCEINLINE float GetNormalWalkSpeed() const { return NormalWalkSpeed; }
 	FORCEINLINE float GetSprintSpeed() const { return SprintSpeed; }
@@ -99,4 +102,10 @@ private:
 	TObjectPtr<UAnimMontage> CurrentDodgeMontage;
 
 	bool ShouldUseDirectionalDodge() const;
+	
+	bool TryStartDodge();
+	void TryStartSprintAfterDodge();
+
+	bool bDodgeSprintHeld = false;
+	bool bWantsSprintAfterDodge = false;
 };
