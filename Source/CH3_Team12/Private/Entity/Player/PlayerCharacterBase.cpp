@@ -156,7 +156,9 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 	if (UInputAction* DodgeAction = PlayerControllerBase->GetDodgeAction())
 	{
-		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::Dodge);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnDodgeSprintPressed);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnDodgeSprintReleased);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Canceled, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnDodgeSprintReleased);
 	}
 	
 	// Combat
