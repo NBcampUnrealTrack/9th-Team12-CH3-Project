@@ -46,6 +46,9 @@ protected:
 	TObjectPtr<UEnemyAttributeComponent> AttributeComponent;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
+	TObjectPtr<UAnimMontage> HitMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
 	TObjectPtr<UAnimMontage> DeadMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
@@ -61,6 +64,8 @@ protected:
 	virtual void DestroyEnemy();
 	
 public:
+	bool IsCommonState();
+	
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 
 	UFUNCTION(BlueprintCallable)
