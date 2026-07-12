@@ -175,7 +175,7 @@ void UEnemyAttackComponent::CancelAttack()
 		UAnimInstance* AnimInstance = OwnerMesh->GetAnimInstance();
 		if (AnimInstance)
 		{
-			AnimInstance->Montage_Stop(0.2);
+			AnimInstance->Montage_Stop(0.2f);
 		}
 	}
 	

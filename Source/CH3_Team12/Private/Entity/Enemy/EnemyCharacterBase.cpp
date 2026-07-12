@@ -15,6 +15,7 @@
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "BrainComponent.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AEnemyCharacterBase::AEnemyCharacterBase()
@@ -102,6 +103,12 @@ void AEnemyCharacterBase::OnDeath()
 			BrainComponent->StopLogic(TEXT("Dead"));
 		}
 		
+	}
+	
+	UCapsuleComponent* CollisionComponent = GetCapsuleComponent();
+	if (CollisionComponent)
+	{
+		CollisionComponent->SetCollisionProfileName(TEXT("NoCollision"));
 	}
 	
 	EnemyAttackComponent->CancelAttack();
