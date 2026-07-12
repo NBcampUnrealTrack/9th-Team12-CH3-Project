@@ -47,15 +47,16 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
 	TObjectPtr<UAnimMontage> DeadMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	float DestroyTime = 10.0f;
 	
 protected:
 	UFUNCTION()
 	void OnDeath();
 	
-	void OnDeadMontageEnded(UAnimMontage* Montage,	bool bInterrupted);
-	
 	void PlayDeathMontage();
-	void FinalizeDead();
+	void SetEnemyDestroyTimer();
 	
 	virtual void DestroyEnemy();
 	

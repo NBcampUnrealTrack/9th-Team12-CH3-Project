@@ -109,11 +109,6 @@ void AEnemyCharacterBase::OnDeath()
 	PlayDeathMontage();
 }
 
-void AEnemyCharacterBase::OnDeadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
-{
-	FinalizeDead();
-}
-
 void AEnemyCharacterBase::PlayDeathMontage()
 {
 	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
@@ -123,36 +118,26 @@ void AEnemyCharacterBase::PlayDeathMontage()
 		if (AnimInstance == nullptr
 			|| DeadMontage == nullptr)
 		{
-			FinalizeDead();
+			SetEnemyDestroyTimer();
 			return;
 		}
 		
-		FOnMontageEnded EndDelegate;
-		EndDelegate.BindUObject(
-			this,
-			&AEnemyCharacterBase::OnDeadMontageEnded
-		);
-
 		AnimInstance->Montage_Play(DeadMontage);
-		AnimInstance->Montage_SetEndDelegate(
-			EndDelegate,
-			DeadMontage
-		);
+		SetEnemyDestroyTimer();
 	}
 }
 
-void AEnemyCharacterBase::FinalizeDead()
+void AEnemyCharacterBase::SetEnemyDestroyTimer()
 {
 	UWorld* World = GetWorld();
 	if (World == nullptr)
 	{
-		DestroyEnemy();
 		return;
 	}
 	
 	FTimerHandle DestroyHandle;
 	FTimerManager& WorldTimerManager = World->GetTimerManager();
-	WorldTimerManager.SetTimer(DestroyHandle, this, &AEnemyCharacterBase::DestroyEnemy, 3.0f, false);	
+	WorldTimerManager.SetTimer(DestroyHandle, this, &AEnemyCharacterBase::DestroyEnemy, DestroyTime, false);	
 }
 
 void AEnemyCharacterBase::DestroyEnemy()
