@@ -2,6 +2,7 @@
 
 #include "Components/VerticalBox.h"
 #include "UI/InventoryItemWidget.h"
+#include "UI/Widget/DelayedProgressBar.h"
 
 UInventoryItemWidget* UInventoryWidget::AddAndItemWidget()
 {
@@ -15,9 +16,16 @@ UInventoryItemWidget* UInventoryWidget::AddAndItemWidget()
 	return NewSlot;
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void UInventoryWidget::ClearItemWidgets()
 {
 	VerticalBox->ClearChildren();
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UInventoryWidget::UpdateHealthBar(const float Percent)
+{
+	HealthBar->SetPercent(Percent);
 }
 
 void UInventoryWidget::NativeOnInitialized()

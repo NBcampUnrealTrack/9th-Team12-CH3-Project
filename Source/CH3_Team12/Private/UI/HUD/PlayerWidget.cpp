@@ -8,21 +8,12 @@ void UPlayerWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (PostureBar)
-		OriginPostureColor = PostureBar->GetColorAndOpacity();
-
-	// TODO 아래 기능을 활용해 최대값에 맞춰 UI 사이즈 조정
-	// auto* CanvasPanelSlot = Cast<UCanvasPanelSlot>(PostureBar->Slot);
-	// CanvasPanelSlot->SetSize(FVector2D(1000.0f, 20.0f));
-
-	if (PostureCenterImage)
-		OriginPostureCenterColor = PostureCenterImage->GetColorAndOpacity();
+	OriginPostureColor = PostureBar->GetColorAndOpacity();
+	OriginPostureCenterColor = PostureCenterImage->GetColorAndOpacity();
 }
 
 void UPlayerWidget::UpdateHealthBar(const float Percent)
 {
-	if (!HealthBar)
-		return;
 	HealthBar->SetPercent(Percent);
 
 	if (HealthPercent > Percent)
@@ -36,9 +27,6 @@ void UPlayerWidget::UpdateHealthBar(const float Percent)
 
 void UPlayerWidget::UpdatePostureBar(const float Percent)
 {
-	if (!PostureBar)
-		return;
-
 	PostureBar->SetColorAndOpacity(bTakeDamageHealth ? DamagePostureColor : OriginPostureColor);
 	PostureCenterImage->SetColorAndOpacity(OriginPostureCenterColor);
 

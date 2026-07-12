@@ -27,17 +27,17 @@ private:
 	TWeakObjectPtr<UPlayerWidget> PlayerWidget; //View
 
 	UFUNCTION()
-	void OnModelHealthChanged(float CurrentHealth, float MaxHealth) const;
+	void HandleModelHealthChanged(float CurrentHealth, float MaxHealth);
 
 	UFUNCTION()
-	void OnModelPostureChanged(float CurrentPosture, float MaxPosture) const;
+	void HandleModelPostureChanged(float CurrentPosture, float MaxPosture);
 
 	UFUNCTION()
-	void OnModelPostureBroken() const;
+	void HandleModelPostureBroken();
 
 	UFUNCTION()
-	void OnModelPostureRecovered() const;
+	void HandleModelPostureRecovered();
 
 	UFUNCTION()
-	void OnModelDeath() const;
+	void HandleModelDeath();
 };

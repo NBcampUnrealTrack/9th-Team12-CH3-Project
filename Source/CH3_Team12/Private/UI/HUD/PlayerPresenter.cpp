@@ -12,14 +12,14 @@ void UPlayerPresenter::Initialize(UPlayerAttributeComponent* InAttributeComponen
 	if (!AttributeComponent.IsValid() || !PlayerWidget.IsValid())
 		return;
 
-	AttributeComponent->OnHealthChanged.AddDynamic(this, &UPlayerPresenter::OnModelHealthChanged);
-	AttributeComponent->OnPostureChanged.AddDynamic(this, &UPlayerPresenter::OnModelPostureChanged);
-	AttributeComponent->OnPostureBroken.AddDynamic(this, &UPlayerPresenter::OnModelPostureBroken);
-	AttributeComponent->OnPostureRecovered.AddDynamic(this, &UPlayerPresenter::OnModelPostureRecovered);
-	AttributeComponent->OnDead.AddDynamic(this, &UPlayerPresenter::OnModelDeath);
+	AttributeComponent->OnHealthChanged.AddDynamic(this, &UPlayerPresenter::HandleModelHealthChanged);
+	AttributeComponent->OnPostureChanged.AddDynamic(this, &UPlayerPresenter::HandleModelPostureChanged);
+	AttributeComponent->OnPostureBroken.AddDynamic(this, &UPlayerPresenter::HandleModelPostureBroken);
+	AttributeComponent->OnPostureRecovered.AddDynamic(this, &UPlayerPresenter::HandleModelPostureRecovered);
+	AttributeComponent->OnDead.AddDynamic(this, &UPlayerPresenter::HandleModelDeath);
 
-	OnModelHealthChanged(AttributeComponent->GetCurrentHealth(), AttributeComponent->GetMaxHealth());
-	OnModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
+	HandleModelHealthChanged(AttributeComponent->GetCurrentHealth(), AttributeComponent->GetMaxHealth());
+	HandleModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
 }
 
 void UPlayerPresenter::Dispose()
@@ -27,14 +27,15 @@ void UPlayerPresenter::Dispose()
 	if (!AttributeComponent.IsValid())
 		return;
 
-	AttributeComponent->OnHealthChanged.RemoveDynamic(this, &UPlayerPresenter::OnModelHealthChanged);
-	AttributeComponent->OnPostureChanged.RemoveDynamic(this, &UPlayerPresenter::OnModelPostureChanged);
-	AttributeComponent->OnPostureBroken.RemoveDynamic(this, &UPlayerPresenter::OnModelPostureBroken);
-	AttributeComponent->OnPostureRecovered.RemoveDynamic(this, &UPlayerPresenter::OnModelPostureRecovered);
-	AttributeComponent->OnDead.RemoveDynamic(this, &UPlayerPresenter::OnModelDeath);
+	AttributeComponent->OnHealthChanged.RemoveDynamic(this, &UPlayerPresenter::HandleModelHealthChanged);
+	AttributeComponent->OnPostureChanged.RemoveDynamic(this, &UPlayerPresenter::HandleModelPostureChanged);
+	AttributeComponent->OnPostureBroken.RemoveDynamic(this, &UPlayerPresenter::HandleModelPostureBroken);
+	AttributeComponent->OnPostureRecovered.RemoveDynamic(this, &UPlayerPresenter::HandleModelPostureRecovered);
+	AttributeComponent->OnDead.RemoveDynamic(this, &UPlayerPresenter::HandleModelDeath);
 }
 
-void UPlayerPresenter::OnModelHealthChanged(const float CurrentHealth, const float MaxHealth) const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UPlayerPresenter::HandleModelHealthChanged(const float CurrentHealth, const float MaxHealth)
 {
 	if (PlayerWidget.IsValid() && MaxHealth > 0.0f)
 	{
@@ -43,7 +44,8 @@ void UPlayerPresenter::OnModelHealthChanged(const float CurrentHealth, const flo
 	}
 }
 
-void UPlayerPresenter::OnModelPostureChanged(const float CurrentPosture, const float MaxPosture) const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UPlayerPresenter::HandleModelPostureChanged(const float CurrentPosture, const float MaxPosture)
 {
 	if (PlayerWidget.IsValid() && MaxPosture > 0.0f)
 	{
@@ -52,17 +54,20 @@ void UPlayerPresenter::OnModelPostureChanged(const float CurrentPosture, const f
 	}
 }
 
-void UPlayerPresenter::OnModelPostureBroken() const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UPlayerPresenter::HandleModelPostureBroken()
 {
 	// UE_LOG(LogTemp, Warning, TEXT("Posture Broken"));
 }
 
-void UPlayerPresenter::OnModelPostureRecovered() const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UPlayerPresenter::HandleModelPostureRecovered()
 {
 	// UE_LOG(LogTemp, Warning, TEXT("Posture Recovered"));
 }
 
-void UPlayerPresenter::OnModelDeath() const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UPlayerPresenter::HandleModelDeath()
 {
 
 }

@@ -12,15 +12,15 @@ void UEnemyPresenter::Initialize(const FString& InName, UEnemyAttributeComponent
 	if (!AttributeComponent.IsValid() || !EnemyWidget.IsValid())
 		return;
 
-	AttributeComponent->OnEnemyHealthChanged.AddDynamic(this, &UEnemyPresenter::OnModelHealthChanged);
-	AttributeComponent->OnEnemyPostureChanged.AddDynamic(this, &UEnemyPresenter::OnModelPostureChanged);
-	AttributeComponent->OnEnemyPostureBroken.AddDynamic(this, &UEnemyPresenter::OnModelPostureBroken);
-	AttributeComponent->OnEnemyPostureRecovered.AddDynamic(this, &UEnemyPresenter::OnModelPostureRecovered);
-	AttributeComponent->OnEnemyDeath.AddDynamic(this, &UEnemyPresenter::OnModelDeath);
+	AttributeComponent->OnEnemyHealthChanged.AddDynamic(this, &UEnemyPresenter::HandleModelHealthChanged);
+	AttributeComponent->OnEnemyPostureChanged.AddDynamic(this, &UEnemyPresenter::HandleModelPostureChanged);
+	AttributeComponent->OnEnemyPostureBroken.AddDynamic(this, &UEnemyPresenter::HandleModelPostureBroken);
+	AttributeComponent->OnEnemyPostureRecovered.AddDynamic(this, &UEnemyPresenter::HandleModelPostureRecovered);
+	AttributeComponent->OnEnemyDeath.AddDynamic(this, &UEnemyPresenter::HandleModelDeath);
 
 	EnemyWidget->UpdateName(InName);
-	OnModelHealthChanged(AttributeComponent->GetCurrentHealth(), AttributeComponent->GetMaxHealth());
-	OnModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
+	HandleModelHealthChanged(AttributeComponent->GetCurrentHealth(), AttributeComponent->GetMaxHealth());
+	HandleModelPostureChanged(AttributeComponent->GetCurrentPosture(), AttributeComponent->GetMaxPosture());
 }
 
 void UEnemyPresenter::Dispose()
@@ -28,14 +28,15 @@ void UEnemyPresenter::Dispose()
 	if (!AttributeComponent.IsValid())
 		return;
 
-	AttributeComponent->OnEnemyHealthChanged.RemoveDynamic(this, &UEnemyPresenter::OnModelHealthChanged);
-	AttributeComponent->OnEnemyPostureChanged.RemoveDynamic(this, &UEnemyPresenter::OnModelPostureChanged);
-	AttributeComponent->OnEnemyPostureBroken.RemoveDynamic(this, &UEnemyPresenter::OnModelPostureBroken);
-	AttributeComponent->OnEnemyPostureRecovered.RemoveDynamic(this, &UEnemyPresenter::OnModelPostureRecovered);
-	AttributeComponent->OnEnemyDeath.RemoveDynamic(this, &UEnemyPresenter::OnModelDeath);
+	AttributeComponent->OnEnemyHealthChanged.RemoveDynamic(this, &UEnemyPresenter::HandleModelHealthChanged);
+	AttributeComponent->OnEnemyPostureChanged.RemoveDynamic(this, &UEnemyPresenter::HandleModelPostureChanged);
+	AttributeComponent->OnEnemyPostureBroken.RemoveDynamic(this, &UEnemyPresenter::HandleModelPostureBroken);
+	AttributeComponent->OnEnemyPostureRecovered.RemoveDynamic(this, &UEnemyPresenter::HandleModelPostureRecovered);
+	AttributeComponent->OnEnemyDeath.RemoveDynamic(this, &UEnemyPresenter::HandleModelDeath);
 }
 
-void UEnemyPresenter::OnModelHealthChanged(const float CurrentHealth, const float MaxHealth) const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UEnemyPresenter::HandleModelHealthChanged(const float CurrentHealth, const float MaxHealth)
 {
 	if (EnemyWidget.IsValid() && MaxHealth > 0.0f)
 	{
@@ -44,7 +45,8 @@ void UEnemyPresenter::OnModelHealthChanged(const float CurrentHealth, const floa
 	}
 }
 
-void UEnemyPresenter::OnModelPostureChanged(const float CurrentPosture, const float MaxPosture) const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UEnemyPresenter::HandleModelPostureChanged(const float CurrentPosture, const float MaxPosture)
 {
 	if (EnemyWidget.IsValid() && MaxPosture > 0.0f)
 	{
@@ -53,17 +55,20 @@ void UEnemyPresenter::OnModelPostureChanged(const float CurrentPosture, const fl
 	}
 }
 
-void UEnemyPresenter::OnModelPostureBroken() const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UEnemyPresenter::HandleModelPostureBroken()
 {
 
 }
 
-void UEnemyPresenter::OnModelPostureRecovered() const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UEnemyPresenter::HandleModelPostureRecovered()
 {
 
 }
 
-void UEnemyPresenter::OnModelDeath() const
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UEnemyPresenter::HandleModelDeath()
 {
 
 }

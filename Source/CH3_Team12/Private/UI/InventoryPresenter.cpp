@@ -2,6 +2,7 @@
 
 #include "Engine/World.h"
 #include "Entity/Item/ItemInstance.h"
+#include "Entity/Player/PlayerAttributeComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerInventoryComponent.h"
 #include "Framework/DataAsset/ItemDataAsset.h"
@@ -16,45 +17,84 @@ void UInventoryPresenter::Initialize(UInventoryWidget* InWidget)
 	if (!InventoryWidget.IsValid())
 		return;
 
-	const UPlayerInventoryComponent* PlayerInventoryComponent = GetPlayerInventoryComponent();
-	if (!PlayerInventoryComponent)
-		return;
-
-	const TArray<TObjectPtr<UItemInstance>>& Items = PlayerInventoryComponent->GetItems();
-
-	InventoryWidget->ClearItemWidgets();
-	InventoryItemDataMap.Empty();
-
-	for (auto Item : Items)
+	if (const UPlayerInventoryComponent* PlayerInventoryComponent = GetPlayerInventoryComponent())
 	{
-		if (!Item || Item->IsEmpty())
-			continue;
+		const TArray<TObjectPtr<UItemInstance>>& Items = PlayerInventoryComponent->GetItems();
 
-		FName ItemKeyName = FName(*Item->GetItemData()->ItemName.ToString());
+		InventoryWidget->ClearItemWidgets();
+		InventoryItemDataMap.Empty();
 
-		FInventoryItemData ItemData;
-		ItemData.Name = Item->GetItemData()->ItemName;
-		ItemData.Icon = Item->GetItemData()->Icon;
-		ItemData.Count = Item->GetCount();
-		ItemData.MaxCount = Item->GetItemData()->MaxStack;
-		ItemData.Description = Item->GetItemData()->Description;
+		for (auto Item : Items)
+		{
+			if (!Item || Item->IsEmpty())
+				continue;
 
-		InventoryItemDataMap.Emplace(ItemKeyName, ItemData);
+			FName ItemKeyName = FName(*Item->GetItemData()->ItemName.ToString());
+
+			FInventoryItemData ItemData;
+			ItemData.Name = Item->GetItemData()->ItemName;
+			ItemData.Icon = Item->GetItemData()->Icon;
+			ItemData.Count = Item->GetCount();
+			ItemData.MaxCount = Item->GetItemData()->MaxStack;
+			ItemData.Description = Item->GetItemData()->Description;
+
+			InventoryItemDataMap.Emplace(ItemKeyName, ItemData);
+		}
+
+		for (auto InventoryItemData : InventoryItemDataMap)
+		{
+			UInventoryItemWidget* Widget = InventoryWidget->AddAndItemWidget();
+			if (!Widget)
+				continue;
+
+			auto [Name, Icon, Count, MaxCount, Description] = InventoryItemData.Value;
+			Widget->UpdateData(Name, Icon, Count);
+		}
 	}
 
-	for (auto InventoryItemData : InventoryItemDataMap)
+	if (UPlayerAttributeComponent* PlayerAttributeComponent = GetPlayerAttributeComponent())
 	{
-		UInventoryItemWidget* Widget = InventoryWidget->AddAndItemWidget();
-		if (!Widget)
-			continue;
-
-		auto [Name, Icon, Count, MaxCount, Description] = InventoryItemData.Value;
-		Widget->UpdateData(Name, Icon, Count);
+		PlayerAttributeComponent->OnHealthChanged.AddDynamic(this, &UInventoryPresenter::HandleModelHealthChanged);
+		HandleModelHealthChanged(PlayerAttributeComponent->GetCurrentHealth(), PlayerAttributeComponent->GetMaxHealth());
 	}
 }
 
 void UInventoryPresenter::Dispose()
 {
+	if (UPlayerAttributeComponent* PlayerAttributeComponent = GetPlayerAttributeComponent())
+	{
+		PlayerAttributeComponent->OnHealthChanged.RemoveDynamic(this, &UInventoryPresenter::HandleModelHealthChanged);
+	}
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UInventoryPresenter::HandleModelHealthChanged(const float CurrentHealth, const float MaxHealth)
+{
+	if (MaxHealth > 0.0f)
+	{
+		const float Percent = CurrentHealth / MaxHealth;
+		InventoryWidget->UpdateHealthBar(Percent);
+	}
+}
+
+UPlayerAttributeComponent* UInventoryPresenter::GetPlayerAttributeComponent() const
+{
+	if (!GetWorld())
+		return nullptr;
+
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (!PlayerController)
+		return nullptr;
+
+	const AKatanaPlayerController* KatanaPlayerController = Cast<AKatanaPlayerController>(PlayerController);
+	if (!KatanaPlayerController)
+		return nullptr;
+
+	const APlayerCharacterBase* PlayerCharacter = KatanaPlayerController->GetPlayerCharacter();
+	if (!PlayerCharacter)
+		return nullptr;
+
+	return PlayerCharacter->GetAttributeComponent();
 }
 
 UPlayerInventoryComponent* UInventoryPresenter::GetPlayerInventoryComponent() const

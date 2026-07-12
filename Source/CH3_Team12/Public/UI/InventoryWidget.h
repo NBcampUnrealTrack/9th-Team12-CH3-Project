@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "InventoryWidget.generated.h"
 
+class UDelayedProgressBar;
 class UInventoryItemWidget;
 class UImage;
 class UTextBlock;
@@ -19,6 +20,8 @@ class CH3_TEAM12_API UInventoryWidget : public UUserWidget
 public:
 	UInventoryItemWidget* AddAndItemWidget();
 	void ClearItemWidgets();
+
+	void UpdateHealthBar(float Percent);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -37,8 +40,11 @@ private:
 	TObjectPtr<UTextBlock> TxtDetailName;
 
 	UPROPERTY(meta=(BindWidget))
-	TSoftObjectPtr<UTextBlock> TxtDetailCapacity;
+	TObjectPtr<UTextBlock> TxtDetailCapacity;
 
 	UPROPERTY(meta=(BindWidget))
-	TSoftObjectPtr<UTextBlock> TxtDetailDescription;
+	TObjectPtr<UTextBlock> TxtDetailDescription;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UDelayedProgressBar> HealthBar;
 };

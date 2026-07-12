@@ -5,6 +5,7 @@
 #include "UObject/Object.h"
 #include "InventoryPresenter.generated.h"
 
+class UPlayerAttributeComponent;
 class UPlayerInventoryComponent;
 class UTexture2D;
 class UInventoryWidget;
@@ -49,6 +50,12 @@ private:
 
 	UPROPERTY()
 	TMap<FName, FInventoryItemData> InventoryItemDataMap;
+
+	UFUNCTION()
+	void HandleModelHealthChanged(float CurrentHealth, float MaxHealth);
+
+	UFUNCTION()
+	UPlayerAttributeComponent* GetPlayerAttributeComponent() const;
 
 	UFUNCTION()
 	UPlayerInventoryComponent* GetPlayerInventoryComponent() const;
