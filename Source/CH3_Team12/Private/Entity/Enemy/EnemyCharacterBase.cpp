@@ -9,6 +9,13 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
+#include "Entity/Player/StateTagComponent.h"
+#include "TimerManager.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "BrainComponent.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AEnemyCharacterBase::AEnemyCharacterBase()
@@ -20,6 +27,7 @@ AEnemyCharacterBase::AEnemyCharacterBase()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	EnemyAttackComponent = CreateDefaultSubobject<UEnemyAttackComponent>(TEXT("EnemyAttackComponent"));
 	AttributeComponent = CreateDefaultSubobject<UEnemyAttributeComponent>(TEXT("AttributeComponent"));
+	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateTagComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -38,6 +46,8 @@ void AEnemyCharacterBase::BeginPlay()
 	// // 	MovementComponent->bUseControllerDesiredRotation = false;
 	// // 	MovementComponent->RotationRate = FRotator(0.f, 720.f, 0.f);
 	// // }
+	
+	AttributeComponent->OnEnemyDeath.AddDynamic(this, &AEnemyCharacterBase::OnDeath);
 }
 
 // Called every frame
@@ -75,6 +85,71 @@ float AEnemyCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& Da
 	AttributeComponent->ApplyAttributeDamage(DamageAmount, DamageAmount * 2);
 	
 	return DamageAmount;
+}
+
+void AEnemyCharacterBase::OnDeath()
+{
+	AEnemyAIController* AIController = Cast<AEnemyAIController>(GetController());
+	if (AIController)
+	{
+		AIController->StopMovement();
+		if (UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement())
+		{
+			CharacterMovementComponent->DisableMovement();
+		}
+		UBrainComponent* BrainComponent = AIController->GetBrainComponent();
+		if (BrainComponent)
+		{
+			BrainComponent->StopLogic(TEXT("Dead"));
+		}
+		
+	}
+	
+	UCapsuleComponent* CollisionComponent = GetCapsuleComponent();
+	if (CollisionComponent)
+	{
+		CollisionComponent->SetCollisionProfileName(TEXT("NoCollision"));
+	}
+	
+	EnemyAttackComponent->CancelAttack();
+	GetWorldTimerManager().ClearAllTimersForObject(this);
+	PlayDeathMontage();
+}
+
+void AEnemyCharacterBase::PlayDeathMontage()
+{
+	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
+	if (SkeletalMeshComponent)
+	{
+		UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
+		if (AnimInstance == nullptr
+			|| DeadMontage == nullptr)
+		{
+			SetEnemyDestroyTimer();
+			return;
+		}
+		
+		AnimInstance->Montage_Play(DeadMontage);
+		SetEnemyDestroyTimer();
+	}
+}
+
+void AEnemyCharacterBase::SetEnemyDestroyTimer()
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+	
+	FTimerHandle DestroyHandle;
+	FTimerManager& WorldTimerManager = World->GetTimerManager();
+	WorldTimerManager.SetTimer(DestroyHandle, this, &AEnemyCharacterBase::DestroyEnemy, DestroyTime, false);	
+}
+
+void AEnemyCharacterBase::DestroyEnemy()
+{
+	Destroy();
 }
 
 void AEnemyCharacterBase::AttackAnimationEnd()
