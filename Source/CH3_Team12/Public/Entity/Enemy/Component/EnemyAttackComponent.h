@@ -13,6 +13,7 @@ struct FAttackAnimationData;
 class UEnemyAttackDataAsset;
 class UAnimMontage;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackFinished);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackCanceled);
 
 UENUM()
 enum class EEnemyAttackPattern : uint8
@@ -41,9 +42,9 @@ public:
 
 	UFUNCTION()
 	void FinishAttack();
-
-	UPROPERTY(BlueprintAssignable, Category="Attack")
-	FOnAttackFinished OnAttackFinished;
+	
+	UFUNCTION(BlueprintCallable, Category= "Attack")
+	void CancelAttack();
 	
 	void StartHitCheck();
 	void AttackTrace();
@@ -67,6 +68,13 @@ private:
 	void ResetAttackCooldown();
 	
 	void OnAttackAnimationEnd();
+	
+public:
+	UPROPERTY(BlueprintAssignable, Category="Attack")
+	FOnAttackFinished OnAttackFinished;
+	
+	UPROPERTY(BlueprintAssignable, Category="Attack")
+	FOnAttackCanceled OnAttackCanceled;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation|Data")

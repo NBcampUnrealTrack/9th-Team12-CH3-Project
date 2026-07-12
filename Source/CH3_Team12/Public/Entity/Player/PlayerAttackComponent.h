@@ -11,7 +11,7 @@ class UStateTagComponent;
 class UPlayerAttributeComponent;
 class UPlayerEquipmentComponent;
 class UPlayerWeaponComponent;
-
+struct FAttackDefinition;
 struct FInputActionValue;
 struct FHitResult;
 
@@ -33,22 +33,40 @@ public:
 
 	// Notify / NotifyState
 	void OpenComboWindow();
-	void EndAttack();
 	void OpenAttackRecovery();
+	void EndAttack();
+	
+	const FAttackStepData* GetCurrentStep() const;
+	
+	
+	bool CanDodgeCancel() const
+	{
+		return bDodgeCancelWindowOpen;
+	}
 
-	UPROPERTY(EditAnywhere, Category="Combat|Data")
-	TObjectPtr<UPlayerAttackDataAsset> AttackData;
-
+	void CancelAttackForDodge();
+	
 private:
+	// Attack
 	bool CanAttack() const;
 	bool IsAttacking() const;
-	bool IsBusy() const;
-
 	bool CanContinueCombo() const;
-
-	void StartAttack(EAttackType AttackType);
+	void StartAttack(const FAttackDefinition* AttackInfo);
 	void ContinueCombo();
+	
+	/** 현재 장착한 무기의 AttackDataAsset */
+	const UPlayerAttackDataAsset* GetAttackData() const;
 
+	/** 공격 타입에 맞는 AttackData 반환 */
+	const FAttackDefinition* GetAttackDataByType(
+		EAttackType AttackType) const;
+	
+	auto OnAttackMontageEnded(
+		UAnimMontage* Montage,
+		bool bInterrupted) -> void;
+	
+private:
+	// Components
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
 	UPROPERTY()
@@ -60,14 +78,26 @@ private:
 	UPROPERTY()
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
 	
+	// Runtime
+	/** 현재 실행중인 공격 데이터 */
+	const FAttackDefinition* CurrentAttackData = nullptr;
+	
+	const FAttackStepData* CurrentStep = nullptr;
+	
+	/** 현재 재생중인 몽타주 */
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentAttackMontage;
-
+	
+	
+	/** 현재 콤보 번호 */
 	int32 ComboIndex = 0;
 
+	/** 콤보 입력 가능 */
 	bool bComboWindow = false;
-	bool bComboBuffered = false;
 
-	EAttackType CurrentAttackType = EAttackType::Light;
-	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	/** 다음 콤보 입력 버퍼 */
+	bool bComboBuffered = false;
+	
+	bool bDodgeCancelWindowOpen = false;
+
 };

@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "PlayerWeaponComponent.generated.h"
 
+class UPlayerAttackComponent;
 class APlayerCharacterBase;
 class UPlayerEquipmentComponent;
 
@@ -28,6 +29,9 @@ public:
 	
 	UPROPERTY()
 	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerAttackComponent> AttackComponent;
 	
 	void StartWeaponHitCheck();
 	void WeaponTrace();

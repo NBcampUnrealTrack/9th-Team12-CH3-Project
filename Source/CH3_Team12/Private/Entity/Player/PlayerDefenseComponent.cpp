@@ -16,6 +16,7 @@
 #include "Sound/SoundBase.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values for this component's properties
 UPlayerDefenseComponent::UPlayerDefenseComponent()
@@ -27,38 +28,60 @@ UPlayerDefenseComponent::UPlayerDefenseComponent()
 void UPlayerDefenseComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 	if (!OwnerCharacter)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : OwnerCharacter is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerDefenseComponent : OwnerCharacter is nullptr"));
 		return;
 	}
 
 	StateComponent = OwnerCharacter->GetStateTagComponent();
+	AttributeComponent = OwnerCharacter->GetAttributeComponent();
+	EquipmentComponent = OwnerCharacter->GetEquipmentComponent();
+	WeaponComponent = OwnerCharacter->GetWeaponComponent();
+
 	if (!StateComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : StateComponent is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerDefenseComponent : StateComponent is nullptr"));
 		return;
 	}
-	
-	AttributeComponent = OwnerCharacter->GetAttributeComponent();
+
 	if (!AttributeComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : AttributeComponent is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerDefenseComponent : AttributeComponent is nullptr"));
+		return;
 	}
-	
-	EquipmentComponent = OwnerCharacter->GetEquipmentComponent();
-	if (!EquipmentComponent)
+
+	if (!DefenseData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : EquipmentComponent is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerDefenseComponent : DefenseData is nullptr"));
+		return;
 	}
-	
-	WeaponComponent = OwnerCharacter->GetWeaponComponent();
-	if (!WeaponComponent)
+
+	if (!FeedbackData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : WeaponComponent is nullptr"));
+		UE_LOG(LogTemp, Error, TEXT("PlayerDefenseComponent : FeedbackData is nullptr"));
 	}
+
+	AttributeComponent->OnDead.AddDynamic(
+		this,
+		&UPlayerDefenseComponent::HandleOwnerDead
+	);
+}
+
+void UPlayerDefenseComponent::EndPlay(
+	const EEndPlayReason::Type EndPlayReason)
+{
+	if (AttributeComponent)
+	{
+		AttributeComponent->OnDead.RemoveDynamic(
+			this,
+			&UPlayerDefenseComponent::HandleOwnerDead
+		);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void UPlayerDefenseComponent::StartGuard(const FInputActionValue& Value)
@@ -89,7 +112,7 @@ void UPlayerDefenseComponent::StartGuard(const FInputActionValue& Value)
 		LocomotionComponent->RefreshMovementSettings();
 	}
 
-	if (DefenseData->GuardStartMontage)
+	if (DefenseData && DefenseData->GuardStartMontage)
 	{
 		OwnerCharacter->PlayAnimMontage(DefenseData->GuardStartMontage);
 	}
@@ -110,7 +133,7 @@ void UPlayerDefenseComponent::StopGuard(const FInputActionValue& Value)
 		CombatTags::State_Combat_Parry
 	);
 
-	if (DefenseData->GuardStartMontage)
+	if (DefenseData && DefenseData->GuardStartMontage)
 	{
 		if (USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh())
 		{
@@ -292,99 +315,24 @@ bool UPlayerDefenseComponent::IsParrying() const
 void UPlayerDefenseComponent::PlayParryReaction(
 	EHitReactionDirection AttackDirection)
 {
-	UAnimMontage* MontageToPlay = nullptr;
-
-	switch (AttackDirection)
-	{
-	case EHitReactionDirection::Left:
-		MontageToPlay = DefenseData->ParryLeftMontage;
-		break;
-
-	case EHitReactionDirection::Right:
-		MontageToPlay = DefenseData->ParryRightMontage;
-		break;
-
-	default:
-		MontageToPlay = DefenseData->ParryRightMontage
-			? DefenseData->ParryRightMontage
-			: DefenseData->ParryLeftMontage;
-		break;
-	}
-
-	if (MontageToPlay && OwnerCharacter)
-	{
-		OwnerCharacter->PlayAnimMontage(MontageToPlay);
-	}
+	PlayMontageSafe(
+		DefenseData->GetParryReactionMontage(AttackDirection)
+	);
 }
 
 void UPlayerDefenseComponent::PlayGuardHitReaction(
 	EHitReactionDirection AttackDirection)
 {
-	UAnimMontage* MontageToPlay = nullptr;
-
-	switch (AttackDirection)
-	{
-	case EHitReactionDirection::Left:
-		MontageToPlay = DefenseData->GuardHitLeftMontage;
-		break;
-
-	case EHitReactionDirection::Right:
-		MontageToPlay = DefenseData->GuardHitRightMontage;
-		break;
-
-	default:
-		MontageToPlay = DefenseData->GuardHitRightMontage
-			? DefenseData->GuardHitRightMontage
-			: DefenseData->GuardHitLeftMontage;
-		break;
-	}
-
-	if (MontageToPlay && OwnerCharacter)
-	{
-		OwnerCharacter->PlayAnimMontage(MontageToPlay);
-	}
-}
-
-UAnimMontage* UPlayerDefenseComponent::GetHitMontage(
-	EHitReactionDirection ReactionDirection) const
-{
-	if (!DefenseData)
-	{
-		return nullptr;
-	}
-
-	switch (ReactionDirection)
-	{
-	case EHitReactionDirection::Left:
-		return DefenseData->HitLeftMontage
-			? DefenseData->HitLeftMontage
-			: DefenseData->HitFrontMontage;
-
-	case EHitReactionDirection::Right:
-		return DefenseData->HitRightMontage
-			? DefenseData->HitRightMontage
-			: DefenseData->HitFrontMontage;
-
-	case EHitReactionDirection::Back:
-		return DefenseData->HitBackMontage
-			? DefenseData->HitBackMontage
-			: DefenseData->HitFrontMontage;
-
-	case EHitReactionDirection::Front:
-	default:
-		return DefenseData->HitFrontMontage;
-	}
+	PlayMontageSafe(
+		DefenseData->GetGuardHitMontage(AttackDirection)
+	);
 }
 
 void UPlayerDefenseComponent::PlayHitReaction(
 	EHitReactionDirection ReactionDirection)
 {
-	UAnimMontage* MontageToPlay = GetHitMontage(ReactionDirection);
-	
-	if (MontageToPlay && OwnerCharacter)
-	{
-		OwnerCharacter->PlayAnimMontage(MontageToPlay);
-	}
+	UAnimMontage* MontageToPlay = DefenseData->GetHitReactionMontage(ReactionDirection);
+	PlayMontageSafe(MontageToPlay);
 	
 	UAnimInstance* AnimInstance =
 		OwnerCharacter->GetMesh()
@@ -499,11 +447,19 @@ EHitReactionDirection UPlayerDefenseComponent::CalculateHitReactionDirection(
 
 void UPlayerDefenseComponent::EndHitReaction()
 {
-	if (StateComponent)
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	if (StateComponent->HasStateTagExact(CombatTags::State_Hit_Dead))
 	{
 		StateComponent->RemoveStateTag(CombatTags::State_Hit_Reacting);
-		StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
+		return;
 	}
+
+	StateComponent->RemoveStateTag(CombatTags::State_Hit_Reacting);
+	StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
 
 	if (OwnerCharacter)
 	{
@@ -513,6 +469,21 @@ void UPlayerDefenseComponent::EndHitReaction()
 			LocomotionComponent->RefreshMovementSettings();
 		}
 	}
+}
+
+bool UPlayerDefenseComponent::PlayMontageSafe(
+	UAnimMontage* Montage,
+	float PlayRate) const
+{
+	if (!OwnerCharacter || !Montage)
+	{
+		return false;
+	}
+
+	return OwnerCharacter->PlayAnimMontage(
+		Montage,
+		PlayRate
+	) > 0.0f;
 }
 
 void UPlayerDefenseComponent::HandleParrySuccess(
@@ -563,26 +534,51 @@ void UPlayerDefenseComponent::HandleDirectHit(
 	const FIncomingAttackContext& Context,
 	EHitReactionDirection ReactionDirection)
 {
-	if (StateComponent)
+	if (!OwnerCharacter || !StateComponent)
 	{
-		StateComponent->AddStateTag(CombatTags::State_Hit_Reacting);
-		StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
-
-		StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
-		StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
-		StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
+		return;
 	}
 
-	WeaponComponent->EndWeaponHitCheck();
+	if (AttributeComponent && AttributeComponent->IsDead())
+	{
+		return;
+	}
 
-	PlayHitReaction(ReactionDirection);
+	StateComponent->AddStateTag(CombatTags::State_Hit_Reacting);
+	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
+
+	if (WeaponComponent)
+	{
+		WeaponComponent->EndWeaponHitCheck();
+	}
 
 	if (AttributeComponent)
 	{
 		AttributeComponent->ApplyHealthDamage(
 			Context.AttackInfo.Damage
 		);
+
+		// ApplyHealthDamage 안에서 Die() → OnDead.Broadcast()가 즉시 호출됨.
+		// 죽었으면 일반 HitReaction으로 가지 않는다.
+		if (AttributeComponent->IsDead())
+		{
+			if (FeedbackData)
+			{
+				PlayCombatFeedback(
+					Context,
+					FeedbackData->HitFeedback
+				);
+			}
+
+			return;
+		}
 	}
+
+	PlayHitReaction(ReactionDirection);
 
 	if (FeedbackData)
 	{
@@ -902,6 +898,11 @@ void UPlayerDefenseComponent::Debug_ReceiveTestAttackFront()
 	Debug_ReceiveTestAttack(EHitReactionDirection::Front);
 }
 
+void UPlayerDefenseComponent::Debug_ReceiveTestAttackBack()
+{
+	Debug_ReceiveTestAttack(EHitReactionDirection::Back);
+}
+
 void UPlayerDefenseComponent::Debug_ReceiveTestAttackLeft()
 {
 	Debug_ReceiveTestAttack(EHitReactionDirection::Left);
@@ -910,11 +911,6 @@ void UPlayerDefenseComponent::Debug_ReceiveTestAttackLeft()
 void UPlayerDefenseComponent::Debug_ReceiveTestAttackRight()
 {
 	Debug_ReceiveTestAttack(EHitReactionDirection::Right);
-}
-
-void UPlayerDefenseComponent::Debug_ReceiveTestAttackBack()
-{
-	Debug_ReceiveTestAttack(EHitReactionDirection::Back);
 }
 
 void UPlayerDefenseComponent::Debug_ReceiveTestAttack(
@@ -966,10 +962,7 @@ void UPlayerDefenseComponent::Debug_ReceiveTestAttack(
 	}
 
 	Context.Hit.ImpactPoint =
-		OwnerLocation;
-
-	Context.AttackWorldDirection =
-		-HitDirection;
+		OwnerLocation + HitDirection * 10.0f;
 
 	const EDefenseResult Result =
 		ResolveIncomingAttack(Context);
@@ -980,4 +973,170 @@ void UPlayerDefenseComponent::Debug_ReceiveTestAttack(
 		TEXT("Debug Test Attack Result: %s"),
 		*UEnum::GetValueAsString(Result)
 	);
+}
+
+void UPlayerDefenseComponent::HandleOwnerDead()
+{
+	if (bDeadHandled)
+	{
+		return;
+	}
+
+	bDeadHandled = true;
+
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return;
+	}
+
+	ClearTransientCombatStatesForDead();
+
+	StateComponent->AddStateTag(CombatTags::State_Hit_Dead);
+	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+
+	if (AController* Controller = OwnerCharacter->GetController())
+	{
+		if (APlayerController* PlayerController =
+			Cast<APlayerController>(Controller))
+		{
+			PlayerController->SetIgnoreMoveInput(true);
+			PlayerController->SetIgnoreLookInput(true);
+		}
+	}
+
+	if (UCharacterMovementComponent* MovementComponent =
+		OwnerCharacter->GetCharacterMovement())
+	{
+		MovementComponent->StopMovementImmediately();
+		MovementComponent->DisableMovement();
+	}
+
+	if (UPlayerLocomotionComponent* LocomotionComponent =
+		OwnerCharacter->GetLocomotionComponent())
+	{
+		LocomotionComponent->DoStopSprint();
+		LocomotionComponent->RefreshMovementSettings();
+	}
+
+	if (WeaponComponent)
+	{
+		WeaponComponent->EndWeaponHitCheck();
+	}
+
+	PlayDeadMontage();
+}
+
+void UPlayerDefenseComponent::ClearTransientCombatStatesForDead()
+{
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Dodging);
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Invincible);
+	StateComponent->RemoveStateTag(CombatTags::State_Hit_Reacting);
+	StateComponent->RemoveStateTag(CombatTags::State_Hit_PostureBroken);
+}
+
+void UPlayerDefenseComponent::PlayDeadMontage()
+{
+	UE_LOG(LogTemp, Warning, TEXT("PlayDeadMontage called"));
+
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dead: OwnerCharacter null"));
+		FinalizeDead();
+		return;
+	}
+
+	USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh();
+	if (!Mesh)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dead: Mesh null"));
+		FinalizeDead();
+		return;
+	}
+
+	UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
+	if (!AnimInstance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dead: AnimInstance null"));
+		FinalizeDead();
+		return;
+	}
+
+	UAnimMontage* DeadMontage =
+		DefenseData ? DefenseData->DeadMontage : nullptr;
+
+	if (!DeadMontage)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dead: DeadMontage null"));
+		FinalizeDead();
+		return;
+	}
+
+	Mesh->bPauseAnims = false;
+
+	AnimInstance->StopAllMontages(0.05f);
+
+	const float Duration = AnimInstance->Montage_Play(
+		DeadMontage,
+		DefenseData ? DefenseData->DeadMontagePlayRate : 1.0f
+	);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Dead Montage Play Duration: %.3f / Montage: %s"),
+		Duration,
+		*GetNameSafe(DeadMontage)
+	);
+
+	if (Duration <= 0.0f)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dead: Montage_Play failed"));
+		FinalizeDead();
+		return;
+	}
+
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(
+		this,
+		&UPlayerDefenseComponent::OnDeadMontageEnded
+	);
+
+	AnimInstance->Montage_SetEndDelegate(
+		EndDelegate,
+		DeadMontage
+	);
+}
+
+void UPlayerDefenseComponent::OnDeadMontageEnded(
+	UAnimMontage* Montage,
+	bool bInterrupted)
+{
+	FinalizeDead();
+}
+
+void UPlayerDefenseComponent::FinalizeDead()
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return;
+	}
+
+	StateComponent->AddStateTag(CombatTags::State_Hit_Dead);
+	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+
+	if (DefenseData && DefenseData->bFreezePoseAfterDead)
+	{
+		if (USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh())
+		{
+			Mesh->bPauseAnims = true;
+		}
+	}
 }

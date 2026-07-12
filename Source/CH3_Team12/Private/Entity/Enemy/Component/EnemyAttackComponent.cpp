@@ -167,6 +167,24 @@ void UEnemyAttackComponent::FinishAttack()
 	CurrentPlayingMontage = EEnemyAttackPattern::End;
 }
 
+void UEnemyAttackComponent::CancelAttack()
+{
+	USkeletalMeshComponent* OwnerMesh = GetOwnerSkeletalMeshComponent();
+	if (OwnerMesh)
+	{
+		UAnimInstance* AnimInstance = OwnerMesh->GetAnimInstance();
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Stop(0.2f);
+		}
+	}
+	
+	bCanAttack = true;
+	OnAttackCanceled.Broadcast();
+	
+	CurrentPlayingMontage = EEnemyAttackPattern::End;
+}
+
 void UEnemyAttackComponent::StartHitCheck()
 {
 	if (bUseDebugColliderDraw)

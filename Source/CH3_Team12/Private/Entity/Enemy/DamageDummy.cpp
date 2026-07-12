@@ -104,7 +104,7 @@ void ADamageDummy::Attack()
 		}
 
 		UPlayerAttackComponent* AttackComponent =
-			Player->GetCombatComponent();
+			Player->GetAttackComponent();
 
 		if (!AttackComponent)
 		{

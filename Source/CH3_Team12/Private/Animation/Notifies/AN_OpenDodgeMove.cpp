@@ -1,16 +1,17 @@
-#include "Animation/Notifies/AN_OpenDodgeRecovery.h"
+#include "Animation/Notifies/AN_OpenDodgeMove.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
 
-void UAN_OpenDodgeRecovery::Notify(
-	USkeletalMeshComponent* MeshComp,
-	UAnimSequenceBase* Animation,
-	const FAnimNotifyEventReference& EventReference
-)
+void UAN_OpenDodgeMove::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+	const FAnimNotifyEventReference& EventReference)
 {
-	Super::Notify(MeshComp, Animation, EventReference);
+	Super::Notify(
+		MeshComp,
+		Animation,
+		EventReference
+	);
 
 	if (!MeshComp)
 	{
@@ -33,5 +34,5 @@ void UAN_OpenDodgeRecovery::Notify(
 		return;
 	}
 
-	LocomotionComponent->OpenDodgeRecovery();
+	LocomotionComponent->OpenDodgeMove();
 }
