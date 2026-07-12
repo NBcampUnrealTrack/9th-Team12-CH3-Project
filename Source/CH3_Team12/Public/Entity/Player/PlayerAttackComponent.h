@@ -37,6 +37,15 @@ public:
 	void EndAttack();
 	
 	const FAttackStepData* GetCurrentStep() const;
+	
+	
+	bool CanDodgeCancel() const
+	{
+		return bDodgeCancelWindowOpen;
+	}
+
+	void CancelAttackForDodge();
+	
 private:
 	// Attack
 	bool CanAttack() const;
@@ -52,9 +61,9 @@ private:
 	const FAttackDefinition* GetAttackDataByType(
 		EAttackType AttackType) const;
 	
-	void OnAttackMontageEnded(
+	auto OnAttackMontageEnded(
 		UAnimMontage* Montage,
-		bool bInterrupted);
+		bool bInterrupted) -> void;
 	
 private:
 	// Components
@@ -88,4 +97,7 @@ private:
 
 	/** 다음 콤보 입력 버퍼 */
 	bool bComboBuffered = false;
+	
+	bool bDodgeCancelWindowOpen = false;
+
 };

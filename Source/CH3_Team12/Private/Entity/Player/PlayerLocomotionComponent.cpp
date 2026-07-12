@@ -253,6 +253,11 @@ void UPlayerLocomotionComponent::StartDodge()
 	{
 		return;
 	}
+	
+	if (AttackComponent && AttackComponent->CanDodgeCancel())
+	{
+		AttackComponent->CancelAttackForDodge();
+	}
 
 	const EDodgeDirection DodgeDirection =
 		ShouldUseDirectionalDodge()
@@ -559,7 +564,11 @@ void UPlayerLocomotionComponent::DoStopSprint()
 void UPlayerLocomotionComponent::Dodge(
 	const FInputActionValue& Value)
 {
-	if (!CanDodge())
+	const bool bCanDodgeCancelAttack =
+		AttackComponent &&
+		AttackComponent->CanDodgeCancel();
+
+	if (!CanDodge() && !bCanDodgeCancelAttack)
 	{
 		return;
 	}
