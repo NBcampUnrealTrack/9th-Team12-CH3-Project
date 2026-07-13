@@ -23,7 +23,7 @@ class IAnimationAttackInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	virtual void AttackAnimationEnd() = 0;
-	virtual void AttackHitCheckStart() = 0;
+	virtual void AttackHitCheckStart(int32 HitIndex) = 0;
 	virtual void AttackHitCheckTick() = 0;
 	virtual void AttackHitCheckEnd() = 0;
 };

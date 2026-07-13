@@ -86,7 +86,7 @@ public:
 	// Attack Animation Interface's Section
 public:
 	virtual void AttackAnimationEnd() override;
-	virtual void AttackHitCheckStart() override;
+	virtual void AttackHitCheckStart(int32 HitIndex) override;
 	virtual void AttackHitCheckTick() override;
 	virtual void AttackHitCheckEnd() override;
 };

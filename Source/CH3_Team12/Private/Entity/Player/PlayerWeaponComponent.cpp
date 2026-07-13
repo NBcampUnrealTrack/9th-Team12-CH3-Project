@@ -3,7 +3,7 @@
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
-
+#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
 UPlayerWeaponComponent::UPlayerWeaponComponent()
@@ -28,6 +28,7 @@ void UPlayerWeaponComponent::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT(
 			"PlayerWeaponComponent : EquipmentComponent is nullptr"));
+		return;
 	}
 	
 	AttackComponent = OwnerCharacter->GetAttackComponent();
@@ -35,18 +36,27 @@ void UPlayerWeaponComponent::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT(
 			"PlayerWeaponComponent : AttackComponent is nullptr"));
+		return;
 	}
 }
 
-void UPlayerWeaponComponent::StartWeaponHitCheck()
+void UPlayerWeaponComponent::StartWeaponHitCheck(int32 HitIndex)
 {
-	if (!EquipmentComponent->GetEquippedWeapon())
+	CurrentHit =
+		AttackComponent->GetCurrentHit(HitIndex);
+
+	if (!CurrentHit)
 	{
 		return;
 	}
 
 	HitActors.Empty();
-	CacheWeaponTraceLocation();
+
+	if (CurrentHit->TraceType ==
+		EAttackTraceType::Weapon)
+	{
+		CacheWeaponTraceLocation();
+	}
 
 	bWeaponHitCheck = true;
 }
@@ -54,7 +64,7 @@ void UPlayerWeaponComponent::StartWeaponHitCheck()
 void UPlayerWeaponComponent::EndWeaponHitCheck()
 {
 	bWeaponHitCheck = false;
-
+	CurrentHit = nullptr;
 	HitActors.Empty();
 
 	PreviousBladeStart = FVector::ZeroVector;
@@ -72,50 +82,12 @@ void UPlayerWeaponComponent::CacheWeaponTraceLocation()
 	PreviousBladeEnd = EquipmentComponent->GetEquippedWeapon()->GetBladeEndLocation();
 }
 
-
-void UPlayerWeaponComponent::ProcessHit(const FHitResult& Hit)
-{
-	AActor* HitActor = Hit.GetActor();
-	if (!HitActor || 
-		!OwnerCharacter ||
-		!AttackComponent
-		)
-	{
-		return;
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Hit : %s"), *HitActor->GetName());
-
-	const FAttackStepData* Step =
-		AttackComponent->GetCurrentStep();
-
-	if (!Step)
-	{
-		return;
-	}
-	
-	UGameplayStatics::ApplyDamage(
-		HitActor,
-		Step->Damage,
-		OwnerCharacter->GetController(),
-		OwnerCharacter,
-		nullptr);
-}
-
-void UPlayerWeaponComponent::WeaponTrace()
+void UPlayerWeaponComponent::ExecuteWeaponTrace()
 {
 	AWeaponBase* Weapon =
-	EquipmentComponent->GetEquippedWeapon();
+		EquipmentComponent->GetEquippedWeapon();
 	
-	if (!bWeaponHitCheck	||
-		!Weapon				||
-		!OwnerCharacter)
-	{
-		return;
-	}
-
-	UWorld* World = GetWorld();
-	if (!World)
+	if (!Weapon)
 	{
 		return;
 	}
@@ -126,63 +98,214 @@ void UPlayerWeaponComponent::WeaponTrace()
 	const FVector CurrentBladeEnd =
 		Weapon->GetBladeEndLocation();
 
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(OwnerCharacter);
-	Params.AddIgnoredActor(Weapon);
+	const int32 SampleCount =
+		FMath::Max(CurrentHit->TraceSampleCount, 2);
 
-	const FCollisionShape CollisionShape =
-		FCollisionShape::MakeSphere(TraceRadius);
-
-	const int32 SafeSampleCount = FMath::Max(TraceSampleCount, 2);
-
-	for (int32 Index = 0; Index < SafeSampleCount; ++Index)
+	const FCollisionShape Shape =
+		FCollisionShape::MakeSphere(
+			CurrentHit->TraceRadius);
+	
+	for (int32 i = 0; i < SampleCount; ++i)
 	{
 		const float Alpha =
-			static_cast<float>(Index) /
-			static_cast<float>(SafeSampleCount - 1);
+			(float)i / (SampleCount - 1);
 
-		const FVector PreviousPoint =
-			FMath::Lerp(PreviousBladeStart, PreviousBladeEnd, Alpha);
+		const FVector Prev =
+			FMath::Lerp(
+				PreviousBladeStart,
+				PreviousBladeEnd,
+				Alpha);
 
-		const FVector CurrentPoint =
-			FMath::Lerp(CurrentBladeStart, CurrentBladeEnd, Alpha);
+		const FVector Curr =
+			FMath::Lerp(
+				CurrentBladeStart,
+				CurrentBladeEnd,
+				Alpha);
 
-		TArray<FHitResult> HitResults;
-
-		const bool bHit = World->SweepMultiByChannel(
-			HitResults,
-			PreviousPoint,
-			CurrentPoint,
-			FQuat::Identity,
-			TraceChannel,
-			CollisionShape,
-			Params
-		);
-
-		if (!bHit)
-		{
-			continue;
-		}
-
-		for (const FHitResult& Hit : HitResults)
-		{
-			AActor* HitActor = Hit.GetActor();
-
-			if (!HitActor || HitActor == OwnerCharacter)
-			{
-				continue;
-			}
-
-			if (HitActors.Contains(HitActor))
-			{
-				continue;
-			}
-
-			HitActors.Add(HitActor);
-			ProcessHit(Hit);
-		}
+		ExecuteSweep(
+			Prev,
+			Curr,
+			Shape);
 	}
 
 	PreviousBladeStart = CurrentBladeStart;
 	PreviousBladeEnd = CurrentBladeEnd;
+}
+
+void UPlayerWeaponComponent::ExecuteSphereTrace()
+{
+	AWeaponBase* Weapon =
+		EquipmentComponent->GetEquippedWeapon();
+
+	if (!Weapon)
+	{
+		return;
+	}
+
+	const FVector Center =
+		Weapon->GetActorLocation();
+
+	ExecuteSweep(
+		Center,
+		Center,
+		FCollisionShape::MakeSphere(
+			CurrentHit->TraceRadius));
+}
+
+void UPlayerWeaponComponent::ExecuteCapsuleTrace()
+{
+	AWeaponBase* Weapon =
+		EquipmentComponent->GetEquippedWeapon();
+
+	if (!Weapon)
+	{
+		return;
+	}
+
+	const FVector Center =
+		Weapon->GetActorLocation();
+
+	ExecuteSweep(
+		Center,
+		Center,
+		FCollisionShape::MakeCapsule(
+			CurrentHit->TraceRadius,
+			CurrentHit->CapsuleHalfHeight));
+}
+
+void UPlayerWeaponComponent::ExecuteBoxTrace()
+{
+	AWeaponBase* Weapon =
+		EquipmentComponent->GetEquippedWeapon();
+
+	if (!Weapon)
+	{
+		return;
+	}
+
+	const FVector Center =
+		Weapon->GetActorLocation();
+
+	ExecuteSweep(
+		Center,
+		Center,
+		FCollisionShape::MakeBox(
+			CurrentHit->BoxExtent));
+}
+
+void UPlayerWeaponComponent::ExecuteSweep(
+	const FVector& Start,
+	const FVector& End,
+	const FCollisionShape& Shape)
+{
+	if (!CurrentHit)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+
+	if (!World)
+	{
+		return;
+	}
+
+	AWeaponBase* Weapon =
+		EquipmentComponent->GetEquippedWeapon();
+
+	FCollisionQueryParams Params;
+
+	Params.AddIgnoredActor(OwnerCharacter);
+
+	if (Weapon)
+	{
+		Params.AddIgnoredActor(Weapon);
+	}
+
+	TArray<FHitResult> HitResults;
+
+	const bool bHit =
+		World->SweepMultiByChannel(
+			HitResults,
+			Start,
+			End,
+			FQuat::Identity,
+			CurrentHit->TraceChannel,
+			Shape,
+			Params);
+
+	if (!bHit)
+	{
+		return;
+	}
+
+	for (const FHitResult& Hit : HitResults)
+	{
+		AActor* HitActor = Hit.GetActor();
+
+		if (!HitActor)
+		{
+			continue;
+		}
+
+		if (HitActors.Contains(HitActor))
+		{
+			continue;
+		}
+
+		HitActors.Add(HitActor);
+
+		ProcessHit(Hit);
+	}
+}
+
+void UPlayerWeaponComponent::ProcessHit(const FHitResult& Hit)
+{
+	AActor* HitActor = Hit.GetActor();
+	if (!HitActor || 
+		!OwnerCharacter
+		)
+	{
+		return;
+	}
+	
+	if (!CurrentHit)
+	{
+		return;
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("Hit : %s"), *HitActor->GetName());
+	
+	UGameplayStatics::ApplyDamage(
+		HitActor,
+		CurrentHit->Damage,
+	OwnerCharacter->GetController(),
+	OwnerCharacter,
+	nullptr);
+}
+
+void UPlayerWeaponComponent::WeaponTrace()
+{
+	if (!bWeaponHitCheck || !CurrentHit)
+	{
+		return;
+	}
+
+	switch (CurrentHit->TraceType)
+	{
+	case EAttackTraceType::Weapon:
+		ExecuteWeaponTrace();
+		break;
+	case EAttackTraceType::Sphere:
+		ExecuteSphereTrace();
+		break;
+	case EAttackTraceType::Capsule:
+		ExecuteCapsuleTrace();
+		break;
+	case EAttackTraceType::Box:
+		ExecuteBoxTrace();
+		break;
+	default:
+		break;
+	}
 }

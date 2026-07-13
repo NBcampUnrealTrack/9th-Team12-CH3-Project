@@ -36,16 +36,13 @@ public:
 	void OpenAttackRecovery();
 	void EndAttack();
 	
-	const FAttackStepData* GetCurrentStep() const;
-	
-	
+	const FAttackHitData* GetCurrentHit(int32 HitIndex) const;
 	bool CanDodgeCancel() const
 	{
 		return bDodgeCancelWindowOpen;
 	}
 
 	void CancelAttackForDodge();
-	
 private:
 	// Attack
 	bool CanAttack() const;
@@ -61,9 +58,9 @@ private:
 	const FAttackDefinition* GetAttackDataByType(
 		EAttackType AttackType) const;
 	
-	auto OnAttackMontageEnded(
+	void OnAttackMontageEnded(
 		UAnimMontage* Montage,
-		bool bInterrupted) -> void;
+		bool bInterrupted);
 	
 private:
 	// Components

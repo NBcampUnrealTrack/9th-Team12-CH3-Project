@@ -188,7 +188,7 @@ void AEnemyCharacterBase::AttackAnimationEnd()
 	}
 }
 
-void AEnemyCharacterBase::AttackHitCheckStart()
+void AEnemyCharacterBase::AttackHitCheckStart(int32 HitIndex)
 {
 	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. AttackComponent is invalid."));
 	

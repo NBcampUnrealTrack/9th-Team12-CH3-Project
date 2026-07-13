@@ -1,11 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "PlayerWeaponComponent.generated.h"
 
+struct FCollisionShape;
+struct FAttackHitData;
 class UPlayerAttackComponent;
 class APlayerCharacterBase;
 class UPlayerEquipmentComponent;
@@ -16,24 +16,13 @@ class CH3_TEAM12_API UPlayerWeaponComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UPlayerWeaponComponent();
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:
-	UPROPERTY()
-	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
-	
-	UPROPERTY()
-	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
-	
-	UPROPERTY()
-	TObjectPtr<UPlayerAttackComponent> AttackComponent;
-	
-	void StartWeaponHitCheck();
+	void StartWeaponHitCheck(int32 HitIndex);
 	void WeaponTrace();
 	void EndWeaponHitCheck();
 	
@@ -43,16 +32,29 @@ public:
 	FVector PreviousBladeStart = FVector::ZeroVector;
 	FVector PreviousBladeEnd = FVector::ZeroVector;
 
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
-	float TraceRadius = 8.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
-	int32 TraceSampleCount = 5;
-
-	UPROPERTY(EditDefaultsOnly, Category="Combat|Trace")
-	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
-
 	TSet<TWeakObjectPtr<AActor>> HitActors;
 	
 	bool bWeaponHitCheck = false;
+	
+private:
+	UPROPERTY()
+	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerAttackComponent> AttackComponent;
+	
+	void ExecuteWeaponTrace();
+	void ExecuteSphereTrace();
+	void ExecuteCapsuleTrace();
+	void ExecuteBoxTrace();
+	
+	void ExecuteSweep(
+	const FVector& Start,
+	const FVector& End,
+	const FCollisionShape& Shape);
+	
+	const FAttackHitData* CurrentHit = nullptr;
 };

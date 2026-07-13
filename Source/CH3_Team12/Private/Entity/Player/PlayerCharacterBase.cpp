@@ -220,13 +220,13 @@ void APlayerCharacterBase::AttackAnimationEnd()
 	}	
 }
 
-void APlayerCharacterBase::AttackHitCheckStart()
+void APlayerCharacterBase::AttackHitCheckStart(int32 HitIndex)
 {
 	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
 	
 	if (WeaponComponent)
 	{
-		WeaponComponent->StartWeaponHitCheck();
+		WeaponComponent->StartWeaponHitCheck(HitIndex);
 	}
 }
 
