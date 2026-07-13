@@ -37,12 +37,16 @@ public:
 	void EndAttack();
 	
 	const FAttackHitData* GetCurrentHit(int32 HitIndex) const;
-	bool CanDodgeCancel() const
-	{
-		return bDodgeCancelWindowOpen;
-	}
+		
+	bool CanDodgeCancel() const { return bDodgeCancelWindowOpen; }
+	bool CanMoveCancel() const { return bMoveCancelWindowOpen; }
+	
+	void CancelAttackInternal();
 
 	void CancelAttackForDodge();
+	void CancelAttackForMovement();
+	void CancelAttackForHit();
+	void CancelAttackForDeath();
 private:
 	// Attack
 	bool CanAttack() const;
@@ -96,5 +100,6 @@ private:
 	bool bComboBuffered = false;
 	
 	bool bDodgeCancelWindowOpen = false;
+	bool bMoveCancelWindowOpen = false;
 
 };
