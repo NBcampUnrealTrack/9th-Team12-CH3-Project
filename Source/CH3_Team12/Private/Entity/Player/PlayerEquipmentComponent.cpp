@@ -312,6 +312,11 @@ bool UPlayerEquipmentComponent::CanChangeWeapon() const
 		return false;
 	}
 
+	if (StateComp->HasStateTag(CombatTags::State_Action_UsingItem))
+	{
+		return false;
+	}
+	
 	if (StateComp->HasStateTag(CombatTags::State_Hit_Dead))
 	{
 		return false;

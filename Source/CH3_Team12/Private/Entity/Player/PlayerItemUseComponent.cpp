@@ -1,11 +1,17 @@
 #include "Entity/Player/PlayerItemUseComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerInventoryComponent.h"
+#include "Entity/Player/PlayerLocomotionComponent.h"
 #include "Framework/DataAsset/ItemDataAsset.h"
 #include "Framework/DataAsset/ConsumableDataAsset.h"
 #include "Entity/Item/ItemEffect.h"
 #include "Entity/Item/ItemInstance.h"
 #include "InputActionValue.h"
+#include "Animation/AnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "GameplayTags/CombatGameplayTags.h"
+#include "Entity/Player/StateTagComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UPlayerItemUseComponent::UPlayerItemUseComponent()
 {
@@ -32,13 +38,27 @@ void UPlayerItemUseComponent::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("PlayerItemUseComponent : Inventory is nullptr"));
 		return;
 	}
+	
+	StateComp = OwnerCharacter->GetStateTagComponent();
+	
+	if (!StateComp)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerItemUseComponent : StateComponent is nullptr"));
+		return;
+	}
+	
+	Locomotion = OwnerCharacter->GetLocomotionComponent();
+	
+	if (!Locomotion)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerItemUseComponent : LocomotionComponent is nullptr"));
+		return;
+	}
 }
 
 void UPlayerItemUseComponent::UseConsumableInput(
 	const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : Press button"));
-	
 	if (!Inventory)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : Inventory is nullptr"));
@@ -63,9 +83,44 @@ void UPlayerItemUseComponent::UseConsumableInput(
 		return;
 	}
 	
-	OwnerCharacter->PlayAnimMontage(
-		Inventory->GetCurrentConsumable()->GetItemData()->UseMontage
-		);
+	if (!canUseItem())
+	{
+		return;
+	}
+	
+	CurrentUsingItem = Inventory->GetCurrentConsumable();
+		
+	StateComp->AddStateTag(CombatTags::State_Action_UsingItem);
+	
+	Locomotion->RefreshMovementSettings();
+	
+	UAnimInstance* AnimInstance =
+		OwnerCharacter->GetMesh()->GetAnimInstance();
+	
+	if (!AnimInstance)
+	{
+		StateComp->RemoveStateTag(CombatTags::State_Action_UsingItem);
+		return;
+	}
+	
+	const float Duration =
+		AnimInstance->Montage_Play(
+			Inventory->GetCurrentConsumable()->GetItemData()->UseMontage);
+
+	if (Duration <= 0.f)
+	{
+		StateComp->RemoveStateTag(CombatTags::State_Action_UsingItem);
+		return;
+	}
+	
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(
+		this,
+		&UPlayerItemUseComponent::OnItemUseMontageEnded);
+
+	AnimInstance->Montage_SetEndDelegate(
+		EndDelegate,
+		Inventory->GetCurrentConsumable()->GetItemData()->UseMontage);
 }
 
 void UPlayerItemUseComponent::AnimNotify_UseConsumable()
@@ -76,6 +131,18 @@ void UPlayerItemUseComponent::AnimNotify_UseConsumable()
 	}
 
 	UseItem(Inventory->GetCurrentConsumable());
+}
+
+float UPlayerItemUseComponent::GetCurrentMoveSpeedMultiplier() const
+{
+	if (!CurrentUsingItem)
+	{
+		return 1.0f;
+	}
+
+	const UItemDataAsset* Data = CurrentUsingItem->GetItemData();
+
+	return Data ? Data->MoveSpeedMultiplier : 1.0f;
 }
 
 void UPlayerItemUseComponent::UseItem(UItemInstance* Item)
@@ -147,6 +214,49 @@ bool UPlayerItemUseComponent::ApplyConsumableEffects(
 		}
 
 		Effect->Apply(OwnerActor);
+	}
+	
+	return true;
+}
+
+void UPlayerItemUseComponent::OnItemUseMontageEnded(
+	UAnimMontage* Montage,
+	bool bInterrupted)
+{
+	StateComp->RemoveStateTag(CombatTags::State_Action_UsingItem);
+	Locomotion->RefreshMovementSettings();
+}
+
+bool UPlayerItemUseComponent::canUseItem()
+{
+	if (!StateComp)
+	{
+		return false;
+	}
+	
+	if (StateComp->HasStateTag(CombatTags::State_Action_UsingItem))
+	{
+		return false;
+	}
+	
+	if (StateComp->HasStateTag(CombatTags::State_Combat_Attacking))
+	{
+		return false;
+	}
+
+	if (StateComp->HasStateTag(CombatTags::State_Combat_Dodging))
+	{
+		return false;
+	}
+
+	if (StateComp->HasStateTag(CombatTags::State_Action_Equipping))
+	{
+		return false;
+	}
+	
+	if (StateComp->HasStateTag(CombatTags::State_Hit_Dead))
+	{
+		return false;
 	}
 	
 	return true;

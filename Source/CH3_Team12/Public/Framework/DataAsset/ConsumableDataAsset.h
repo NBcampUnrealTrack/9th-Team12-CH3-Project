@@ -19,10 +19,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Instanced, Category="Consumable")
 	TArray<TObjectPtr<UItemEffect>> Effects;
 	
-	/** 사용 시간(0이면 즉시 사용) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Consumable", meta = (ClampMin = "0.0"))
-	float UseTime = 0.0f;
-
 	/** 사용 후 소비 여부 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Consumable")
 	bool bConsumeOnUse = true;

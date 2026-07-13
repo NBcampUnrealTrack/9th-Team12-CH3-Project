@@ -6,6 +6,7 @@
 #include "Framework/DataAsset/PlayerDodgeDataAsset.h"
 #include "PlayerLocomotionComponent.generated.h"
 
+class UPlayerItemUseComponent;
 class UAnimMontage;
 class APlayerCharacterBase;
 class UStateTagComponent;
@@ -84,7 +85,10 @@ private:
 	
 	UPROPERTY()
 	TObjectPtr<UPlayerDefenseComponent> DefenseComponent;
-
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerItemUseComponent> ItemUseComponent;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Locomotion|Data")
 	TObjectPtr<UPlayerLocomotionDataAsset> LocomotionData;
 	
