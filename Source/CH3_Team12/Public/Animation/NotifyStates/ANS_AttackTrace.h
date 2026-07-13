@@ -34,4 +34,8 @@ public:
 		UAnimSequenceBase* Animation,
 		const FAnimNotifyEventReference& EventReference
 	) override;
+	
+public:
+	UPROPERTY(EditAnywhere)
+	int32 HitIndex = 0;
 };

@@ -379,7 +379,14 @@ void UPlayerAttackComponent::ContinueCombo()
 		CurrentAttackMontage);
 }
 
-const FAttackStepData* UPlayerAttackComponent::GetCurrentStep() const
+const FAttackHitData*
+UPlayerAttackComponent::GetCurrentHit(int32 HitIndex) const
 {
-	return CurrentStep;
+	if (!CurrentStep)
+		return nullptr;
+
+	if (!CurrentStep->Hits.IsValidIndex(HitIndex))
+		return nullptr;
+
+	return &CurrentStep->Hits[HitIndex];
 }

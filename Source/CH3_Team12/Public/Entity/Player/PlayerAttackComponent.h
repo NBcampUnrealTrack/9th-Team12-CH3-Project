@@ -36,7 +36,7 @@ public:
 	void OpenAttackRecovery();
 	void EndAttack();
 	
-	const FAttackStepData* GetCurrentStep() const;
+	const FAttackHitData* GetCurrentHit(int32 HitIndex) const;
 private:
 	// Attack
 	bool CanAttack() const;

@@ -19,7 +19,7 @@ void UANS_AttackTrace::NotifyBegin(
 	
 	if (IAnimationAttackInterface* AttackPawn = Cast<IAnimationAttackInterface>(MeshComp->GetOwner()))
 	{
-		AttackPawn->AttackHitCheckStart();
+		AttackPawn->AttackHitCheckStart(HitIndex);
 	}
 }
 
