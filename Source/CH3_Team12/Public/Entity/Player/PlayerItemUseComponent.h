@@ -4,14 +4,14 @@
 #include "Components/ActorComponent.h"
 #include "PlayerItemUseComponent.generated.h"
 
-
+class UPlayerLocomotionComponent;
+class UStateTagComponent;
 struct FInputActionValue;
 class UAnimMontage;
 class APlayerCharacterBase;
 class UPlayerInventoryComponent;
 class UConsumableDataAsset;
 class UItemInstance;
-
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CH3_TEAM12_API UPlayerItemUseComponent : public UActorComponent
@@ -26,7 +26,8 @@ public:
 	
 	// AnimNotify
 	void AnimNotify_UseConsumable();
-		
+	
+	float GetCurrentMoveSpeedMultiplier() const;
 protected:
 	virtual void BeginPlay() override;
 	
@@ -41,11 +42,26 @@ private:
 	bool ApplyConsumableEffects(
 		const UConsumableDataAsset* ConsumableData);
 	
+	void OnItemUseMontageEnded(
+		UAnimMontage* Montage,
+		bool bInterrupted);
+	
+	bool canUseItem();
 private:
 
 	UPROPERTY()
 	TObjectPtr<UPlayerInventoryComponent> Inventory;
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerLocomotionComponent> Locomotion;
+	
+	UPROPERTY()
+	TObjectPtr<UStateTagComponent> StateComp;
 
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
+	
+	
+	UPROPERTY()
+	TObjectPtr<UItemInstance> CurrentUsingItem;
 };

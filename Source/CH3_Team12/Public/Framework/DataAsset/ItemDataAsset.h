@@ -16,9 +16,12 @@ public:
 	{
 		return FPrimaryAssetId(TEXT("Item"), GetFName());
 	}
-
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	TObjectPtr<UAnimMontage> UseMontage;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
+	float MoveSpeedMultiplier = 1.0f;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	FText ItemName;

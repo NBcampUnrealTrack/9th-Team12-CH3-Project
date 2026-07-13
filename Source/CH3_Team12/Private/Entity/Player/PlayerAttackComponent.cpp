@@ -287,6 +287,7 @@ bool UPlayerAttackComponent::CanStartAttack() const
 	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
 	BlockTags.AddTag(CombatTags::State_Hit_Dead);
 	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
+	BlockTags.AddTag(CombatTags::State_Action_UsingItem);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }

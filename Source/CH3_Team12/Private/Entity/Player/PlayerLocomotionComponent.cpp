@@ -6,7 +6,7 @@
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerCameraComponent.h"
 #include "Entity/Player/PlayerDefenseComponent.h"
-
+#include "Entity/Player/PlayerItemUseComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UPlayerLocomotionComponent::UPlayerLocomotionComponent()
@@ -31,6 +31,7 @@ void UPlayerLocomotionComponent::BeginPlay()
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
 	AttackComponent = OwnerCharacter->GetAttackComponent();
 	DefenseComponent = OwnerCharacter->GetDefenseComponent();
+	ItemUseComponent = OwnerCharacter->GetItemUseComponent();
 	
 	{
 		MovementComponent->bOrientRotationToMovement = true;
@@ -149,12 +150,21 @@ void UPlayerLocomotionComponent::RefreshMovementSettings()
 			CombatTags::State_Movement_Locked
 		);
 
+	const bool bIsUsingItem =
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Action_UsingItem
+		);
 	// =========================
 	// Speed
 	// =========================
 	if (bIsGuarding)
 	{
 		MovementComponent->MaxWalkSpeed = GuardWalkSpeed;
+	}
+	else if (bIsUsingItem)
+	{
+		MovementComponent->MaxWalkSpeed = 
+			NormalWalkSpeed * ItemUseComponent->GetCurrentMoveSpeedMultiplier();
 	}
 	else if (bIsSprinting)
 	{
