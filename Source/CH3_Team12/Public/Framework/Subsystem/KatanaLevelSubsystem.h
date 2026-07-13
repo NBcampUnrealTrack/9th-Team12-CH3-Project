@@ -17,6 +17,8 @@ class CH3_TEAM12_API UKatanaLevelSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
+	static UKatanaLevelSubsystem* Get(const UObject* WorldContextObject);
+
 	UPROPERTY(BlueprintAssignable)
 	FOnLoadingProgress OnLoadingProgressUpdated;
 

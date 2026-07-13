@@ -17,7 +17,7 @@
 #include "Entity/Player/PlayerInventoryComponent.h"
 #include "Entity/Player/PlayerWeaponComponent.h"
 #include "Entity/Player/PlayerDefenseComponent.h"
-#include "Entity/Player/PlayerAttackComponent.h"
+#include "Entity/Player/PlayerDebugOverlayComponent.h"
 
 // Sets default values
 APlayerCharacterBase::APlayerCharacterBase()
@@ -46,6 +46,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	EquipmentComponent = CreateDefaultSubobject<UPlayerEquipmentComponent>(TEXT("EquipmentComponent"));
 	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
 	DefenseComponent = CreateDefaultSubobject<UPlayerDefenseComponent>(TEXT("DefenseComponent"));
+	DebugOverlayComponent = CreateDefaultSubobject<UPlayerDebugOverlayComponent>(TEXT("DebugOverlayComponent"));
 }
 
 UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
@@ -86,6 +87,11 @@ UPlayerDefenseComponent* APlayerCharacterBase::GetDefenseComponent() const
 UPlayerAttackComponent* APlayerCharacterBase::GetAttackComponent() const
 {
 	return AttackComponent;
+}
+
+UPlayerDebugOverlayComponent* APlayerCharacterBase::GetDebugOverlayComponent() const
+{
+	return DebugOverlayComponent;
 }
 
 UPlayerCameraComponent* APlayerCharacterBase::GetPlayerCameraComponent() const
@@ -150,12 +156,9 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 	if (UInputAction* DodgeAction = PlayerControllerBase->GetDodgeAction())
 	{
-		EnhancedInputComponent->BindAction(
-			DodgeAction,
-			ETriggerEvent::Started,
-			LocomotionComponent.Get(),
-			&UPlayerLocomotionComponent::Dodge
-		);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnDodgeSprintPressed);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnDodgeSprintReleased);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Canceled, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnDodgeSprintReleased);
 	}
 	
 	// Combat
