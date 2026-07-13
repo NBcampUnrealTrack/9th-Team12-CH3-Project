@@ -10,6 +10,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
@@ -129,10 +130,12 @@ const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType
 	{
 	case EAttackType::Light:
 		return &Data->LightAttack;
-
 	case EAttackType::Heavy:
 		return &Data->HeavyAttack;
-
+	case EAttackType::Jump:
+		return &Data->JumpAttack;
+	case EAttackType::Dodge:
+		return &Data->DodgeAttack;
 	default:
 		return nullptr;
 	}
@@ -140,6 +143,11 @@ const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType
 
 void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 {
+	if (!CanAttack())
+	{
+		return;
+	}
+	
 	if (IsAttacking())
 	{
 		if (!CanContinueCombo())
@@ -158,14 +166,26 @@ void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 
 		return;
 	}
-
-	if (!CanAttack())
+	
+	const FAttackDefinition* AttackData = nullptr;
+	
+	if (OwnerCharacter->GetCharacterMovement()->IsFalling())
 	{
-		return;
+		AttackData = GetAttackDataByType(EAttackType::Jump);
 	}
-
-	StartAttack(
-		GetAttackDataByType(EAttackType::Light));
+	else if (bCanDodgeAttack)
+	{
+		AttackData = GetAttackDataByType(EAttackType::Dodge);
+	}
+	else
+	{
+		AttackData = GetAttackDataByType(EAttackType::Light);
+	}
+	
+	if (AttackData)
+	{
+		StartAttack(AttackData);
+	}
 }
 
 void UPlayerAttackComponent::HeavyAttack(const FInputActionValue& Value)
@@ -178,7 +198,6 @@ void UPlayerAttackComponent::HeavyAttack(const FInputActionValue& Value)
 	StartAttack(
 		GetAttackDataByType(EAttackType::Heavy));
 }
-
 
 void UPlayerAttackComponent::CancelAttackForDodge()
 {
@@ -346,7 +365,8 @@ void UPlayerAttackComponent::EndAttack()
 	bComboWindow = false;
 	bComboBuffered = false;
 	bDodgeCancelWindowOpen = false;
-
+	bCanDodgeAttack = false;
+	
 	if (StateComponent)
 	{
 		StateComponent->RemoveStateTag(
@@ -363,6 +383,11 @@ void UPlayerAttackComponent::EndAttack()
 			LocomotionComponent->RefreshMovementSettings();
 		}
 	}
+}
+
+void UPlayerAttackComponent::CanDodgeAttack()
+{
+	bCanDodgeAttack = true;
 }
 
 void UPlayerAttackComponent::OpenComboWindow()

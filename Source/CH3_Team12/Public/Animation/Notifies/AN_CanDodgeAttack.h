@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
-#include "AN_DeadFinal.generated.h"
+#include "AN_CanDodgeAttack.generated.h"
 
-UCLASS(meta=(DisplayName="Death Final"))
-class CH3_TEAM12_API UAN_DeadFinal : public UAnimNotify
+UCLASS()
+class CH3_TEAM12_API UAN_CanDodgeAttack : public UAnimNotify
 {
 	GENERATED_BODY()
 	

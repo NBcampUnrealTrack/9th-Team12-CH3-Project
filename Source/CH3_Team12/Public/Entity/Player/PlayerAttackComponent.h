@@ -30,11 +30,12 @@ public:
 	// Input
 	void Attack(const FInputActionValue& Value);
 	void HeavyAttack(const FInputActionValue& Value);
-
+	
 	// Notify / NotifyState
 	void OpenComboWindow();
 	void OpenAttackRecovery();
 	void EndAttack();
+	void CanDodgeAttack();
 	
 	const FAttackHitData* GetCurrentHit(int32 HitIndex) const;
 	bool CanDodgeCancel() const
@@ -96,5 +97,5 @@ private:
 	bool bComboBuffered = false;
 	
 	bool bDodgeCancelWindowOpen = false;
-
+	bool bCanDodgeAttack = false;
 };
