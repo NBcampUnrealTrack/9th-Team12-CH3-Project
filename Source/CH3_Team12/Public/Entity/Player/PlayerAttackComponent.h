@@ -50,7 +50,7 @@ public:
 	void CancelAttackForDeath();
 private:
 	// Attack
-	bool CanAttack() const;
+	bool CanStartAttack() const;
 	bool IsAttacking() const;
 	bool CanContinueCombo() const;
 	void StartAttack(const FAttackDefinition* AttackInfo);

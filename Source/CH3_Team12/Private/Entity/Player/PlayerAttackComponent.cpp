@@ -149,11 +149,6 @@ const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType
 
 void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 {
-	if (!CanAttack())
-	{
-		return;
-	}
-	
 	if (IsAttacking())
 	{
 		if (!CanContinueCombo())
@@ -172,7 +167,12 @@ void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 
 		return;
 	}
-	
+
+	if (!CanStartAttack())
+	{
+		return;
+	}
+
 	const FAttackDefinition* AttackData = nullptr;
 	
 	if (OwnerCharacter->GetCharacterMovement()->IsFalling())
@@ -196,7 +196,7 @@ void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 
 void UPlayerAttackComponent::HeavyAttack(const FInputActionValue& Value)
 {
-	if (!CanAttack())
+	if (!CanStartAttack())
 	{
 		return;
 	}
@@ -247,7 +247,7 @@ void UPlayerAttackComponent::CancelAttackForMovement()
 	CancelAttackInternal();
 }
 
-bool UPlayerAttackComponent::CanAttack() const
+bool UPlayerAttackComponent::CanStartAttack() const
 {
 	if (!OwnerCharacter || !StateComponent)
 	{
@@ -370,6 +370,7 @@ void UPlayerAttackComponent::EndAttack()
 	bComboWindow = false;
 	bComboBuffered = false;
 	bDodgeCancelWindowOpen = false;
+	bMoveCancelWindowOpen = false;
 	bCanDodgeAttack = false;
 	
 	if (StateComponent)
