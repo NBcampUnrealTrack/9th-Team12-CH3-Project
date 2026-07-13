@@ -45,7 +45,8 @@ public:
 	
 	void OnDodgeSprintPressed(const FInputActionValue& Value);
 	void OnDodgeSprintReleased(const FInputActionValue& Value);
-	
+	FRotator GetLockOnDodgeBaseRotation() const;
+
 	// Getter
 	FORCEINLINE float GetNormalWalkSpeed() const { return NormalWalkSpeed; }
 	FORCEINLINE float GetSprintSpeed() const { return SprintSpeed; }
