@@ -18,6 +18,9 @@ public:
 	}
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
+	TObjectPtr<UAnimMontage> UseMontage;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	FText ItemName;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")

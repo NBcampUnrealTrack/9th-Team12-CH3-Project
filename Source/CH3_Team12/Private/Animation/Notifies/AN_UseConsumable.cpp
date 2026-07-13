@@ -21,8 +21,7 @@ void UAN_UseConsumable::Notify(
 		return;
 	}
 
-	if (UPlayerItemUseComponent* ItemUse =
-		Character->FindComponentByClass<UPlayerItemUseComponent>())
+	if (UPlayerItemUseComponent* ItemUse = Character->GetItemUseComponent())
 	{
 		ItemUse->AnimNotify_UseConsumable();
 	}

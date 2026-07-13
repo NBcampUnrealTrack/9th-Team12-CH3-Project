@@ -48,8 +48,4 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
-
-	// 포션 사용 모션
-	UPROPERTY(EditDefaultsOnly)
-	TObjectPtr<UAnimMontage> UseConsumableMontage;
 };

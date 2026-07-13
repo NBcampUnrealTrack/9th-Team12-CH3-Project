@@ -5,6 +5,7 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Engine/Player.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 #include "Entity/Player/PlayerControllerBase.h"
@@ -18,6 +19,7 @@
 #include "Entity/Player/PlayerWeaponComponent.h"
 #include "Entity/Player/PlayerDefenseComponent.h"
 #include "Entity/Player/PlayerDebugOverlayComponent.h"
+#include "Entity/Player/PlayerItemUseComponent.h"
 
 // Sets default values
 APlayerCharacterBase::APlayerCharacterBase()
@@ -47,6 +49,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
 	DefenseComponent = CreateDefaultSubobject<UPlayerDefenseComponent>(TEXT("DefenseComponent"));
 	DebugOverlayComponent = CreateDefaultSubobject<UPlayerDebugOverlayComponent>(TEXT("DebugOverlayComponent"));
+	ItemUseComponent = CreateDefaultSubobject<UPlayerItemUseComponent>(TEXT("ItemUseComponent"));
 }
 
 UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
@@ -67,6 +70,11 @@ UPlayerAttributeComponent* APlayerCharacterBase::GetAttributeComponent() const
 UPlayerInventoryComponent* APlayerCharacterBase::GetInventoryComponent() const
 {
 	return InventoryComponent;
+}
+
+UPlayerItemUseComponent* APlayerCharacterBase::GetItemUseComponent() const
+{
+	return ItemUseComponent;
 }
 
 UPlayerEquipmentComponent* APlayerCharacterBase::GetEquipmentComponent() const
@@ -204,10 +212,10 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, EquipmentComponent.Get(), &UPlayerEquipmentComponent::ToggleWeaponInput);
 	}
 	
-	// if (UInputAction* UseItemAction = PlayerControllerBase->GetUseItemAction())
-	// {
-	// 	EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Started, InventoryComponent.Get(), &UPlayerInventoryComponent::);
-	// }
+	if (UInputAction* UseItemAction = PlayerControllerBase->GetUseItemAction())
+	{
+		EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Started, ItemUseComponent.Get(), &UPlayerItemUseComponent::UseConsumableInput);
+	}
 }
 
 void APlayerCharacterBase::AttackAnimationEnd()
