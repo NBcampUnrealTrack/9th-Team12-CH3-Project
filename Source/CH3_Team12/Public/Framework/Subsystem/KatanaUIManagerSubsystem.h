@@ -7,6 +7,9 @@
 #include "UObject/ScriptInterface.h"
 #include "KatanaUIManagerSubsystem.generated.h"
 
+class UEnemyAttributeComponent;
+class UInventoryWidget;
+class USoundSettingsWidget;
 class UKatanaSoundManagerSubsystem;
 class UKatanaLevelSubsystem;
 class UPlayerAttributeComponent;
@@ -22,25 +25,47 @@ class CH3_TEAM12_API UKatanaUIManagerSubsystem : public ULocalPlayerSubsystem
 	GENERATED_BODY()
 
 public:
+	static UKatanaUIManagerSubsystem* Get(const UObject* WorldContextObject);
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 	void ShowMainMenuWidget();
 	void HideMainMenuWidget();
 
-	void ShowSettingsWidget(UKatanaSoundManagerSubsystem* InSubsystem);
-	void HideSettingsWidget();
+	void ShowMainMenuSettingsWidget();
+	void HideMainMenuSettingsWidget();
 
-	void ShowLoadingWidget(UKatanaLevelSubsystem* InSubsystem);
+	void ShowInGameMenuWidget();
+	void HideInGameMenuWidget();
+	bool HasInGameMenuWidget() const;
+
+	void ShowLoadingWidget();
 	void HideLoadingWidget();
 
 	void ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent);
 	void HidePlayerWidget();
 
+	void ShowEnemyWidget(const FString& InName, UEnemyAttributeComponent* InAttributeComponent);
+	void HideEnemyWidget();
+
+	void RegisterInventoryWidget(UInventoryWidget* InWidget);
+	void UnregisterInventoryWidget(UInventoryWidget* InWidget);
+
+	void RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
+	void UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
+
 private:
 	const FName MainMenuWidgetName = FName("MainMenuWidget");
-	const FName SettingsWidgetName = FName("SettingsWidget");
+	const FName MainMenuSettingsWidgetName = FName("MainMenuSettingsWidget");
+	const FName InGameMenuWidgetName = FName("InGameMenuWidget");
+
 	const FName LoadingWidgetName = FName("LoadingWidget");
+
 	const FName PlayerWidgetName = FName("PlayerWidget");
+	const FName EnemyWidgetName = FName("EnemyWidget");
+
+	const FName InventoryWidgetName = FName("InventoryWidget");
+	const FName SoundSettingsWidgetName = FName("SoundSettingsWidget");
 
 	UPROPERTY()
 	TSoftObjectPtr<UUIDataAsset> UIDataAsset = nullptr;

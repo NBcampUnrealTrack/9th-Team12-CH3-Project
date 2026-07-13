@@ -4,6 +4,9 @@
 #include "Entity/Player/PlayerControllerBase.h"
 #include "KatanaPlayerController.generated.h"
 
+class AEnemyCharacterBase;
+class APlayerCharacterBase;
+struct FInputActionValue;
 class UPlayerAttributeComponent;
 /**
  *
@@ -13,16 +16,23 @@ class CH3_TEAM12_API AKatanaPlayerController : public APlayerControllerBase
 {
 	GENERATED_BODY()
 
+public:
+	APlayerCharacterBase* GetPlayerCharacter() const;
+
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UInputMappingContext> InputMappingContextUI = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UInputAction> InGameMenuActon = nullptr;
+
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
+	virtual void SetupInputComponent() override;
 
-// public:
-// 	virtual void Tick(float DeltaSeconds) override;
-//
-// private:
-// 	float Time = 0.0f;
-// 	float SetTime = 5.0f;
-//
-// 	UPlayerAttributeComponent* AttributeComponentTest = nullptr;
+private:
+	UPROPERTY()
+	TWeakObjectPtr<APlayerCharacterBase> PlayerCharacterBase;
+
+	AEnemyCharacterBase* FindEnemyCharacter() const;
+	void ToggleInGameMenu(const FInputActionValue& Value);
 };
