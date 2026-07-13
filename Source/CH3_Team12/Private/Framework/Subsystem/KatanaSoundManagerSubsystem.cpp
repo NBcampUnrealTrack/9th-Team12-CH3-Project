@@ -5,32 +5,10 @@
 #include "Sound/SoundBase.h"
 #include "AudioModulationStatics.h"
 #include "SoundControlBus.h"
-#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Framework/AudioSaveGame.h"
 #include "Framework/KatanaSystemSettings.h"
 #include "Framework/DataAsset/SoundDataAsset.h"
-
-UKatanaSoundManagerSubsystem* UKatanaSoundManagerSubsystem::Get(const UObject* WorldContextObject)
-{
-	if (!WorldContextObject) return nullptr;
-
-	const UWorld* World = WorldContextObject->GetWorld();
-	if (!World)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UKatanaSoundManagerSubsystem: World is null"));
-		return nullptr;
-	}
-
-	const UGameInstance* GameInstance = World->GetGameInstance();
-	if (!GameInstance)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UKatanaSoundManagerSubsystem: GameInstance is null"));
-		return nullptr;
-	}
-
-	return  GameInstance->GetSubsystem<UKatanaSoundManagerSubsystem>();
-}
 
 void UKatanaSoundManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -50,40 +28,14 @@ void UKatanaSoundManagerSubsystem::Initialize(FSubsystemCollectionBase& Collecti
 		return;
 	}
 
-	if (!CachedSoundDataAsset->MasterControlBus.IsNull())
-	{
-		USoundControlBus* MasterControlBus = CachedSoundDataAsset->MasterControlBus.LoadSynchronous();
-		if (!MasterControlBus)
-		{
-			UE_LOG(LogTemp, Error, TEXT("UKatanaSoundManagerSubsystem : MasterControlBus is null"));
-		}
+	if (CachedSoundDataAsset->MasterControlBus.IsValid())
+		ControlBusMap.Add(EAudioType::Master, CachedSoundDataAsset->MasterControlBus.Get());
 
-		ControlBusMap.Add(EAudioType::Master, MasterControlBus);
-	}
+	if (CachedSoundDataAsset->BGMControlBus.IsValid())
+		ControlBusMap.Add(EAudioType::BGM, CachedSoundDataAsset->BGMControlBus.Get());
 
-	if (!CachedSoundDataAsset->BGMControlBus.IsNull())
-	{
-		USoundControlBus* BGMControlBus = CachedSoundDataAsset->BGMControlBus.LoadSynchronous();
-		if (!BGMControlBus)
-		{
-			UE_LOG(LogTemp, Error, TEXT("UKatanaSoundManagerSubsystem : BGMControlBus is null"));
-		}
-
-		ControlBusMap.Add(EAudioType::BGM, BGMControlBus);
-	}
-
-	if (!CachedSoundDataAsset->SFXControlBus.IsNull())
-	{
-		USoundControlBus* SFXControlBus = CachedSoundDataAsset->SFXControlBus.LoadSynchronous();
-		if (!SFXControlBus)
-		{
-			UE_LOG(LogTemp, Error, TEXT("UKatanaSoundManagerSubsystem : SFXControlBus is null"));
-		}
-
-		ControlBusMap.Add(EAudioType::SFX, SFXControlBus);
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("ControlBusMap: %d"), ControlBusMap.Num());
+	if (CachedSoundDataAsset->SFXControlBus.IsValid())
+		ControlBusMap.Add(EAudioType::SFX, CachedSoundDataAsset->SFXControlBus.Get());
 
 	LoadAudioSettings();
 }
@@ -157,44 +109,18 @@ UAudioComponent* UKatanaSoundManagerSubsystem::PlaySound3DAtLocation(EAudioType 
 	return AudioComp;
 }
 
-float UKatanaSoundManagerSubsystem::GetVolume(const EAudioType AudioType)
-{
-	TObjectPtr<UAudioSaveGame> LoadGameInstance = Cast<UAudioSaveGame>(
-		UGameplayStatics::LoadGameFromSlot(SlotName, 0));
-
-	if (!LoadGameInstance)
-	{
-		LoadGameInstance = Cast<UAudioSaveGame>(UGameplayStatics::CreateSaveGameObject(UAudioSaveGame::StaticClass()));
-	}
-
-	switch (AudioType)
-	{
-	case EAudioType::Master:
-		return LoadGameInstance->MasterVolume;
-	case EAudioType::BGM:
-		return LoadGameInstance->BGMVolume;
-	case EAudioType::SFX:
-		return LoadGameInstance->SFXVolume;
-	default:
-		return 0;
-	}
-}
-
 void UKatanaSoundManagerSubsystem::SetVolume(const EAudioType AudioType, const float NewVolume)
 {
-	UE_LOG(LogTemp, Warning, TEXT("SetVolume: AudioType: %d, NewVolume: %f"), static_cast<int32>(AudioType), NewVolume);
-
 	if (!ControlBusMap.Contains(AudioType)) return;
 
 	UAudioModulationStatics::SetGlobalBusMixValue(GetWorld(), ControlBusMap[AudioType].Get(), NewVolume, 0.0f);
 
 	TObjectPtr<UAudioSaveGame> SaveGameInstance = Cast<UAudioSaveGame>(
-		UGameplayStatics::LoadGameFromSlot(SlotName, 0));
+		UGameplayStatics::LoadGameFromSlot(TEXT("AudioSettingsSlot_Modulation"), 0));
 
 	if (!SaveGameInstance)
 	{
 		SaveGameInstance = Cast<UAudioSaveGame>(UGameplayStatics::CreateSaveGameObject(UAudioSaveGame::StaticClass()));
-		UE_LOG(LogTemp, Warning, TEXT("CreateGameInstance: %s"), *SaveGameInstance->GetName());
 	}
 
 	if (SaveGameInstance)
@@ -203,15 +129,14 @@ void UKatanaSoundManagerSubsystem::SetVolume(const EAudioType AudioType, const f
 		else if (AudioType == EAudioType::BGM) SaveGameInstance->BGMVolume = NewVolume;
 		else if (AudioType == EAudioType::SFX) SaveGameInstance->SFXVolume = NewVolume;
 
-		UE_LOG(LogTemp, Warning, TEXT("SaveGameInstance: %s"), *SaveGameInstance->GetName());
-		UGameplayStatics::SaveGameToSlot(SaveGameInstance, SlotName, 0);
+		UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->SaveSlotName, SaveGameInstance->UserIndex);
 	}
 }
 
 void UKatanaSoundManagerSubsystem::LoadAudioSettings()
 {
 	TObjectPtr<UAudioSaveGame> LoadGameInstance = Cast<UAudioSaveGame>(
-		UGameplayStatics::LoadGameFromSlot(SlotName, 0));
+		UGameplayStatics::LoadGameFromSlot(TEXT("AudioSettingsSlot_Modulation"), 0));
 
 	if (!LoadGameInstance)
 	{

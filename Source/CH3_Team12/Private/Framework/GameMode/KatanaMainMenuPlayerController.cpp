@@ -11,7 +11,7 @@ void AKatanaMainMenuPlayerController::BeginPlay()
 	const FInputModeUIOnly InputMode;
 	SetInputMode(InputMode);
 
-	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
+	UKatanaUIManagerSubsystem* UIManager = GetLocalPlayer()->GetSubsystem<UKatanaUIManagerSubsystem>();
 	if (!UIManager)
 		return;
 

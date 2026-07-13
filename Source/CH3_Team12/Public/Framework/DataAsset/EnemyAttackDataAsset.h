@@ -24,18 +24,6 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FEnemyAttackMontageSet
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> AttackMontage;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack | Montage")
-	TObjectPtr<UAnimMontage> ParriedMontage;
-};
-
-USTRUCT(BlueprintType)
 struct FAttackAnimationData
 {
 	GENERATED_BODY()
@@ -54,9 +42,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack")
 	FAttackInfo AttackInfo;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack|Animation")
-	FEnemyAttackMontageSet AttackMontageSet;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack | Montage")
+	TObjectPtr<UAnimMontage> Montage;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack|Hitbox")
 	TArray<FHitBoxData> HitBoxes;

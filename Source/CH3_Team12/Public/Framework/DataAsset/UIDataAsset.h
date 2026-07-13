@@ -13,9 +13,6 @@ struct FUIWidgetInfo
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FName WidgetName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<UUserWidget> WidgetClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -31,14 +28,6 @@ class CH3_TEAM12_API UUIDataAsset : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
-	TMap<FName, FUIWidgetInfo> WidgetInfoMap;
-
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-
-protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TArray<FUIWidgetInfo> WidgetInfoList;
+	TMap<FName, FUIWidgetInfo> WidgetInfoMap;
 };

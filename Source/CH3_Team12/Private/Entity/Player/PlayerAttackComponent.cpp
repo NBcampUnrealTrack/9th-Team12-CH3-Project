@@ -60,7 +60,8 @@ void UPlayerAttackComponent::BeginPlay()
 
 void UPlayerAttackComponent::OnAttackMontageEnded(
 	UAnimMontage* Montage,
-	bool bInterrupted)
+	bool bInterrupted
+)
 {
 	if (Montage != CurrentAttackMontage)
 	{
@@ -77,16 +78,13 @@ void UPlayerAttackComponent::OpenAttackRecovery()
 		return;
 	}
 
-	if (!StateComponent->HasStateTagExact(
-		CombatTags::State_Combat_Attacking))
+	if (!StateComponent->HasStateTagExact(CombatTags::State_Combat_Attacking))
 	{
 		return;
 	}
 
 	// 공격 상태는 유지.
-	// 단, 이 시점부터 Dodge Cancel 가능.
-	bDodgeCancelWindowOpen = true;
-
+	// 이동 잠금만 해제.
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Movement_Locked
 	);
@@ -177,50 +175,6 @@ void UPlayerAttackComponent::HeavyAttack(const FInputActionValue& Value)
 
 	StartAttack(
 		GetAttackDataByType(EAttackType::Heavy));
-}
-
-
-void UPlayerAttackComponent::CancelAttackForDodge()
-{
-	if (!OwnerCharacter || !StateComponent)
-	{
-		return;
-	}
-
-	bDodgeCancelWindowOpen = false;
-	bComboWindow = false;
-	bComboBuffered = false;
-	ComboIndex = 0;
-
-	if (WeaponComponent)
-	{
-		WeaponComponent->EndWeaponHitCheck();
-	}
-
-	UAnimMontage* MontageToStop = CurrentAttackMontage;
-	CurrentAttackMontage = nullptr;
-
-	StateComponent->RemoveStateTag(
-		CombatTags::State_Combat_Attacking
-	);
-
-	StateComponent->RemoveStateTag(
-		CombatTags::State_Movement_Locked
-	);
-
-	if (MontageToStop)
-	{
-		if (USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh())
-		{
-			if (UAnimInstance* AnimInstance = Mesh->GetAnimInstance())
-			{
-				AnimInstance->Montage_Stop(
-					0.05f,
-					MontageToStop
-				);
-			}
-		}
-	}
 }
 
 bool UPlayerAttackComponent::CanAttack() const
@@ -345,7 +299,6 @@ void UPlayerAttackComponent::EndAttack()
 	
 	bComboWindow = false;
 	bComboBuffered = false;
-	bDodgeCancelWindowOpen = false;
 
 	if (StateComponent)
 	{

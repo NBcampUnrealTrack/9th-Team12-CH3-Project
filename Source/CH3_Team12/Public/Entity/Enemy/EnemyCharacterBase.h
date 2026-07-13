@@ -7,7 +7,6 @@
 #include "Interface/AnimationAttackInterface.h"
 #include "EnemyCharacterBase.generated.h"
 
-class UAnimMontage;
 class UStateTagComponent;
 class UEnemyAttackComponent;
 class UBehaviorTree;
@@ -45,27 +44,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UEnemyAttributeComponent> AttributeComponent;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
-	TObjectPtr<UAnimMontage> HitMontage;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
-	TObjectPtr<UAnimMontage> DeadMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
-	float DestroyTime = 10.0f;
-	
-protected:
-	UFUNCTION()
-	void OnDeath();
-	
-	void PlayDeathMontage();
-	void SetEnemyDestroyTimer();
-	
-	virtual void DestroyEnemy();
-	
 public:
-	bool IsCommonState();
-	
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 
 	UFUNCTION(BlueprintCallable)

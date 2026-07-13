@@ -7,27 +7,6 @@
 #include "Framework/DataAsset/LevelDataAsset.h"
 #include "Kismet/GameplayStatics.h"
 
-UKatanaLevelSubsystem* UKatanaLevelSubsystem::Get(const UObject* WorldContextObject)
-{
-	if (!WorldContextObject) return nullptr;
-
-	const UWorld* World = WorldContextObject->GetWorld();
-	if (!World)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem: World is null"));
-		return nullptr;
-	}
-
-	const UGameInstance* GameInstance = World->GetGameInstance();
-	if (!GameInstance)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem: GameInstance is null"));
-		return nullptr;
-	}
-
-	return  GameInstance->GetSubsystem<UKatanaLevelSubsystem>();
-}
-
 void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName)
 {
 	const UKatanaSystemSettings* SystemSettings = GetDefault<UKatanaSystemSettings>();

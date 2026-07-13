@@ -15,10 +15,18 @@ class CH3_TEAM12_API UAudioSaveGame : public USaveGame
 public:
 	UAudioSaveGame()
 	{
+		SaveSlotName = TEXT("AudioSettingsSlot_Modulation");
+		UserIndex = 0;
 		MasterVolume = 1.0f;
 		BGMVolume = 0.8f;
 		SFXVolume = 0.8f;
 	}
+
+	UPROPERTY()
+	FString SaveSlotName;
+
+	UPROPERTY()
+	int32 UserIndex;
 
 	// 사운드 분류별 볼륨 값 (0.0 ~ 1.0)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")

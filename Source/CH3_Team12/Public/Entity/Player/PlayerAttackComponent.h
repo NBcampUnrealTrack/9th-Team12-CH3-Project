@@ -88,7 +88,4 @@ private:
 
 	/** 다음 콤보 입력 버퍼 */
 	bool bComboBuffered = false;
-	
-	bool bDodgeCancelWindowOpen = false;
-
 };
