@@ -247,6 +247,21 @@ void UPlayerAttackComponent::CancelAttackForMovement()
 	CancelAttackInternal();
 }
 
+void UPlayerAttackComponent::CancelAttackForHit()
+{
+	CancelAttackInternal();
+}
+
+void UPlayerAttackComponent::CancelAttackForDeath()
+{
+	CancelAttackInternal();
+}
+
+void UPlayerAttackComponent::CancelAttackForPostureBreak()
+{
+	CancelAttackInternal();
+}
+
 bool UPlayerAttackComponent::CanStartAttack() const
 {
 	if (!OwnerCharacter || !StateComponent)

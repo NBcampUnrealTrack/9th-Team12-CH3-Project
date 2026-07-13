@@ -176,4 +176,14 @@ private:
 	
 public:
 	void FinalizeDead();
+	
+	// Posture
+	UFUNCTION()
+	void HandleOwnerPostureBroken();
+
+	UFUNCTION()
+	void HandleOwnerPostureRecovered();
+
+	void PlayPostureBrokenMontage();
+	void ClearCombatStatesForPostureBreak();
 };

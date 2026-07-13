@@ -48,6 +48,8 @@ public:
 	void CancelAttackForMovement();
 	void CancelAttackForHit();
 	void CancelAttackForDeath();
+	void CancelAttackForPostureBreak();
+
 private:
 	// Attack
 	bool CanStartAttack() const;

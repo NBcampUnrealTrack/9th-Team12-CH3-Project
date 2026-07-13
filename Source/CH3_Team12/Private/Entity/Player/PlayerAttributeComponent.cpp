@@ -57,6 +57,13 @@ void UPlayerAttributeComponent::TickComponent(
 
 void UPlayerAttributeComponent::ResetAttributes()
 {
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(
+			PostureBreakTimerHandle
+		);
+	}
+
 	bIsDead = false;
 	bIsPostureBroken = false;
 
@@ -69,15 +76,8 @@ void UPlayerAttributeComponent::ResetAttributes()
 		StateComponent->RemoveStateTag(CombatTags::State_Hit_PostureBroken);
 	}
 
-	OnHealthChanged.Broadcast(
-		CurrentHealth,
-		MaxHealth
-	);
-
-	OnPostureChanged.Broadcast(
-		CurrentPosture,
-		MaxPosture
-	);
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+	OnPostureChanged.Broadcast(CurrentPosture, MaxPosture);
 }
 
 void UPlayerAttributeComponent::ApplyAttributeDamage(

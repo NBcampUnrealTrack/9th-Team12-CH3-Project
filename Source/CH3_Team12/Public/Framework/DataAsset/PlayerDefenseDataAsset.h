@@ -45,6 +45,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Dead")
 	TObjectPtr<UAnimMontage> DeadMontage;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Dead")
+	TObjectPtr<UAnimMontage> PostureBrokenMontage;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Guard")
 	float GuardMontageBlendOutTime = 0.1f;
 
@@ -59,6 +62,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Dead")
 	bool bFreezePoseAfterDead = true;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Dead")
+	float PostureBrokenMontagePlayRate = 1.0f;
 	
 	UAnimMontage* GetParryReactionMontage(
 		EHitReactionDirection ReactionDirection
