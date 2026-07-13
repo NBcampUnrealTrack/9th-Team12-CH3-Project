@@ -58,6 +58,9 @@ private:
 	void UpdateHealthBar(float CurrentHealth, float MaxHealth, bool bImmediately = false);
 
 	UFUNCTION()
+	void HandleInventoryItemClicked(const FText& ItemName);
+
+	UFUNCTION()
 	UPlayerAttributeComponent* GetPlayerAttributeComponent() const;
 
 	UFUNCTION()

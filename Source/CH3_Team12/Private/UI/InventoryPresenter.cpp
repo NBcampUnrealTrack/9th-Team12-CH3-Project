@@ -49,6 +49,8 @@ void UInventoryPresenter::Initialize(UInventoryWidget* InWidget)
 
 			auto [Name, Icon, Count, MaxCount, Description] = InventoryItemData.Value;
 			Widget->UpdateData(Name, Icon, Count);
+
+			Widget->OnTextButtonClicked.BindDynamic(this, &UInventoryPresenter::HandleInventoryItemClicked);
 		}
 	}
 
@@ -83,6 +85,16 @@ void UInventoryPresenter::UpdateHealthBar(const float CurrentHealth, const float
 		const float Percent = CurrentHealth / MaxHealth;
 		InventoryWidget->UpdateHealthBar(Percent, bImmediately);
 	}
+}
+
+void UInventoryPresenter::HandleInventoryItemClicked(const FText& ItemName)
+{
+	const FName ItemNameName = FName(ItemName.ToString());
+	if (!InventoryItemDataMap.Contains(ItemNameName))
+		return;
+
+	auto [Name, Icon, Count, MaxCount, Description] = InventoryItemDataMap[ItemNameName];
+	InventoryWidget->UpdateDetailWidget(Name, Icon, Count, MaxCount, Description);
 }
 
 UPlayerAttributeComponent* UInventoryPresenter::GetPlayerAttributeComponent() const
