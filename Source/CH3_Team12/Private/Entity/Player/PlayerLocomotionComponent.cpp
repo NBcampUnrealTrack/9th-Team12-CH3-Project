@@ -501,6 +501,48 @@ void UPlayerLocomotionComponent::TryStartSprintAfterDodge()
 	}
 }
 
+void UPlayerLocomotionComponent::BufferDodgeInput()
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	bBufferedDodgeInput = true;
+	BufferedDodgeInputTime = GetWorld()->GetTimeSeconds();
+}
+
+bool UPlayerLocomotionComponent::HasValidBufferedDodgeInput() const
+{
+	if (!bBufferedDodgeInput || !GetWorld())
+	{
+		return false;
+	}
+
+	const float Now = GetWorld()->GetTimeSeconds();
+
+	return Now - BufferedDodgeInputTime <= DodgeInputBufferDuration;
+}
+
+void UPlayerLocomotionComponent::ClearBufferedDodgeInput()
+{
+	bBufferedDodgeInput = false;
+	BufferedDodgeInputTime = 0.0f;
+}
+
+bool UPlayerLocomotionComponent::TryConsumeBufferedDodge()
+{
+	if (!HasValidBufferedDodgeInput())
+	{
+		ClearBufferedDodgeInput();
+		return false;
+	}
+
+	ClearBufferedDodgeInput();
+
+	return TryStartDodge();
+}
+
 void UPlayerLocomotionComponent::DoStartJump(const FInputActionValue& value)
 {
 	if (!OwnerCharacter) return;
@@ -520,15 +562,14 @@ void UPlayerLocomotionComponent::DoStopJump(const FInputActionValue& value)
 	OwnerCharacter->StopJumping();
 }
 
-void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
+void UPlayerLocomotionComponent::DoMove(
+	const FInputActionValue& Value)
 {
-	if (!OwnerCharacter || !OwnerCharacter->GetStateTagComponent())
+	if (!OwnerCharacter || !StateComponent)
 	{
 		return;
 	}
 
-	UStateTagComponent* StateComp = OwnerCharacter->GetStateTagComponent();
-	
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (MovementVector.IsNearlyZero())
@@ -537,7 +578,27 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 	}
 
 	LastMovementInput = MovementVector;
-	
+
+	const bool bCanMoveCancelAttack =
+		AttackComponent &&
+		AttackComponent->CanMoveCancel();
+
+	// Dodge 입력이 버퍼에 있으면 Move가 Attack을 먼저 끊지 못하게 한다.
+	if (bCanMoveCancelAttack && HasValidBufferedDodgeInput())
+	{
+		return;
+	}
+
+	if (!CanMove() && !bCanMoveCancelAttack)
+	{
+		return;
+	}
+
+	if (bCanMoveCancelAttack)
+	{
+		AttackComponent->CancelAttackForMovement();
+	}
+
 	if (!CanMove())
 	{
 		return;
@@ -561,8 +622,6 @@ void UPlayerLocomotionComponent::DoMove(const FInputActionValue& Value)
 		RightDirection,
 		MovementVector.Y
 	);
-	
-	// UE_LOG(LogTemp, Warning, TEXT("Move Input Called"));
 }
 
 void UPlayerLocomotionComponent::DoStopMove()
@@ -606,7 +665,17 @@ void UPlayerLocomotionComponent::DoStopSprint()
 void UPlayerLocomotionComponent::Dodge(
 	const FInputActionValue& Value)
 {
-	TryStartDodge();
+	if (TryStartDodge())
+	{
+		return;
+	}
+
+	// 공격 중이면 Dodge 입력을 짧게 저장한다.
+	if (StateComponent &&
+		StateComponent->HasStateTagExact(CombatTags::State_Combat_Attacking))
+	{
+		BufferDodgeInput();
+	}
 }
 
 void UPlayerLocomotionComponent::EndDodge()
@@ -683,24 +752,19 @@ void UPlayerLocomotionComponent::OnDodgeSprintPressed(
 		return;
 	}
 
-	if (StateComponent->HasStateTagExact(
-		CombatTags::State_Hit_Dead))
-	{
-		return;
-	}
-
-	// Dodge 중 새 입력은 무시.
-	// Dodge 중에 누른 Shift가 끝난 뒤 Sprint로 이어지는 걸 막기 위함.
-	if (StateComponent->HasStateTagExact(
-		CombatTags::State_Combat_Dodging))
-	{
-		return;
-	}
-
 	bDodgeSprintHeld = true;
 
-	// 누르자마자 바로 Dodge / Dash
-	bWantsSprintAfterDodge = TryStartDodge();
+	if (TryStartDodge())
+	{
+		bWantsSprintAfterDodge = true;
+		return;
+	}
+
+	if (StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Attacking))
+	{
+		BufferDodgeInput();
+	}
 }
 
 void UPlayerLocomotionComponent::OnDodgeSprintReleased(

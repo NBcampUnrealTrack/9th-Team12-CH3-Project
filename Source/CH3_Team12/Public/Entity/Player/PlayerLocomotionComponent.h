@@ -39,7 +39,7 @@ public:
 	void DoStartSprint();
 	void DoStopSprint();
 
-	void Dodge(const FInputActionValue& Value);
+	void Dodge(const FInputActionValue& Value); // 안씀
 	void EndDodge();
 	void OpenDodgeMove();
 	
@@ -108,4 +108,20 @@ private:
 
 	bool bDodgeSprintHeld = false;
 	bool bWantsSprintAfterDodge = false;
+	
+private:
+	bool bBufferedDodgeInput = false;
+	float BufferedDodgeInputTime = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Dodge|Buffer")
+	float DodgeInputBufferDuration = 0.2f;
+
+private:
+	void BufferDodgeInput();
+	bool HasValidBufferedDodgeInput() const;
+	void ClearBufferedDodgeInput();
+
+public:
+	bool TryConsumeBufferedDodge();
+	
 };
