@@ -21,8 +21,7 @@ void UAN_UnequipWeapon::Notify(
 		return;
 	}
 
-	if (UPlayerEquipmentComponent* Equipment =
-		Character->FindComponentByClass<UPlayerEquipmentComponent>())
+	if (UPlayerEquipmentComponent* Equipment = Character->GetEquipmentComponent())
 	{
 		Equipment->AnimNotify_Unequip();
 	}

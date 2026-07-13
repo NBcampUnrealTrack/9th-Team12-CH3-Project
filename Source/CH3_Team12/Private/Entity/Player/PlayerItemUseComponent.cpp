@@ -21,27 +21,51 @@ void UPlayerItemUseComponent::BeginPlay()
 
 	if (!OwnerCharacter)
 	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerItemUseComponent : OwnerCharacter is nullptr"));
 		return;
 	}
 	
-	Inventory =
-		OwnerCharacter->FindComponentByClass<UPlayerInventoryComponent>();
+	Inventory = OwnerCharacter->GetInventoryComponent();
+	
+	if (!Inventory)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerItemUseComponent : Inventory is nullptr"));
+		return;
+	}
 }
 
 void UPlayerItemUseComponent::UseConsumableInput(
 	const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : Press button"));
+	
 	if (!Inventory)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : Inventory is nullptr"));
+		return;
+	}
+	
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : OwnerCharacter is nullptr"));
 		return;
 	}
 
 	if (!Inventory->GetCurrentConsumable())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : CurrentConsumable is nullptr"));
 		return;
 	}
-
-	OwnerCharacter->PlayAnimMontage(UseConsumableMontage);
+	
+	if (!Inventory->GetCurrentConsumable()->GetItemData())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : ConsumableData is nullptr"));
+		return;
+	}
+	
+	OwnerCharacter->PlayAnimMontage(
+		Inventory->GetCurrentConsumable()->GetItemData()->UseMontage
+		);
 }
 
 void UPlayerItemUseComponent::AnimNotify_UseConsumable()
