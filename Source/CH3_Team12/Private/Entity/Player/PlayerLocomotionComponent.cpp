@@ -260,33 +260,38 @@ void UPlayerLocomotionComponent::StartDodge()
 	{
 		return;
 	}
-	
+
 	if (AttackComponent && AttackComponent->CanDodgeCancel())
 	{
 		AttackComponent->CancelAttackForDodge();
 	}
 
+	const bool bDirectionalDodge = ShouldUseDirectionalDodge();
+
+	if (bDirectionalDodge)
+	{
+		const FRotator DodgeBaseRotation =
+			GetLockOnDodgeBaseRotation();
+
+		OwnerCharacter->SetActorRotation(DodgeBaseRotation);
+	}
+
 	const EDodgeDirection DodgeDirection =
-		ShouldUseDirectionalDodge()
+		bDirectionalDodge
 			? CalculateDodgeDirectionFromInput(LastMovementInput)
 			: EDodgeDirection::Forward;
 
 	const FEvadeMontageData* EvadeData =
 		DodgeData->FindEvadeData(DodgeDirection);
 
-	if (!EvadeData || !EvadeData->Montage)
+	if (!EvadeData || !EvadeData->IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("StartDodge: EvadeData invalid"));
 		return;
 	}
 
-	if (StateComponent->HasStateTagExact(
-		CombatTags::State_Movement_Sprinting))
-	{
-		StateComponent->RemoveStateTag(
-			CombatTags::State_Movement_Sprinting
-		);
-	}
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Sprinting
+	);
 
 	StateComponent->AddStateTag(
 		CombatTags::State_Combat_Dodging
@@ -297,14 +302,6 @@ void UPlayerLocomotionComponent::StartDodge()
 	);
 
 	RefreshMovementSettings();
-
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("Dodge Direction: %s / Directional: %s"),
-		*UEnum::GetValueAsString(DodgeDirection),
-		ShouldUseDirectionalDodge() ? TEXT("true") : TEXT("false")
-	);
 
 	PlayDodgeMontage(*EvadeData);
 }
@@ -784,4 +781,43 @@ void UPlayerLocomotionComponent::OnDodgeSprintReleased(
 	{
 		DoStopSprint();
 	}
+}
+
+FRotator UPlayerLocomotionComponent::GetLockOnDodgeBaseRotation() const
+{
+	if (!OwnerCharacter)
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	AActor* LockOnTarget = nullptr;
+
+	if (UPlayerCameraComponent* CameraComponent =
+		OwnerCharacter->GetPlayerCameraComponent())
+	{
+		LockOnTarget = CameraComponent->GetCurrentLockOnTarget();
+	}
+
+	if (LockOnTarget)
+	{
+		FVector ToTarget =
+			LockOnTarget->GetActorLocation() -
+			OwnerCharacter->GetActorLocation();
+
+		ToTarget.Z = 0.0f;
+
+		if (!ToTarget.IsNearlyZero())
+		{
+			return ToTarget.Rotation();
+		}
+	}
+
+	const FRotator ControlRotation =
+		OwnerCharacter->GetControlRotation();
+
+	return FRotator(
+		0.0f,
+		ControlRotation.Yaw,
+		0.0f
+	);
 }
