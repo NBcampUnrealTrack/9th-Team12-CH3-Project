@@ -26,12 +26,12 @@ void UPlayerInventoryComponent::BeginPlay()
 		{
 			continue;
 		}
-
-		if (Cast<UWeaponDataAsset>(StarterItem.Item))
+		
+		if (Cast<UWeaponDataAsset>(StarterItem.Item) && StarterItem.bAutoEquip)
 		{
 			SetWeaponSlot(Item);
 		}
-		else if (Cast<UConsumableDataAsset>(StarterItem.Item))
+		else if (Cast<UConsumableDataAsset>(StarterItem.Item) && StarterItem.bRegisterConsumable)
 		{
 			SetConsumableSlot(0, Item); // 추후 AddConsumableSlot으로 교체
 		}
@@ -46,7 +46,7 @@ UItemInstance* UPlayerInventoryComponent::AddItem(UItemDataAsset* ItemData, int3
 	{
 		return nullptr;
 	}
-
+	
 	if (!ItemData->bStackable)
 	{
 		UItemInstance* LastCreatedItem = nullptr;
@@ -57,9 +57,13 @@ UItemInstance* UPlayerInventoryComponent::AddItem(UItemDataAsset* ItemData, int3
 			NewItem->Initialize(ItemData, 1);
 
 			Items.Add(NewItem);
+			
+			OnItemAdded.Broadcast(NewItem);
+			
 			LastCreatedItem = NewItem;
 		}
-
+		
+		OnInventoryChanged.Broadcast();
 		return LastCreatedItem;
 	}
 	
@@ -87,11 +91,12 @@ UItemInstance* UPlayerInventoryComponent::AddItem(UItemDataAsset* ItemData, int3
 		const int32 AddAmount = FMath::Min(Space, Remaining);
 
 		Item->AddCount(AddAmount);
-
+		
 		Remaining -= AddAmount;
-
+		
 		if (Remaining <= 0)
 		{
+			OnInventoryChanged.Broadcast();
 			return Item;
 		}
 	}
@@ -107,6 +112,8 @@ UItemInstance* UPlayerInventoryComponent::AddItem(UItemDataAsset* ItemData, int3
 
 		Items.Add(NewItem);
 
+		OnItemAdded.Broadcast(NewItem);
+		
 		if (!FirstNewItem)
 		{
 			FirstNewItem = NewItem;
@@ -114,7 +121,8 @@ UItemInstance* UPlayerInventoryComponent::AddItem(UItemDataAsset* ItemData, int3
 		
 		Remaining -= StackCount;
 	}
-
+	
+	OnInventoryChanged.Broadcast();
 	return FirstNewItem;
 }
 
@@ -136,25 +144,58 @@ bool UPlayerInventoryComponent::RemoveItem(UItemInstance* Item, int32 Count)
 
 		if (WeaponSlot == Item)
 		{
-			WeaponSlot = nullptr;
+			ClearWeaponSlot();
 		}
+		OnItemRemoved.Broadcast(Item);
 		
 		Items.RemoveSingle(Item);
+		
+		OnInventoryChanged.Broadcast();
 	}
-
+	else
+	{
+		OnInventoryChanged.Broadcast();
+	}
+	
 	return true;
 }
 
 void UPlayerInventoryComponent::RemoveItemFromConsumableSlots(
 	UItemInstance* Item)
 {
-	for (TObjectPtr<UItemInstance>& Slot : ConsumableSlots)
+	for (int32 i = 0; i < ConsumableSlots.Num(); ++i)
 	{
-		if (Slot == Item)
+		if (ConsumableSlots[i] == Item)
 		{
-			Slot = nullptr;
+			ConsumableSlots[i] = nullptr;
+			OnConsumableSlotChanged.Broadcast(i, nullptr);
 		}
 	}
+}
+
+int32 UPlayerInventoryComponent::GetItemCount(const UItemDataAsset* ItemData) const
+{
+	int32 Count = 0;
+
+	for (UItemInstance* Item : Items)
+	{
+		if (Item->GetItemData() == ItemData)
+		{
+			Count += Item->GetCount();
+		}
+	}
+
+	return Count;
+}
+
+UItemInstance* UPlayerInventoryComponent::GetConsumableSlot(int32 Index) const
+{
+	if (!ConsumableSlots.IsValidIndex(Index))
+	{
+		return nullptr;
+	}
+
+	return ConsumableSlots[Index];
 }
 
 UItemInstance* UPlayerInventoryComponent::GetCurrentConsumable() const
@@ -195,18 +236,40 @@ bool UPlayerInventoryComponent::AddConsumableSlot(UItemInstance* Item)
 	// 지금은 퀵슬롯 갯수 무한인데 추후 슬롯 수 제한가능
 	ConsumableSlots.Add(Item);
 
+	const int32 Index = ConsumableSlots.Num() - 1;
+
+	OnConsumableSlotChanged.Broadcast(Index, Item);
+	OnInventoryChanged.Broadcast();
+	
 	return true;
 }
 
 bool UPlayerInventoryComponent::RemoveConsumableSlot(UItemInstance* Item)
 {
-	return ConsumableSlots.RemoveSingle(Item) > 0;
+	const int32 SlotIndex = ConsumableSlots.IndexOfByKey(Item);
+
+	if (SlotIndex == INDEX_NONE)
+	{
+		return false;
+	}
+
+	ConsumableSlots[SlotIndex] = nullptr;
+	
+	OnConsumableSlotChanged.Broadcast(SlotIndex, nullptr);
+	OnInventoryChanged.Broadcast();
+
+	return true;
 }
 
 void UPlayerInventoryComponent::SetConsumableSlot(
 	int32 SlotIndex,
 	UItemInstance* Item)
 {
+	if (!Item)
+	{
+		return;
+	}
+	
 	if (!Items.Contains(Item))
 	{
 		return;
@@ -216,7 +279,7 @@ void UPlayerInventoryComponent::SetConsumableSlot(
 	{
 		return;
 	}
-
+	
 
 	if (ConsumableSlots.Num() <= SlotIndex)
 	{
@@ -224,6 +287,12 @@ void UPlayerInventoryComponent::SetConsumableSlot(
 	}
 	
 	ConsumableSlots[SlotIndex] = Item;
+	
+	OnConsumableSlotChanged.Broadcast(
+		SlotIndex,
+		Item);
+	
+	OnInventoryChanged.Broadcast();
 }
 
 bool UPlayerInventoryComponent::SetWeaponSlot(UItemInstance* Item)
@@ -245,15 +314,14 @@ bool UPlayerInventoryComponent::SetWeaponSlot(UItemInstance* Item)
 
 	WeaponSlot = Item;
 
+	OnWeaponSlotChanged.Broadcast(Item);
+	
 	return true;
 }
 
 void UPlayerInventoryComponent::ClearWeaponSlot()
 {
 	WeaponSlot = nullptr;
-}
-
-UItemInstance* UPlayerInventoryComponent::GetCurrentWeapon() const
-{
-	return WeaponSlot;
+	
+	OnWeaponSlotChanged.Broadcast(nullptr);
 }
