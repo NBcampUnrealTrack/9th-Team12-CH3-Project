@@ -191,7 +191,8 @@ bool UPlayerLocomotionComponent::CanMove() const
 
 	FGameplayTagContainer BlockTags;
 	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
-	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	// 여기서는 Dodging을 막지 않는다.
+	// BlockTags.AddTag(CombatTags::State_Combat_Dodging);
 	BlockTags.AddTag(CombatTags::State_Combat_Parry);
 	BlockTags.AddTag(CombatTags::State_Movement_Locked);
 	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
@@ -208,7 +209,14 @@ bool UPlayerLocomotionComponent::CanSprint() const
 		return false;
 	}
 
-	if (MovementComponent->Velocity.IsNearlyZero())
+	if (LastMovementInput.IsNearlyZero())
+	{
+		return false;
+	}
+
+	// LockOn 중 Sprint를 막고 싶으면 유지.
+	if (StateComponent->HasStateTagExact(
+		CombatTags::State_Movement_LockOn))
 	{
 		return false;
 	}
@@ -251,6 +259,11 @@ void UPlayerLocomotionComponent::StartDodge()
 	if (!OwnerCharacter || !StateComponent || !DodgeData)
 	{
 		return;
+	}
+	
+	if (AttackComponent && AttackComponent->CanDodgeCancel())
+	{
+		AttackComponent->CancelAttackForDodge();
 	}
 
 	const EDodgeDirection DodgeDirection =
@@ -453,6 +466,41 @@ bool UPlayerLocomotionComponent::ShouldUseDirectionalDodge() const
 	return bIsArmed && bIsLockedOn;
 }
 
+bool UPlayerLocomotionComponent::TryStartDodge()
+{
+	const bool bCanDodgeCancelAttack =
+		AttackComponent &&
+		AttackComponent->CanDodgeCancel();
+
+	if (!CanDodge() && !bCanDodgeCancelAttack)
+	{
+		return false;
+	}
+
+	StartDodge();
+	return true;
+}
+
+void UPlayerLocomotionComponent::TryStartSprintAfterDodge()
+{
+	if (!bDodgeSprintHeld)
+	{
+		return;
+	}
+
+	if (!bWantsSprintAfterDodge)
+	{
+		return;
+	}
+
+	bWantsSprintAfterDodge = false;
+
+	if (CanSprint())
+	{
+		DoStartSprint();
+	}
+}
+
 void UPlayerLocomotionComponent::DoStartJump(const FInputActionValue& value)
 {
 	if (!OwnerCharacter) return;
@@ -558,12 +606,7 @@ void UPlayerLocomotionComponent::DoStopSprint()
 void UPlayerLocomotionComponent::Dodge(
 	const FInputActionValue& Value)
 {
-	if (!CanDodge())
-	{
-		return;
-	}
-
-	StartDodge();
+	TryStartDodge();
 }
 
 void UPlayerLocomotionComponent::EndDodge()
@@ -603,4 +646,78 @@ void UPlayerLocomotionComponent::EndDodge()
 	}
 
 	RefreshMovementSettings();
+
+	TryStartSprintAfterDodge();
+}
+
+void UPlayerLocomotionComponent::OpenDodgeMove()
+{
+	if (!StateComponent)
+	{
+		return;
+	}
+
+	if (!StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Dodging))
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked
+	);
+
+	RefreshMovementSettings();
+}
+
+void UPlayerLocomotionComponent::OnDodgeSprintPressed(
+	const FInputActionValue& Value)
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return;
+	}
+
+	if (bDodgeSprintHeld)
+	{
+		return;
+	}
+
+	if (StateComponent->HasStateTagExact(
+		CombatTags::State_Hit_Dead))
+	{
+		return;
+	}
+
+	// Dodge 중 새 입력은 무시.
+	// Dodge 중에 누른 Shift가 끝난 뒤 Sprint로 이어지는 걸 막기 위함.
+	if (StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Dodging))
+	{
+		return;
+	}
+
+	bDodgeSprintHeld = true;
+
+	// 누르자마자 바로 Dodge / Dash
+	bWantsSprintAfterDodge = TryStartDodge();
+}
+
+void UPlayerLocomotionComponent::OnDodgeSprintReleased(
+	const FInputActionValue& Value)
+{
+	if (!bDodgeSprintHeld)
+	{
+		return;
+	}
+
+	bDodgeSprintHeld = false;
+	bWantsSprintAfterDodge = false;
+
+	if (StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Movement_Sprinting))
+	{
+		DoStopSprint();
+	}
 }

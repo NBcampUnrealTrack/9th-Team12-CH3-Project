@@ -16,6 +16,9 @@
 #include "Entity/Player/PlayerDefenseComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Combat/CombatTypes.h"
+#include "Entity/Enemy/EnemyCharacterBase.h"
+#include "GameplayTags/CombatGameplayTags.h"
+#include "Entity/Player/StateTagComponent.h"
 
 // Sets default values for this component's properties
 UEnemyAttackComponent::UEnemyAttackComponent()
@@ -24,7 +27,7 @@ UEnemyAttackComponent::UEnemyAttackComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	CurrentPlayingMontage = EEnemyAttackPattern::End;
+	CurrentPlayingPattern = EEnemyAttackPattern::End;
 }
 
 
@@ -32,6 +35,21 @@ UEnemyAttackComponent::UEnemyAttackComponent()
 void UEnemyAttackComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	AEnemyCharacterBase* OwnerCharacter = Cast<AEnemyCharacterBase>(GetOwner());
+
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("EnemyAttributeComponent owner is not EnemyCharacterBase."));
+		return;
+	}
+	
+	StateComponent = OwnerCharacter->GetStateTagComponent();
+
+	if (!StateComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("EnemyAttributeComponent could not find StateTagComponent."));
+	}
 }
 
 bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern)
@@ -96,7 +114,7 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 	// 	UE_LOG(LogTemp, Log, TEXT("Execute Strong Attack Pattern: %d"), SelectedPattern);
 	// }
 	
-	UAnimMontage* SelectedMontage = AttackAnimationData->Montage;
+	UAnimMontage* SelectedMontage = AttackAnimationData->AttackMontageSet.AttackMontage;
 
 	float AttackRange = AttackAnimationData->AttackRange;
 	float AttackCooldown = AttackAnimationData->AttackCooldown;
@@ -116,6 +134,7 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		return false;
 	}
 
+	StateComponent->AddStateTag(CombatTags::State_Combat_Attacking);
 	GetWorld()->GetTimerManager().SetTimer(
 		AttackCooldownTimerHandle,
 		this,
@@ -164,7 +183,27 @@ void UEnemyAttackComponent::FinishAttack()
 	bCanAttack = true;
 	OnAttackFinished.Broadcast();
 	
-	CurrentPlayingMontage = EEnemyAttackPattern::End;
+	CurrentPlayingPattern = EEnemyAttackPattern::End;
+	StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
+}
+
+void UEnemyAttackComponent::CancelAttack()
+{
+	USkeletalMeshComponent* OwnerMesh = GetOwnerSkeletalMeshComponent();
+	if (OwnerMesh)
+	{
+		UAnimInstance* AnimInstance = OwnerMesh->GetAnimInstance();
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Stop(0.2f);
+		}
+	}
+	
+	bCanAttack = true;
+	OnAttackCanceled.Broadcast();
+	CurrentPlayingPattern = EEnemyAttackPattern::End;
+	
+	FinishAttack();
 }
 
 void UEnemyAttackComponent::StartHitCheck()
@@ -340,7 +379,8 @@ void UEnemyAttackComponent::ProcessHit(const FHitResult& InHitResult, const FAtt
 			IncomingAttackContext.Hit = InHitResult;
 			IncomingAttackContext.AttackInfo = InAttackInfo;
 			
-			PlayerDefenseComponent->ResolveIncomingAttack(IncomingAttackContext);	
+			EDefenseResult Result = PlayerDefenseComponent->ResolveIncomingAttack(IncomingAttackContext);
+			ProcessDefenseResult(Result);				
 		}
 	}
 	else
@@ -352,6 +392,46 @@ void UEnemyAttackComponent::ProcessHit(const FHitResult& InHitResult, const FAtt
 			Owner,
 			nullptr
 		);
+	}
+}
+
+void UEnemyAttackComponent::ProcessDefenseResult(EDefenseResult InDefenseResult)
+{
+	switch (InDefenseResult)
+	{
+	case EDefenseResult::Parry:
+		OnAttackParried();
+		return;
+		
+	default:
+		return;		
+	}
+}
+
+void UEnemyAttackComponent::OnAttackParried()
+{	
+	const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
+	
+	if (AttackAnimationData == nullptr
+		|| AttackAnimationData->AttackInfo.bCanBeParried == false
+		)
+	{
+		return;
+	}
+	
+	CancelAttack();
+	
+	USkeletalMeshComponent* OwnerMesh = GetOwnerSkeletalMeshComponent();
+	if (OwnerMesh)
+	{
+		UAnimInstance* AnimInstance = OwnerMesh->GetAnimInstance();
+		UAnimMontage* ParriedMontage = AttackAnimationData->AttackMontageSet.ParriedMontage;
+		if (AnimInstance
+			&& ParriedMontage
+			)
+		{
+			AnimInstance->Montage_Play(ParriedMontage);
+		}
 	}
 }
 
@@ -376,10 +456,10 @@ void UEnemyAttackComponent::StopAttackMontage()
 const FAttackAnimationData* UEnemyAttackComponent::GetCurrentPatternData()
 {
 	if (AttackData == nullptr
-		|| CurrentPlayingMontage == EEnemyAttackPattern::End)
+		|| CurrentPlayingPattern == EEnemyAttackPattern::End)
 		return nullptr;
 	
-	return AttackData->GetAttackAnimationData(static_cast<uint8>(CurrentPlayingMontage));
+	return AttackData->GetAttackAnimationData(static_cast<uint8>(CurrentPlayingPattern));
 }
 
 const FAttackAnimationData* UEnemyAttackComponent::GetSelectedPatternData(int32 InSelectedAction, int32 InSelectedPattern)
@@ -391,28 +471,28 @@ const FAttackAnimationData* UEnemyAttackComponent::GetSelectedPatternData(int32 
 	{
 		// NormalAttackMontage0 
 		//SelectedMontage = NormalAttack0;
-		CurrentPlayingMontage = EEnemyAttackPattern::NormalAttack_1;
+		CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_1;
 	}
 	else if (InSelectedAction == 1 && InSelectedPattern == 1)
 	{
 		// NormalAttackMontage1 
 		//SelectedMontage = NormalAttack0;
-		CurrentPlayingMontage = EEnemyAttackPattern::NormalAttack_2;
+		CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_2;
 	}
 	else if (InSelectedAction == 2 && InSelectedPattern == 0)
 	{
 		// StrongAttackMontage0 
 		//SelectedMontage = NormalAttack0;
-		CurrentPlayingMontage = EEnemyAttackPattern::NormalAttack_1;
+		CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_1;
 	}
 	else if (InSelectedAction == 2 && InSelectedPattern == 1)
 	{
 		// FarStrongAttackMontage 재생
 		//SelectedMontage = FarStrongAttack;
-		CurrentPlayingMontage = EEnemyAttackPattern::FarStrongAttack;
+		CurrentPlayingPattern = EEnemyAttackPattern::FarStrongAttack;
 	}
 	
-	return AttackData->GetAttackAnimationData(static_cast<int8>(CurrentPlayingMontage));
+	return AttackData->GetAttackAnimationData(static_cast<int8>(CurrentPlayingPattern));
 }
 
 USkeletalMeshComponent* UEnemyAttackComponent::GetOwnerSkeletalMeshComponent()
