@@ -37,7 +37,7 @@ void UPlayerEquipmentComponent::BeginPlay()
 		return;
 	}
 	
-	if (Inventory->GetCurrentWeapon())
+	if (Inventory->GetEquippedWeaponInstance())
 	{
 		SpawnWeaponToSheath();
 	}
@@ -57,7 +57,7 @@ void UPlayerEquipmentComponent::ToggleWeaponInput(
 	}
 	
 	// 인벤토리의 현재 무기 슬롯 사용
-	UItemInstance* WeaponItem = Inventory->GetCurrentWeapon();
+	UItemInstance* WeaponItem = Inventory->GetEquippedWeaponInstance();
 
 	if (!WeaponItem)
 	{
@@ -322,7 +322,7 @@ bool UPlayerEquipmentComponent::CanChangeWeapon() const
 
 void UPlayerEquipmentComponent::SpawnWeaponToSheath()
 {
-	UItemInstance* Item = Inventory->GetCurrentWeapon();
+	UItemInstance* Item = Inventory->GetEquippedWeaponInstance();
 
 	if (!Item)
 	{

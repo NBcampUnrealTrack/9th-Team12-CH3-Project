@@ -21,11 +21,30 @@ struct FStarterItem
 	int32 Count = 1;
 	
 	UPROPERTY(EditAnywhere)
-	bool bAutoEquip;
+	bool bAutoEquip = false;
 	
 	UPROPERTY(EditAnywhere)
-	bool bRegisterConsumable;
+	bool bRegisterConsumable = false;
 };
+
+DECLARE_MULTICAST_DELEGATE(FOnInventoryChanged);
+
+DECLARE_MULTICAST_DELEGATE_OneParam(
+	FOnItemAdded,
+	UItemInstance*);
+
+DECLARE_MULTICAST_DELEGATE_OneParam(
+	FOnItemRemoved,
+	UItemInstance*);
+
+DECLARE_MULTICAST_DELEGATE_TwoParams(
+	FOnConsumableSlotChanged,
+	int32,
+	UItemInstance*);
+
+DECLARE_MULTICAST_DELEGATE_OneParam(
+	FOnWeaponSlotChanged,
+	UItemInstance*);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UPlayerInventoryComponent : public UActorComponent
@@ -47,15 +66,37 @@ public:
 	
 	/** 모든 아이템 */
 	const TArray<TObjectPtr<UItemInstance>>& GetItems() const { return Items; }
-
+	
+	int32 GetItemsCount() const { return Items.Num(); }
+	
+	int32 GetItemCount(const UItemDataAsset* ItemData) const;
+	
+	int32 GetConsumableSlotCount() const { return ConsumableSlots.Num(); }
+	
+	UItemInstance* GetConsumableSlot(int32 Index) const;
+	
 	UItemInstance* GetCurrentConsumable() const;
 	
-	UItemInstance* GetCurrentWeapon() const;
+	UItemInstance* FindItem(
+	const UItemDataAsset* ItemData) const;
+	
+	UItemInstance* GetEquippedWeaponInstance() const { return WeaponSlot; }
 	
 	bool SetWeaponSlot(UItemInstance* Item);
 	
 	void ClearWeaponSlot();
 	
+public:
+	// delegate
+	FOnInventoryChanged OnInventoryChanged;
+
+	FOnItemAdded OnItemAdded;
+
+	FOnItemRemoved OnItemRemoved;
+
+	FOnConsumableSlotChanged OnConsumableSlotChanged;
+
+	FOnWeaponSlotChanged OnWeaponSlotChanged;
 protected:
 	virtual void BeginPlay() override;
 
