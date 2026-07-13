@@ -88,7 +88,9 @@ UENUM(BlueprintType)
 enum class EAttackType : uint8
 {
 	Light,
-	Heavy
+	Heavy,
+	Jump,
+	Dodge
 };
 
 UCLASS(BlueprintType)
@@ -104,4 +106,12 @@ public:
 	// 강공격
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FAttackDefinition HeavyAttack;
+	
+	// 점프공격
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FAttackDefinition JumpAttack;
+	
+	// 회피공격
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FAttackDefinition DodgeAttack;
 };
