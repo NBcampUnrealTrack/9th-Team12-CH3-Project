@@ -101,8 +101,7 @@ USoundBase* UKatanaSoundManagerSubsystem::GetOrLoadSound(const FString& SoundKey
 }
 
 UAudioComponent* UKatanaSoundManagerSubsystem::PlaySound2D(EAudioType AudioType, FString SoundKey,
-                                                           float VolumeMultiplier,
-                                                           float PitchMultiplier)
+                                                           float VolumeMultiplier, float PitchMultiplier)
 {
 	USoundBase* SoundToPlay = GetOrLoadSound(SoundKey);
 	if (!SoundToPlay) return nullptr;

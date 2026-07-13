@@ -5,8 +5,10 @@
 #include "DelayedProgressBar.generated.h"
 
 class UImage;
+class UMaterialInstanceDynamic;
+
 /**
- *
+ * 피해 및 회복 지연 효과가 적용되는 프로그레스 바
  */
 UCLASS()
 class CH3_TEAM12_API UDelayedProgressBar : public UUserWidget
@@ -15,19 +17,13 @@ class CH3_TEAM12_API UDelayedProgressBar : public UUserWidget
 
 public:
 	UPROPERTY(EditAnywhere, Category = "ProgressBar")
-	float InterpSpeed = 5.0f; // 잔상이 따라오는 속도 (낮을수록 느림)
+	float InterpSpeed = 5.0f;
 
 	UPROPERTY(EditAnywhere, Category = "ProgressBar")
-	float DamageDelayTime = 0.3f; // 맞은 후 잔상이 멈춰있는 시간 (초)
-
-	UPROPERTY(EditAnywhere, Category = "ProgressBar")
-	float RecoveryDelayTime = 0.3f; // 회복 후 잔상이 멈춰있는 시간 (초)
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProgressBar")
-	bool IsCumulative = true;
+	float DelayTime = 0.3f;
 
 	UFUNCTION(BlueprintCallable, Category = "ProgressBar")
-	void SetPercent(float InPercent);
+	void SetPercent(float InPercent, bool bImmediately = false);
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -46,24 +42,23 @@ protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
-	float TargetPercent = 1.0f; // 목표 체력 비율 (0.0 ~ 1.0)
-	float CurrentPercent = 1.0f; // 현재 표시 중인 실제 체력 비율
-	float DamageDelayedPercent = 1.0f; // 뒤따라오는 잔상 체력 비율
-	float RecoveryDelayedPercent = 1.0f; // 뒤따라오는 잔상 체력 비율
+	float TargetPercent = 1.0f;
+	float CurrentPercent = 1.0f;
+	float DamageDelayedPercent = 1.0f;
+	float DelayRemainingTime = 0.0f;
 
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> DamageDelayedMat;
+
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> RecoveryDelayedMat;
+
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> CurrentMat;
 
-	FTimerHandle DamageDelayTimerHandle;
-	bool bCanAnimateDamageDelayed = false;
+	static void SetProgress(UMaterialInstanceDynamic* Material, float Percent);
 
-	FTimerHandle RecoveryDelayTimerHandle;
-	bool bCanAnimateCurrentRecovery = false;
-
-	void StartDamageDelayedAnimation();
-	void StartRecoveryDelayedAnimation();
+	static void InterpolateProgress(float& Current, float Target, float DeltaTime, float InterpSpeed,
+	                                UMaterialInstanceDynamic* Material
+	);
 };

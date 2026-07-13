@@ -55,7 +55,9 @@ void UInventoryPresenter::Initialize(UInventoryWidget* InWidget)
 	if (UPlayerAttributeComponent* PlayerAttributeComponent = GetPlayerAttributeComponent())
 	{
 		PlayerAttributeComponent->OnHealthChanged.AddDynamic(this, &UInventoryPresenter::HandleModelHealthChanged);
-		HandleModelHealthChanged(PlayerAttributeComponent->GetCurrentHealth(), PlayerAttributeComponent->GetMaxHealth());
+		const float CurrentHealth = PlayerAttributeComponent->GetCurrentHealth();
+		const float MaxHealth = PlayerAttributeComponent->GetMaxHealth();
+		UpdateHealthBar(CurrentHealth, MaxHealth, true);
 	}
 }
 
@@ -67,13 +69,19 @@ void UInventoryPresenter::Dispose()
 	}
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UInventoryPresenter::HandleModelHealthChanged(const float CurrentHealth, const float MaxHealth)
+{
+	UpdateHealthBar(CurrentHealth, MaxHealth, false);
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UInventoryPresenter::UpdateHealthBar(const float CurrentHealth, const float MaxHealth,
+                                                   const bool bImmediately)
 {
 	if (MaxHealth > 0.0f)
 	{
 		const float Percent = CurrentHealth / MaxHealth;
-		InventoryWidget->UpdateHealthBar(Percent);
+		InventoryWidget->UpdateHealthBar(Percent, bImmediately);
 	}
 }
 

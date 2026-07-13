@@ -24,6 +24,7 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UDelayedProgressBar> HealthBar;
@@ -37,6 +38,8 @@ protected:
 private:
 	float HealthPercent;
 	bool bTakeDamageHealth = false;
+
+	float PosturePercent;
 
 	FLinearColor OriginPostureColor;
 	FLinearColor OriginPostureCenterColor;

@@ -23,9 +23,9 @@ void UInventoryWidget::ClearItemWidgets()
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-void UInventoryWidget::UpdateHealthBar(const float Percent)
+void UInventoryWidget::UpdateHealthBar(const float Percent, const bool bImmediately)
 {
-	HealthBar->SetPercent(Percent);
+	HealthBar->SetPercent(Percent, bImmediately);
 }
 
 void UInventoryWidget::NativeOnInitialized()
