@@ -260,38 +260,33 @@ void UPlayerLocomotionComponent::StartDodge()
 	{
 		return;
 	}
-
+	
 	if (AttackComponent && AttackComponent->CanDodgeCancel())
 	{
 		AttackComponent->CancelAttackForDodge();
 	}
 
-	const bool bDirectionalDodge = ShouldUseDirectionalDodge();
-
-	if (bDirectionalDodge)
-	{
-		const FRotator DodgeBaseRotation =
-			GetLockOnDodgeBaseRotation();
-
-		OwnerCharacter->SetActorRotation(DodgeBaseRotation);
-	}
-
 	const EDodgeDirection DodgeDirection =
-		bDirectionalDodge
+		ShouldUseDirectionalDodge()
 			? CalculateDodgeDirectionFromInput(LastMovementInput)
 			: EDodgeDirection::Forward;
 
 	const FEvadeMontageData* EvadeData =
 		DodgeData->FindEvadeData(DodgeDirection);
 
-	if (!EvadeData || !EvadeData->IsValid())
+	if (!EvadeData || !EvadeData->Montage)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("StartDodge: EvadeData invalid"));
 		return;
 	}
 
-	StateComponent->RemoveStateTag(
-		CombatTags::State_Movement_Sprinting
-	);
+	if (StateComponent->HasStateTagExact(
+		CombatTags::State_Movement_Sprinting))
+	{
+		StateComponent->RemoveStateTag(
+			CombatTags::State_Movement_Sprinting
+		);
+	}
 
 	StateComponent->AddStateTag(
 		CombatTags::State_Combat_Dodging
@@ -302,6 +297,14 @@ void UPlayerLocomotionComponent::StartDodge()
 	);
 
 	RefreshMovementSettings();
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Dodge Direction: %s / Directional: %s"),
+		*UEnum::GetValueAsString(DodgeDirection),
+		ShouldUseDirectionalDodge() ? TEXT("true") : TEXT("false")
+	);
 
 	PlayDodgeMontage(*EvadeData);
 }
@@ -783,41 +786,27 @@ void UPlayerLocomotionComponent::OnDodgeSprintReleased(
 	}
 }
 
-FRotator UPlayerLocomotionComponent::GetLockOnDodgeBaseRotation() const
+void UPlayerLocomotionComponent::CancelDodgeForPostureBreak()
 {
-	if (!OwnerCharacter)
+	if (!StateComponent)
 	{
-		return FRotator::ZeroRotator;
+		return;
 	}
 
-	AActor* LockOnTarget = nullptr;
+	CurrentDodgeMontage = nullptr;
 
-	if (UPlayerCameraComponent* CameraComponent =
-		OwnerCharacter->GetPlayerCameraComponent())
-	{
-		LockOnTarget = CameraComponent->GetCurrentLockOnTarget();
-	}
-
-	if (LockOnTarget)
-	{
-		FVector ToTarget =
-			LockOnTarget->GetActorLocation() -
-			OwnerCharacter->GetActorLocation();
-
-		ToTarget.Z = 0.0f;
-
-		if (!ToTarget.IsNearlyZero())
-		{
-			return ToTarget.Rotation();
-		}
-	}
-
-	const FRotator ControlRotation =
-		OwnerCharacter->GetControlRotation();
-
-	return FRotator(
-		0.0f,
-		ControlRotation.Yaw,
-		0.0f
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Dodging
 	);
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Sprinting
+	);
+
+	if (DefenseComponent)
+	{
+		DefenseComponent->DisableInvincible();
+	}
+
+	RefreshMovementSettings();
 }

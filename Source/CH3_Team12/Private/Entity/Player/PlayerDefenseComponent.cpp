@@ -5,6 +5,7 @@
 #include "Entity/Player/PlayerAttributeComponent.h"
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Player/PlayerWeaponComponent.h"
+#include "Entity/Player/PlayerAttackComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Entity/Weapon/WeaponBase.h"
 
@@ -64,10 +65,22 @@ void UPlayerDefenseComponent::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("PlayerDefenseComponent : FeedbackData is nullptr"));
 	}
 
-	AttributeComponent->OnDead.AddDynamic(
-		this,
-		&UPlayerDefenseComponent::HandleOwnerDead
-	);
+	if (AttributeComponent)
+	{
+		AttributeComponent->OnDead.AddDynamic(
+			this,
+			&UPlayerDefenseComponent::HandleOwnerDead
+		);
+
+		AttributeComponent->OnPostureBroken.AddDynamic(
+			this,
+			&UPlayerDefenseComponent::HandleOwnerPostureBroken
+		);
+		AttributeComponent->OnPostureRecovered.AddDynamic(
+			this,
+			&UPlayerDefenseComponent::HandleOwnerPostureRecovered
+		);
+	}
 }
 
 void UPlayerDefenseComponent::EndPlay(
@@ -78,6 +91,15 @@ void UPlayerDefenseComponent::EndPlay(
 		AttributeComponent->OnDead.RemoveDynamic(
 			this,
 			&UPlayerDefenseComponent::HandleOwnerDead
+		);
+		
+		AttributeComponent->OnPostureBroken.RemoveDynamic(
+			this,
+			&UPlayerDefenseComponent::HandleOwnerPostureBroken
+		);
+		AttributeComponent->OnPostureRecovered.RemoveDynamic(
+			this,
+			&UPlayerDefenseComponent::HandleOwnerPostureRecovered
 		);
 	}
 
@@ -170,7 +192,7 @@ bool UPlayerDefenseComponent::CanGuard() const
 	{
 		return false;
 	}
-	
+
 	FGameplayTagContainer BlockTags;
 	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
 	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
@@ -200,14 +222,14 @@ void UPlayerDefenseComponent::OpenParryWindow()
 	StateComponent->AddStateTag(
 		CombatTags::State_Combat_Parry
 	);
-	
+
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(
-			-1,                                   // Key (화면 덮어쓰기 키)
-			2.0f,                                 // 화면에 떠 있을 시간 (초)
-			FColor::Red,                          // 텍스트 색상
-		   FString(TEXT("Open Parry Window"))
+			-1, // Key (화면 덮어쓰기 키)
+			2.0f, // 화면에 떠 있을 시간 (초)
+			FColor::Red, // 텍스트 색상
+			FString(TEXT("Open Parry Window"))
 		);
 	}
 }
@@ -222,14 +244,14 @@ void UPlayerDefenseComponent::CloseParryWindow()
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Combat_Parry
 	);
-	
+
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(
-		   -1, 
-		   2.0f, 
-		   FColor::Red, 
-		   FString(TEXT("Close Parry Window"))
+			-1,
+			2.0f,
+			FColor::Red,
+			FString(TEXT("Close Parry Window"))
 		);
 	}
 }
@@ -333,7 +355,7 @@ void UPlayerDefenseComponent::PlayHitReaction(
 {
 	UAnimMontage* MontageToPlay = DefenseData->GetHitReactionMontage(ReactionDirection);
 	PlayMontageSafe(MontageToPlay);
-	
+
 	UAnimInstance* AnimInstance =
 		OwnerCharacter->GetMesh()
 			? OwnerCharacter->GetMesh()->GetAnimInstance()
@@ -343,7 +365,7 @@ void UPlayerDefenseComponent::PlayHitReaction(
 	{
 		return;
 	}
-	
+
 	FOnMontageEnded EndDelegate;
 	EndDelegate.BindUObject(
 		this,
@@ -396,13 +418,13 @@ EHitReactionDirection UPlayerDefenseComponent::CalculateHitReactionDirection(
 			if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
 			{
 				return RightDot > 0.0f
-					? EHitReactionDirection::Right
-					: EHitReactionDirection::Left;
+					       ? EHitReactionDirection::Right
+					       : EHitReactionDirection::Left;
 			}
 
 			return ForwardDot >= 0.0f
-				? EHitReactionDirection::Front
-				: EHitReactionDirection::Back;
+				       ? EHitReactionDirection::Front
+				       : EHitReactionDirection::Back;
 		}
 	}
 
@@ -432,13 +454,13 @@ EHitReactionDirection UPlayerDefenseComponent::CalculateHitReactionDirection(
 			if (FMath::Abs(RightDot) > FMath::Abs(ForwardDot))
 			{
 				return RightDot > 0.0f
-					? EHitReactionDirection::Right
-					: EHitReactionDirection::Left;
+					       ? EHitReactionDirection::Right
+					       : EHitReactionDirection::Left;
 			}
 
 			return ForwardDot >= 0.0f
-				? EHitReactionDirection::Front
-				: EHitReactionDirection::Back;
+				       ? EHitReactionDirection::Front
+				       : EHitReactionDirection::Back;
 		}
 	}
 
@@ -1138,5 +1160,135 @@ void UPlayerDefenseComponent::FinalizeDead()
 		{
 			Mesh->bPauseAnims = true;
 		}
+	}
+}
+
+void UPlayerDefenseComponent::HandleOwnerPostureBroken()
+{
+	if (!OwnerCharacter || !StateComponent || !AttributeComponent)
+	{
+		return;
+	}
+
+	if (AttributeComponent->IsDead())
+	{
+		return;
+	}
+
+	ClearCombatStatesForPostureBreak();
+
+	StateComponent->AddStateTag(
+		CombatTags::State_Movement_Locked
+	);
+
+	if (UCharacterMovementComponent* Movement =
+		OwnerCharacter->GetCharacterMovement())
+	{
+		Movement->StopMovementImmediately();
+	}
+
+	PlayPostureBrokenMontage();
+}
+
+void UPlayerDefenseComponent::HandleOwnerPostureRecovered()
+{
+	if (!OwnerCharacter || !StateComponent || !AttributeComponent)
+	{
+		return;
+	}
+
+	if (AttributeComponent->IsDead())
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked
+	);
+
+	if (UPlayerLocomotionComponent* LocomotionComponent =
+		OwnerCharacter->GetLocomotionComponent())
+	{
+		LocomotionComponent->RefreshMovementSettings();
+	}
+}
+
+void UPlayerDefenseComponent::PlayPostureBrokenMontage()
+{
+	if (!OwnerCharacter || !DefenseData)
+	{
+		return;
+	}
+
+	UAnimMontage* Montage = DefenseData->PostureBrokenMontage;
+
+	if (!Montage)
+	{
+		return;
+	}
+
+	USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh();
+	if (!Mesh)
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
+	if (!AnimInstance)
+	{
+		return;
+	}
+
+	AnimInstance->StopAllMontages(0.05f);
+
+	const float Duration =
+		AnimInstance->Montage_Play(
+			Montage,
+			DefenseData->PostureBrokenMontagePlayRate
+		);
+
+	if (Duration <= 0.0f)
+	{
+		return;
+	}
+}
+
+void UPlayerDefenseComponent::ClearCombatStatesForPostureBreak()
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Guarding
+	);
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Parry
+	);
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Invincible
+	);
+
+	DisableInvincible();
+
+	if (UPlayerAttackComponent* AttackComponent =
+		OwnerCharacter->GetAttackComponent())
+	{
+		AttackComponent->CancelAttackForPostureBreak();
+	}
+
+	if (WeaponComponent)
+	{
+		WeaponComponent->EndWeaponHitCheck();
+	}
+
+	if (UPlayerLocomotionComponent* LocomotionComponent =
+		OwnerCharacter->GetLocomotionComponent())
+	{
+		LocomotionComponent->CancelDodgeForPostureBreak();
+		LocomotionComponent->RefreshMovementSettings();
 	}
 }

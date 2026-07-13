@@ -92,6 +92,16 @@ FString UPlayerDebugOverlayComponent::MakeDebugText() const
 			TEXT("Dead: %s\n"),
 			AttributeComponent->IsDead() ? TEXT("true") : TEXT("false")
 		);
+
+		Text += FString::Printf(
+			TEXT("HP: %.1f\n"),
+			AttributeComponent->GetCurrentHealth()
+		);
+		
+		Text += FString::Printf(
+			TEXT("Posture: %.1f\n"),
+			AttributeComponent->GetCurrentPosture()
+		);
 	}
 
 	if (MovementComponent)

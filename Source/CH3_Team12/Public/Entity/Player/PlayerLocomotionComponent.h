@@ -45,6 +45,7 @@ public:
 	
 	void OnDodgeSprintPressed(const FInputActionValue& Value);
 	void OnDodgeSprintReleased(const FInputActionValue& Value);
+	void CancelDodgeForPostureBreak();
 	FRotator GetLockOnDodgeBaseRotation() const;
 
 	// Getter
