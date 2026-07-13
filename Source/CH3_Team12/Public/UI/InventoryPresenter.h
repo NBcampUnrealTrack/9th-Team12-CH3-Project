@@ -55,6 +55,9 @@ private:
 	void HandleModelHealthChanged(float CurrentHealth, float MaxHealth);
 
 	UFUNCTION()
+	void UpdateHealthBar(float CurrentHealth, float MaxHealth, bool bImmediately = false);
+
+	UFUNCTION()
 	UPlayerAttributeComponent* GetPlayerAttributeComponent() const;
 
 	UFUNCTION()

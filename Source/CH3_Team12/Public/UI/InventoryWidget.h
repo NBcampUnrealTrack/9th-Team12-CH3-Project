@@ -21,7 +21,7 @@ public:
 	UInventoryItemWidget* AddAndItemWidget();
 	void ClearItemWidgets();
 
-	void UpdateHealthBar(float Percent);
+	void UpdateHealthBar(float Percent, bool bImmediately = false);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

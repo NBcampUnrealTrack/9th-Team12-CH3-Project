@@ -1,6 +1,5 @@
 #include "UI/Widget/DelayedProgressBar.h"
 
-#include "TimerManager.h"
 #include "Components/Image.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
@@ -8,170 +7,96 @@ void UDelayedProgressBar::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (Img_DamageDelayed)
-	{
-		DamageDelayedMat = Img_DamageDelayed->GetDynamicMaterial();
-		if (DamageDelayedMat)
-		{
-			DamageDelayedMat->SetScalarParameterValue(TEXT("Progress"), DamageDelayedPercent);
-		}
-	}
+	DamageDelayedMat = Img_DamageDelayed->GetDynamicMaterial();
+	RecoveryDelayedMat = Img_RecoveryDelayed->GetDynamicMaterial();
+	CurrentMat = Img_Current->GetDynamicMaterial();
 
-	if (Img_RecoveryDelayed)
-	{
-		RecoveryDelayedMat = Img_RecoveryDelayed->GetDynamicMaterial();
-		if (RecoveryDelayedMat)
-		{
-			RecoveryDelayedMat->SetScalarParameterValue(TEXT("Progress"), RecoveryDelayedPercent);
-		}
-	}
-
-	if (Img_Current)
-	{
-		CurrentMat = Img_Current->GetDynamicMaterial();
-		if (CurrentMat)
-		{
-			CurrentMat->SetScalarParameterValue(TEXT("Progress"), CurrentPercent);
-		}
-	}
+	SetProgress(DamageDelayedMat, DamageDelayedPercent);
+	SetProgress(RecoveryDelayedMat, CurrentPercent);
+	SetProgress(CurrentMat, CurrentPercent);
 }
 
-void UDelayedProgressBar::SetPercent(const float InPercent)
+void UDelayedProgressBar::SetPercent(const float InPercent, const bool bImmediately)
 {
-	const float PrePercent = CurrentPercent;
 	const float NewPercent = FMath::Clamp(InPercent, 0.0f, 1.0f);
 
-	TargetPercent = NewPercent;
-
-	const bool bIsDamaged = NewPercent < PrePercent;
-	const bool bIsRecovered = NewPercent > PrePercent;
-
-	if (bIsDamaged)
+	if (bImmediately)
 	{
+		TargetPercent = NewPercent;
+		CurrentPercent = NewPercent;
+		DamageDelayedPercent = NewPercent;
+		DelayRemainingTime = 0.0f;
+
+		SetProgress(DamageDelayedMat, NewPercent);
+		SetProgress(RecoveryDelayedMat, NewPercent);
+		SetProgress(CurrentMat, NewPercent);
+		return;
+	}
+
+	const float PreviousPercent = CurrentPercent;
+
+	if (FMath::IsNearlyEqual(NewPercent, PreviousPercent))
+		return;
+
+	TargetPercent = NewPercent;
+	DelayRemainingTime = FMath::Max(DelayTime, 0.0f);
+
+	if (NewPercent < PreviousPercent)
+	{
+		DamageDelayedPercent = FMath::Max(DamageDelayedPercent, PreviousPercent);
+
 		CurrentPercent = NewPercent;
 
-		DamageDelayedPercent = IsCumulative
-			? FMath::Max(DamageDelayedPercent, PrePercent)
-			: PrePercent;
-
-		if (DamageDelayedMat)
-		{
-			DamageDelayedMat->SetScalarParameterValue(TEXT("Progress"), DamageDelayedPercent);
-		}
-
-		RecoveryDelayedPercent = CurrentPercent;
-		if (RecoveryDelayedMat)
-		{
-			RecoveryDelayedMat->SetScalarParameterValue(TEXT("Progress"), RecoveryDelayedPercent);
-		}
-
-		if (CurrentMat)
-		{
-			CurrentMat->SetScalarParameterValue(TEXT("Progress"), CurrentPercent);
-		}
-
-		bCanAnimateDamageDelayed = false;
-		bCanAnimateCurrentRecovery = false;
+		SetProgress(DamageDelayedMat, DamageDelayedPercent);
+		SetProgress(RecoveryDelayedMat, CurrentPercent);
+		SetProgress(CurrentMat, CurrentPercent);
 	}
-
-	if (bIsRecovered)
+	else
 	{
-		RecoveryDelayedPercent = NewPercent;
-
-		if (RecoveryDelayedMat)
-		{
-			RecoveryDelayedMat->SetScalarParameterValue(TEXT("Progress"), RecoveryDelayedPercent);
-		}
-
 		DamageDelayedPercent = NewPercent;
-		if (DamageDelayedMat)
-		{
-			DamageDelayedMat->SetScalarParameterValue(TEXT("Progress"), DamageDelayedPercent);
-		}
 
-		if (CurrentMat)
-		{
-			CurrentMat->SetScalarParameterValue(TEXT("Progress"), CurrentPercent);
-		}
-
-		bCanAnimateDamageDelayed = false;
-		bCanAnimateCurrentRecovery = false;
-	}
-
-	if (!GetWorld()) return;
-
-	if (bIsDamaged)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(DamageDelayTimerHandle);
-		GetWorld()->GetTimerManager().SetTimer(
-			DamageDelayTimerHandle,
-			this,
-			&UDelayedProgressBar::StartDamageDelayedAnimation,
-			DamageDelayTime,
-			false
-		);
-
-		GetWorld()->GetTimerManager().ClearTimer(RecoveryDelayTimerHandle);
-	}
-
-	if (bIsRecovered)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(RecoveryDelayTimerHandle);
-		GetWorld()->GetTimerManager().SetTimer(
-			RecoveryDelayTimerHandle,
-			this,
-			&UDelayedProgressBar::StartRecoveryDelayedAnimation,
-			RecoveryDelayTime,
-			false
-		);
-
-		GetWorld()->GetTimerManager().ClearTimer(DamageDelayTimerHandle);
+		SetProgress(DamageDelayedMat, DamageDelayedPercent);
+		SetProgress(RecoveryDelayedMat, NewPercent);
 	}
 }
 
-void UDelayedProgressBar::StartDamageDelayedAnimation()
-{
-	bCanAnimateDamageDelayed = true;
-}
-
-void UDelayedProgressBar::StartRecoveryDelayedAnimation()
-{
-	bCanAnimateCurrentRecovery = true;
-}
-
-void UDelayedProgressBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+void UDelayedProgressBar::NativeTick(const FGeometry& MyGeometry, const float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	if (bCanAnimateCurrentRecovery && CurrentPercent < TargetPercent)
+	if (DelayRemainingTime > 0.0f)
 	{
-		CurrentPercent = FMath::FInterpTo(CurrentPercent, TargetPercent, InDeltaTime, InterpSpeed);
-
-		if (FMath::IsNearlyEqual(CurrentPercent, TargetPercent, 0.001f))
-		{
-			CurrentPercent = TargetPercent;
-			bCanAnimateCurrentRecovery = false;
-		}
-
-		if (CurrentMat)
-		{
-			CurrentMat->SetScalarParameterValue(TEXT("Progress"), CurrentPercent);
-		}
+		DelayRemainingTime -= InDeltaTime;
+		return;
 	}
 
-	if (bCanAnimateDamageDelayed && DamageDelayedPercent > TargetPercent)
+	if (CurrentPercent < TargetPercent)
 	{
-		DamageDelayedPercent = FMath::FInterpTo(DamageDelayedPercent, TargetPercent, InDeltaTime, InterpSpeed);
-
-		if (FMath::IsNearlyEqual(DamageDelayedPercent, TargetPercent, 0.001f))
-		{
-			DamageDelayedPercent = TargetPercent;
-			bCanAnimateDamageDelayed = false;
-		}
-
-		if (DamageDelayedMat)
-		{
-			DamageDelayedMat->SetScalarParameterValue(TEXT("Progress"), DamageDelayedPercent);
-		}
+		InterpolateProgress(CurrentPercent, TargetPercent, InDeltaTime, InterpSpeed, CurrentMat);
 	}
+	else if (DamageDelayedPercent > TargetPercent)
+	{
+		InterpolateProgress(DamageDelayedPercent, TargetPercent, InDeltaTime, InterpSpeed, DamageDelayedMat);
+	}
+}
+
+void UDelayedProgressBar::SetProgress(UMaterialInstanceDynamic* Material, const float Percent)
+{
+	if (Material)
+	{
+		Material->SetScalarParameterValue(TEXT("Progress"), Percent);
+	}
+}
+
+void UDelayedProgressBar::InterpolateProgress(float& Current, const float Target, const float DeltaTime,
+                                              const float InterpSpeed, UMaterialInstanceDynamic* Material)
+{
+	Current = FMath::FInterpTo(Current, Target, DeltaTime, InterpSpeed);
+
+	if (FMath::IsNearlyEqual(Current, Target, 0.001f))
+	{
+		Current = Target;
+	}
+
+	SetProgress(Material, Current);
 }

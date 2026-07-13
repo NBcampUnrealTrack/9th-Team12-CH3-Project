@@ -12,6 +12,18 @@ void UPlayerWidget::NativeConstruct()
 	OriginPostureCenterColor = PostureCenterImage->GetColorAndOpacity();
 }
 
+void UPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	if (PosturePercent <= 0.0f)
+	{
+		PostureBar->SetColorAndOpacity(FLinearColor::Transparent);
+		PostureCenterImage->SetColorAndOpacity(FLinearColor::Transparent);
+		bTakeDamageHealth = false;
+	}
+}
+
 void UPlayerWidget::UpdateHealthBar(const float Percent)
 {
 	HealthBar->SetPercent(Percent);
@@ -32,10 +44,5 @@ void UPlayerWidget::UpdatePostureBar(const float Percent)
 
 	PostureBar->SetPercent(Percent);
 
-	if (Percent <= 0.0f)
-	{
-		PostureBar->SetColorAndOpacity(FLinearColor::Transparent);
-		PostureCenterImage->SetColorAndOpacity(FLinearColor::Transparent);
-		bTakeDamageHealth = false;
-	}
+	PosturePercent = Percent;
 }
