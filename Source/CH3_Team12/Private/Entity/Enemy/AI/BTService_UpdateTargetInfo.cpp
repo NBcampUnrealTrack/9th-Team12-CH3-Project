@@ -5,6 +5,7 @@
 
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "NavigationSystem.h"
 
 UBTService_UpdateTargetInfo::UBTService_UpdateTargetInfo()
 {
@@ -27,6 +28,7 @@ void UBTService_UpdateTargetInfo::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	AActor* TargetActor = Cast<AActor>(BlackboardComponent->GetValueAsObject(TargetActorKeyName));
 	if (!TargetActor)
 	{
+		BlackboardComponent->SetValueAsBool(CanStartCombatKeyName, false);
 		return;
 	}
 
@@ -47,6 +49,18 @@ void UBTService_UpdateTargetInfo::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 
 	const float DistanceToTarget = FVector::Dist(PawnLocation, TargetLocation);
 	BlackboardComponent->SetValueAsFloat(DistanceToTargetKeyName, DistanceToTarget);
+
+	bool bCanStartCombat = false;
+	if (const UNavigationSystemV1* NavigationSystem = UNavigationSystemV1::GetCurrent(GetWorld()))
+	{
+		FNavLocation ProjectedLocation;
+		bCanStartCombat = NavigationSystem->ProjectPointToNavigation(
+			TargetLocation,
+			ProjectedLocation,
+			NavMeshProjectionExtent
+		);
+	}
+	BlackboardComponent->SetValueAsBool(CanStartCombatKeyName, bCanStartCombat);
 
 	const FVector Direction = TargetLocation - PawnLocation;
 	const FRotator TargetRotation = Direction.Rotation();

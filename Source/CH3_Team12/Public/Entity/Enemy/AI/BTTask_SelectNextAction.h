@@ -33,7 +33,16 @@ protected:
 	FName TargetActorKeyName = TEXT("TargetActor");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
-	float FarSpecialAttackDistance = 2400.f;
+	FName OpeningAttackCheckedKeyName = TEXT("bOpeningAttackChecked");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName OpeningAttackSelectedKeyName = TEXT("bOpeningAttackSelected");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName CanStartCombatKeyName = TEXT("bCanStartCombat");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	float FarSpecialAttackDistance = 1500.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	int32 NormalAttack0Weight = 40;

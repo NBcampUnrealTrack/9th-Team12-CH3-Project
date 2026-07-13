@@ -124,7 +124,8 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		TargetActor->GetActorLocation()
 	);
 
-	if (DistanceToTarget > AttackRange)
+	const bool bIsFarStrongAttack = SelectedAction == 2 && SelectedPattern == 1;
+	if (!bIsFarStrongAttack && DistanceToTarget > AttackRange)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: RangeShort"));
 		return false;

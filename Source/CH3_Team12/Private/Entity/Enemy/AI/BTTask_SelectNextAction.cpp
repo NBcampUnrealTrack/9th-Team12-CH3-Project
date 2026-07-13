@@ -19,6 +19,11 @@ EBTNodeResult::Type UBTTask_SelectNextAction::ExecuteTask(UBehaviorTreeComponent
 		return EBTNodeResult::Failed;
 	}
 
+	if (!BlackboardComponent->GetValueAsBool(CanStartCombatKeyName))
+	{
+		return EBTNodeResult::Failed;
+	}
+
 	float DistanceToTarget = BlackboardComponent->GetValueAsFloat(DistanceToTargetKeyName);
 
 	AAIController* AIController = OwnerComp.GetAIOwner();
@@ -37,13 +42,22 @@ EBTNodeResult::Type UBTTask_SelectNextAction::ExecuteTask(UBehaviorTreeComponent
 
 	int32 SelectedAction = 1;
 	int32 SelectedPattern = 0;
+	const bool bOpeningAttackChecked = BlackboardComponent->GetValueAsBool(OpeningAttackCheckedKeyName);
+	BlackboardComponent->SetValueAsBool(OpeningAttackSelectedKeyName, false);
 
-	if (DistanceToTarget >= FarSpecialAttackDistance)
+	bool bUseOpeningAttack = false;
+	if (!bOpeningAttackChecked)
 	{
-		SelectedAction = 2;
-		SelectedPattern = 1;
+		if (DistanceToTarget >= FarSpecialAttackDistance)
+		{
+			SelectedAction = 2;
+			SelectedPattern = 1;
+			BlackboardComponent->SetValueAsBool(OpeningAttackSelectedKeyName, true);
+			bUseOpeningAttack = true;
+		}
 	}
-	else
+
+	if (!bUseOpeningAttack)
 	{
 		const int32 TotalWeight = NormalAttack0Weight + NormalAttack1Weight + StrongAttack0Weight;
 		if (TotalWeight <= 0)
@@ -69,6 +83,7 @@ EBTNodeResult::Type UBTTask_SelectNextAction::ExecuteTask(UBehaviorTreeComponent
 			SelectedPattern = 0;
 		}
 	}
+
 
 	BlackboardComponent->SetValueAsInt(SelectedActionKeyName, SelectedAction);
 	BlackboardComponent->SetValueAsInt(SelectedPatternKeyName, SelectedPattern);

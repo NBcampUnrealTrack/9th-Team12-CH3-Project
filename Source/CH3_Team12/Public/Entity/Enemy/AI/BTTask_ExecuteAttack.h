@@ -33,6 +33,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	FName SelectedPatternKeyName = TEXT("SelectedPattern");
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName OpeningAttackSelectedKeyName = TEXT("bOpeningAttackSelected");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName OpeningAttackCheckedKeyName = TEXT("bOpeningAttackChecked");
+
 private:
 	UPROPERTY()
 	TObjectPtr<UBehaviorTreeComponent> CachedOwnerComp;

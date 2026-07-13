@@ -87,6 +87,15 @@ void UBTTask_ExecuteAttack::HandleAttackFinished()
 	UBehaviorTreeComponent* OwnerComp = CachedOwnerComp;
 	CachedOwnerComp = nullptr;
 
+	if (UBlackboardComponent* BlackboardComponent = OwnerComp->GetBlackboardComponent())
+	{
+		if (BlackboardComponent->GetValueAsBool(OpeningAttackSelectedKeyName))
+		{
+			BlackboardComponent->SetValueAsBool(OpeningAttackCheckedKeyName, true);
+			BlackboardComponent->SetValueAsBool(OpeningAttackSelectedKeyName, false);
+		}
+	}
+
 	FinishLatentTask(*OwnerComp, EBTNodeResult::Succeeded);
 }
 

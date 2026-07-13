@@ -27,5 +27,11 @@ protected:
 	FName DistanceToTargetKeyName = TEXT("DistanceToTarget");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName CanStartCombatKeyName = TEXT("bCanStartCombat");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FVector NavMeshProjectionExtent = FVector(100.f, 100.f, 300.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	float RotationInterpSpeed = 25.f;
 };
