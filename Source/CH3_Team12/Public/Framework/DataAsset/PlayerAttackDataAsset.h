@@ -90,7 +90,8 @@ enum class EAttackType : uint8
 	Light,
 	Heavy,
 	Jump,
-	Dodge
+	Dodge,
+	Execution
 };
 
 UCLASS(BlueprintType)
@@ -114,4 +115,8 @@ public:
 	// 회피공격
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FAttackDefinition DodgeAttack;
+	
+	// 처형
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FAttackDefinition ExecutionAttack;
 };

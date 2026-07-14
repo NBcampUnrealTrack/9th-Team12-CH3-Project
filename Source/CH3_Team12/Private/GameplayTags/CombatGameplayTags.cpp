@@ -63,6 +63,11 @@ namespace CombatTags
 	);
 	
 	UE_DEFINE_GAMEPLAY_TAG(
+		State_Hit_Executed,
+		TEXT("State.Hit.Executed")
+	);
+	
+	UE_DEFINE_GAMEPLAY_TAG(
 		State_Action_Equipping,
 		TEXT("State.Action.Equipping")
 	);

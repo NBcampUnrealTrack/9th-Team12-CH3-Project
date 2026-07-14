@@ -6,6 +6,7 @@
 #include "Framework/DataAsset/PlayerAttackDataAsset.h"
 #include "PlayerAttackComponent.generated.h"
 
+class AEnemyCharacterBase;
 class APlayerCharacterBase;
 class UStateTagComponent;
 class UPlayerAttributeComponent;
@@ -69,6 +70,16 @@ private:
 		UAnimMontage* Montage,
 		bool bInterrupted);
 	
+	// execution
+	void StartExecution();
+	void RegisterEnemy(AEnemyCharacterBase* Enemy);
+	UPROPERTY()
+	TWeakObjectPtr<AEnemyCharacterBase> ExecutableEnemy;
+	
+	void OnEnemyPostureBroken();
+	void OnEnemyPostureRecovered();
+	void OnEnemyDeath();
+	bool CanExecution() const;
 private:
 	// Components
 	UPROPERTY()
@@ -91,7 +102,6 @@ private:
 	/** 현재 재생중인 몽타주 */
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentAttackMontage;
-	
 	
 	/** 현재 콤보 번호 */
 	int32 ComboIndex = 0;

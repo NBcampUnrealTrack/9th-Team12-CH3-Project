@@ -7,6 +7,7 @@
 #include "Interface/AnimationAttackInterface.h"
 #include "EnemyCharacterBase.generated.h"
 
+class UEnemyExecutionDataAsset;
 class UAnimMontage;
 class UStateTagComponent;
 class UEnemyAttackComponent;
@@ -33,6 +34,8 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
+	const UEnemyExecutionDataAsset* GetExecutionData() const { return ExecutionData; }
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
@@ -58,6 +61,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
 	float DestroyTime = 10.0f;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	TObjectPtr<UEnemyExecutionDataAsset> ExecutionData;
 protected:
 	UFUNCTION()
 	void HandlePostureBroken();
