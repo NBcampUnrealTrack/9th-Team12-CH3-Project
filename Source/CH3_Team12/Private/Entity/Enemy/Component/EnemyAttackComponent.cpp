@@ -196,7 +196,17 @@ void UEnemyAttackComponent::CancelAttack()
 		UAnimInstance* AnimInstance = OwnerMesh->GetAnimInstance();
 		if (AnimInstance)
 		{
-			AnimInstance->Montage_Stop(0.2f);
+			const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
+			if (AttackAnimationData)
+			{
+				UAnimMontage* CurrentAttackMontage = AttackAnimationData->AttackMontageSet.AttackMontage;
+				if (CurrentAttackMontage
+					&& AnimInstance->Montage_IsPlaying(CurrentAttackMontage)
+					)
+				{
+					AnimInstance->Montage_Stop(0.2f, CurrentAttackMontage);
+				}
+			}
 		}
 	}
 	
