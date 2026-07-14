@@ -28,10 +28,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	
-	// Input
 	void DoStartJump(const FInputActionValue& Value);
 	void DoStopJump(const FInputActionValue& Value);
+	void CommitJump();
 
 	void DoMove(const FInputActionValue& Value);
 	void DoStopMove();
@@ -47,14 +46,13 @@ public:
 	void OnDodgeSprintPressed(const FInputActionValue& Value);
 	void OnDodgeSprintReleased(const FInputActionValue& Value);
 	void CancelDodgeForPostureBreak();
-	FRotator GetLockOnDodgeBaseRotation() const;
-
+	bool TryConsumeBufferedDodge();
+	FVector GetDodgeWorldDirectionFromLastInput() const;
+	
 	// Getter
 	FORCEINLINE float GetNormalWalkSpeed() const { return NormalWalkSpeed; }
 	FORCEINLINE float GetSprintSpeed() const { return SprintSpeed; }
 	FORCEINLINE FVector2D GetLastMovementInput() const { return LastMovementInput; }
-
-	FVector GetDodgeWorldDirectionFromLastInput() const;
 
 	void RefreshMovementSettings();
 
@@ -107,6 +105,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentDodgeMontage;
 
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> CurrentJumpStartMontage;
+	
 	bool ShouldUseDirectionalDodge() const;
 	
 	bool TryStartDodge();
@@ -115,19 +116,15 @@ private:
 	bool bDodgeSprintHeld = false;
 	bool bWantsSprintAfterDodge = false;
 	
-private:
 	bool bBufferedDodgeInput = false;
 	float BufferedDodgeInputTime = 0.0f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Dodge|Buffer")
 	float DodgeInputBufferDuration = 0.2f;
 
-private:
 	void BufferDodgeInput();
 	bool HasValidBufferedDodgeInput() const;
 	void ClearBufferedDodgeInput();
-
-public:
-	bool TryConsumeBufferedDodge();
 	
+	bool CanStartJump() const;
 };
