@@ -52,6 +52,8 @@ public:
 	// Getter
 	FORCEINLINE float GetNormalWalkSpeed() const { return NormalWalkSpeed; }
 	FORCEINLINE float GetSprintSpeed() const { return SprintSpeed; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Player|Locomotion|Input")
 	FORCEINLINE FVector2D GetLastMovementInput() const { return LastMovementInput; }
 
 	void RefreshMovementSettings();
