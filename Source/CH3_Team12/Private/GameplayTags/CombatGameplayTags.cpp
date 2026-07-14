@@ -46,6 +46,11 @@ namespace CombatTags
 		State_Movement_Locked,
 		"State.Movement.Locked"
 	);
+	
+	UE_DEFINE_GAMEPLAY_TAG(
+		State_Movement_JumpStarting,
+		"State.Movement.JumpStarting"
+	);
 
 	UE_DEFINE_GAMEPLAY_TAG(
 		CombatTags::State_Hit_PostureBroken,
