@@ -5,6 +5,9 @@
 #include "UObject/Object.h"
 #include "InventoryPresenter.generated.h"
 
+class UInventoryItemWidget;
+class UItemInstance;
+class UPlayerItemUseComponent;
 class UPlayerAttributeComponent;
 class UPlayerInventoryComponent;
 class UTexture2D;
@@ -15,21 +18,23 @@ struct CH3_TEAM12_API FInventoryItemData
 {
 	GENERATED_BODY()
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	FText Name;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	UTexture2D* Icon;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	int32 Count;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	int32 MaxCount;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY()
 	FText Description;
+
+	UPROPERTY()
+	TObjectPtr<UItemInstance> ItemInstance;
 };
 
 /**
@@ -45,11 +50,15 @@ public:
 	virtual void Dispose() override;
 
 private:
-	UPROPERTY()
 	TWeakObjectPtr<UInventoryWidget> InventoryWidget;
 
 	UPROPERTY()
-	TMap<FName, FInventoryItemData> InventoryItemDataMap;
+	TMap<FPrimaryAssetId, FInventoryItemData> InventoryItemDataMap;
+
+	UPROPERTY()
+	TMap<FPrimaryAssetId, TObjectPtr<UInventoryItemWidget>> InventoryItemWidgetMap;
+
+	FPrimaryAssetId SelectedItemId;
 
 	UFUNCTION()
 	void HandleModelHealthChanged(float CurrentHealth, float MaxHealth);
@@ -58,11 +67,20 @@ private:
 	void UpdateHealthBar(float CurrentHealth, float MaxHealth, bool bImmediately = false);
 
 	UFUNCTION()
-	void HandleInventoryItemClicked(const FText& ItemName);
+	void HandleInventoryItemLeftClicked(const FPrimaryAssetId& ItemId);
+
+	UFUNCTION()
+	void HandleInventoryItemRightClicked(const FPrimaryAssetId& ItemId);
+
+	UFUNCTION()
+	void HandleItemChanged(UItemInstance* ItemInstance);
 
 	UFUNCTION()
 	UPlayerAttributeComponent* GetPlayerAttributeComponent() const;
 
 	UFUNCTION()
 	UPlayerInventoryComponent* GetPlayerInventoryComponent() const;
+
+	UFUNCTION()
+	UPlayerItemUseComponent* GetPlayerItemUseComponent() const;
 };

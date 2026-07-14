@@ -5,6 +5,7 @@
 #include "Entity/Player/PlayerAttributeComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerInventoryComponent.h"
+#include "Entity/Player/PlayerItemUseComponent.h"
 #include "Framework/DataAsset/ItemDataAsset.h"
 #include "Framework/GameMode/KatanaPlayerController.h"
 #include "GameFramework/PlayerController.h"
@@ -17,19 +18,20 @@ void UInventoryPresenter::Initialize(UInventoryWidget* InWidget)
 	if (!InventoryWidget.IsValid())
 		return;
 
-	if (const UPlayerInventoryComponent* PlayerInventoryComponent = GetPlayerInventoryComponent())
+	if (UPlayerInventoryComponent* PlayerInventoryComponent = GetPlayerInventoryComponent())
 	{
 		const TArray<TObjectPtr<UItemInstance>>& Items = PlayerInventoryComponent->GetItems();
 
 		InventoryWidget->ClearItemWidgets();
 		InventoryItemDataMap.Empty();
+		InventoryItemWidgetMap.Empty();
 
 		for (auto Item : Items)
 		{
 			if (!Item || Item->IsEmpty())
 				continue;
 
-			FName ItemKeyName = FName(*Item->GetItemData()->ItemName.ToString());
+			const FPrimaryAssetId& ItemId = Item->GetItemData()->GetPrimaryAssetId();
 
 			FInventoryItemData ItemData;
 			ItemData.Name = Item->GetItemData()->ItemName;
@@ -37,8 +39,9 @@ void UInventoryPresenter::Initialize(UInventoryWidget* InWidget)
 			ItemData.Count = Item->GetCount();
 			ItemData.MaxCount = Item->GetItemData()->MaxStack;
 			ItemData.Description = Item->GetItemData()->Description;
+			ItemData.ItemInstance = Item;
 
-			InventoryItemDataMap.Emplace(ItemKeyName, ItemData);
+			InventoryItemDataMap.Emplace(ItemId, ItemData);
 		}
 
 		for (auto InventoryItemData : InventoryItemDataMap)
@@ -47,11 +50,17 @@ void UInventoryPresenter::Initialize(UInventoryWidget* InWidget)
 			if (!Widget)
 				continue;
 
-			auto [Name, Icon, Count, MaxCount, Description] = InventoryItemData.Value;
-			Widget->UpdateData(Name, Icon, Count);
+			const FPrimaryAssetId& ItemId = InventoryItemData.Key;
+			const FInventoryItemData& ItemDataValue = InventoryItemData.Value;
+			Widget->UpdateData(ItemId, ItemDataValue.Name, ItemDataValue.Icon, ItemDataValue.Count);
 
-			Widget->OnTextButtonClicked.BindDynamic(this, &UInventoryPresenter::HandleInventoryItemClicked);
+			Widget->OnMouseLeftClicked.BindDynamic(this, &UInventoryPresenter::HandleInventoryItemLeftClicked);
+			Widget->OnMouseRightClicked.BindDynamic(this, &UInventoryPresenter::HandleInventoryItemRightClicked);
+
+			InventoryItemWidgetMap.Emplace(InventoryItemData.Key, Widget);
 		}
+
+		PlayerInventoryComponent->OnInventoryChanged.AddUObject(this, &UInventoryPresenter::HandleItemChanged);
 	}
 
 	if (UPlayerAttributeComponent* PlayerAttributeComponent = GetPlayerAttributeComponent())
@@ -65,6 +74,11 @@ void UInventoryPresenter::Initialize(UInventoryWidget* InWidget)
 
 void UInventoryPresenter::Dispose()
 {
+	if (UPlayerInventoryComponent* PlayerInventoryComponent = GetPlayerInventoryComponent())
+	{
+		PlayerInventoryComponent->OnInventoryChanged.RemoveAll(this);
+	}
+
 	if (UPlayerAttributeComponent* PlayerAttributeComponent = GetPlayerAttributeComponent())
 	{
 		PlayerAttributeComponent->OnHealthChanged.RemoveDynamic(this, &UInventoryPresenter::HandleModelHealthChanged);
@@ -78,7 +92,7 @@ void UInventoryPresenter::HandleModelHealthChanged(const float CurrentHealth, co
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void UInventoryPresenter::UpdateHealthBar(const float CurrentHealth, const float MaxHealth,
-                                                   const bool bImmediately)
+                                          const bool bImmediately)
 {
 	if (MaxHealth > 0.0f)
 	{
@@ -87,14 +101,60 @@ void UInventoryPresenter::UpdateHealthBar(const float CurrentHealth, const float
 	}
 }
 
-void UInventoryPresenter::HandleInventoryItemClicked(const FText& ItemName)
+void UInventoryPresenter::HandleInventoryItemLeftClicked(const FPrimaryAssetId& ItemId)
 {
-	const FName ItemNameName = FName(ItemName.ToString());
-	if (!InventoryItemDataMap.Contains(ItemNameName))
+	if (!InventoryItemDataMap.Contains(ItemId))
 		return;
 
-	auto [Name, Icon, Count, MaxCount, Description] = InventoryItemDataMap[ItemNameName];
-	InventoryWidget->UpdateDetailWidget(Name, Icon, Count, MaxCount, Description);
+	SelectedItemId = ItemId;
+
+	const auto& ItemDataValue = InventoryItemDataMap[ItemId];
+	InventoryWidget->UpdateDetailWidget(ItemDataValue.Name, ItemDataValue.Icon, ItemDataValue.Count,
+	                                    ItemDataValue.MaxCount, ItemDataValue.Description);
+}
+
+void UInventoryPresenter::HandleInventoryItemRightClicked(const FPrimaryAssetId& ItemId)
+{
+	if (!InventoryItemDataMap.Contains(ItemId))
+		return;
+
+	UPlayerItemUseComponent* PlayerItemUseComponent = GetPlayerItemUseComponent();
+	if (!PlayerItemUseComponent)
+		return;
+
+	PlayerItemUseComponent->UseItem(InventoryItemDataMap[ItemId].ItemInstance);
+}
+
+void UInventoryPresenter::HandleItemChanged(UItemInstance* ItemInstance)
+{
+	if (!ItemInstance || !ItemInstance->GetItemData()) return;
+
+	const FPrimaryAssetId ItemId = ItemInstance->GetItemData()->GetPrimaryAssetId();
+
+	FInventoryItemData* ItemDataPtr = InventoryItemDataMap.Find(ItemId);
+	TObjectPtr<UInventoryItemWidget>* WidgetPtr = InventoryItemWidgetMap.Find(ItemId);
+
+	if (!ItemDataPtr || !WidgetPtr || !*WidgetPtr) return;
+
+	if (ItemInstance->GetCount() <= 0) // 0이하인 경우 삭제
+	{
+		(*WidgetPtr)->RemoveFromParent();
+
+		InventoryItemDataMap.Remove(ItemId);
+		InventoryItemWidgetMap.Remove(ItemId);
+		return;
+	}
+
+	ItemDataPtr->Count = ItemInstance->GetCount();
+	ItemDataPtr->ItemInstance = ItemInstance;
+
+	(*WidgetPtr)->UpdateData(ItemId, ItemDataPtr->Name, ItemDataPtr->Icon, ItemDataPtr->Count);
+
+	if (ItemId == SelectedItemId)
+	{
+		InventoryWidget->UpdateDetailWidget(ItemDataPtr->Name, ItemDataPtr->Icon, ItemDataPtr->Count,
+										ItemDataPtr->MaxCount, ItemDataPtr->Description);
+	}
 }
 
 UPlayerAttributeComponent* UInventoryPresenter::GetPlayerAttributeComponent() const
@@ -135,4 +195,24 @@ UPlayerInventoryComponent* UInventoryPresenter::GetPlayerInventoryComponent() co
 		return nullptr;
 
 	return PlayerCharacter->GetInventoryComponent();
+}
+
+UPlayerItemUseComponent* UInventoryPresenter::GetPlayerItemUseComponent() const
+{
+	if (!GetWorld())
+		return nullptr;
+
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (!PlayerController)
+		return nullptr;
+
+	const AKatanaPlayerController* KatanaPlayerController = Cast<AKatanaPlayerController>(PlayerController);
+	if (!KatanaPlayerController)
+		return nullptr;
+
+	const APlayerCharacterBase* PlayerCharacter = KatanaPlayerController->GetPlayerCharacter();
+	if (!PlayerCharacter)
+		return nullptr;
+
+	return PlayerCharacter->GetItemUseComponent();
 }

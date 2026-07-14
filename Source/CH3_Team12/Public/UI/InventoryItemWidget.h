@@ -16,10 +16,11 @@ class CH3_TEAM12_API UInventoryItemWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	FOnTextButtonClicked OnTextButtonClicked;
+	FOnItemIdClicked OnMouseLeftClicked;
+	FOnItemIdClicked OnMouseRightClicked;
 
 	UFUNCTION()
-	void UpdateData(const FText& Name, UTexture2D* Icon, int32 Count);
+	void UpdateData(const FPrimaryAssetId& InItemId, const FText& Name, UTexture2D* Icon, int32 Count);
 
 protected:
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -33,6 +34,9 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> TxtName;
+
+	UPROPERTY()
+	FPrimaryAssetId ItemId;
 
 	void HandleLeftClick();
 	void HandleRightClick();
