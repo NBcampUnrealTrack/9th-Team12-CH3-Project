@@ -13,12 +13,13 @@
 #include "GameFramework/Character.h"
 #include "Framework/DataAsset/EnemyAttackDataAsset.h"
 #include "Kismet/GameplayStatics.h"
+#include "Combat/CombatTypes.h"
+#include "GameplayTags/CombatGameplayTags.h"
 #include "Entity/Player/PlayerDefenseComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
-#include "Combat/CombatTypes.h"
-#include "Entity/Enemy/EnemyCharacterBase.h"
-#include "GameplayTags/CombatGameplayTags.h"
 #include "Entity/Player/StateTagComponent.h"
+#include "Entity/Enemy/EnemyCharacterBase.h"
+#include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 
 // Sets default values for this component's properties
 UEnemyAttackComponent::UEnemyAttackComponent()
@@ -45,6 +46,7 @@ void UEnemyAttackComponent::BeginPlay()
 	}
 	
 	StateComponent = OwnerCharacter->GetStateTagComponent();
+	AttributeComponent = OwnerCharacter->GetEnemyAttributeComponent();
 
 	if (!StateComponent)
 	{
@@ -443,6 +445,11 @@ void UEnemyAttackComponent::OnAttackParried()
 		{
 			AnimInstance->Montage_Play(ParriedMontage);
 		}
+	}
+	
+	if (AttributeComponent)
+	{
+		AttributeComponent->ApplyPostureDamage(AttackAnimationData->AttackInfo.Damage);
 	}
 }
 

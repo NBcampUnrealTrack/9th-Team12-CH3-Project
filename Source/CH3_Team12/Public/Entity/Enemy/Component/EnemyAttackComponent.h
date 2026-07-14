@@ -10,6 +10,7 @@
 struct FHitResult;
 struct FHitBoxData;
 struct FAttackAnimationData;
+class UEnemyAttributeComponent;
 class UStateTagComponent;
 class UEnemyAttackDataAsset;
 class UAnimMontage;
@@ -94,6 +95,9 @@ protected:
 	UPROPERTY(EditAnywhere,	BlueprintReadOnly, Category = "Attack|Debug")
 	bool bUseDebugColliderDraw = true;
 private:
+	UPROPERTY()
+	TObjectPtr<UEnemyAttributeComponent> AttributeComponent;
+	
 	UPROPERTY()
 	TObjectPtr<UStateTagComponent> StateComponent;
 	
