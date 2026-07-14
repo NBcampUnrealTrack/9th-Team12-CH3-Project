@@ -381,11 +381,16 @@ void UPlayerAttackComponent::StartAttack(
 	{
 		return;
 	}
-
+	
 	CurrentAttackData = AttackInfo;
 	CurrentAttackMontage = AttackInfo->Montage;
 	ComboIndex = 0;
 	CurrentStep = &CurrentAttackData->Steps[ComboIndex];
+	
+	if (CurrentStep && CurrentStep->bRotateToInput)
+	{
+		StartAttackRotation();
+	}
 	
 	bComboWindow = false;
 	bComboBuffered = false;
@@ -530,8 +535,11 @@ void UPlayerAttackComponent::ContinueCombo()
 
 	StateComponent->AddStateTag(
 		CombatTags::State_Movement_Locked);
-
-	StartRotateForCombo();
+	
+	if (CurrentStep && CurrentStep->bRotateToInput)
+	{
+		StartAttackRotation();
+	}
 	
 	AnimInstance->Montage_SetPlayRate(
 		CurrentAttackMontage,
@@ -542,7 +550,7 @@ void UPlayerAttackComponent::ContinueCombo()
 		CurrentAttackMontage);
 }
 
-void UPlayerAttackComponent::StartRotateForCombo()
+void UPlayerAttackComponent::StartAttackRotation()
 {
 	FVector2D BufferedAttackInput = LocoMotionComponent->GetLastMovementInput();
 	

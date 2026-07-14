@@ -71,7 +71,7 @@ private:
 	bool CanContinueCombo() const;
 	void StartAttack(const FAttackDefinition* AttackInfo);
 	void ContinueCombo();
-	void StartRotateForCombo();
+	void StartAttackRotation();
 	/** 현재 장착한 무기의 AttackDataAsset */
 	const UPlayerAttackDataAsset* GetAttackData() const;
 
