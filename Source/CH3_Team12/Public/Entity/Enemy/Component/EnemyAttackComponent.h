@@ -22,6 +22,7 @@ enum class EEnemyAttackPattern : uint8
 {
 	NormalAttack_1,
 	NormalAttack_2,
+	NormalAttack_3,
 	FarStrongAttack,
 	StrongAttack_1,
 	End,
