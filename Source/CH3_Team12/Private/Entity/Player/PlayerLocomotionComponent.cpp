@@ -285,14 +285,16 @@ void UPlayerLocomotionComponent::StartDodge()
 	{
 		return;
 	}
-	
-	if (AttackComponent && AttackComponent->CanDodgeCancel())
-	{
-		AttackComponent->CancelAttackForDodge();
-	}
+
+	const bool bIsAttackDodgeCancel =
+		AttackComponent &&
+		AttackComponent->CanDodgeCancel();
+
+	const bool bUseDirectionalDodge =
+		ShouldUseDirectionalDodge(bIsAttackDodgeCancel);
 
 	const EDodgeDirection DodgeDirection =
-		ShouldUseDirectionalDodge()
+		bUseDirectionalDodge
 			? CalculateDodgeDirectionFromInput(LastMovementInput)
 			: EDodgeDirection::Forward;
 
@@ -303,6 +305,19 @@ void UPlayerLocomotionComponent::StartDodge()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("StartDodge: EvadeData invalid"));
 		return;
+	}
+
+	if (bIsAttackDodgeCancel)
+	{
+		AttackComponent->CancelAttackForDodge();
+	}
+
+	if (bUseDirectionalDodge)
+	{
+		const FRotator DodgeBaseRotation =
+			GetDodgeBaseRotation();
+
+		OwnerCharacter->SetActorRotation(DodgeBaseRotation);
 	}
 
 	if (StateComponent->HasStateTagExact(
@@ -326,9 +341,10 @@ void UPlayerLocomotionComponent::StartDodge()
 	UE_LOG(
 		LogTemp,
 		Warning,
-		TEXT("Dodge Direction: %s / Directional: %s"),
+		TEXT("Dodge Direction: %s / Directional: %s / AttackCancel: %s"),
 		*UEnum::GetValueAsString(DodgeDirection),
-		ShouldUseDirectionalDodge() ? TEXT("true") : TEXT("false")
+		bUseDirectionalDodge ? TEXT("true") : TEXT("false"),
+		bIsAttackDodgeCancel ? TEXT("true") : TEXT("false")
 	);
 
 	PlayDodgeMontage(*EvadeData);
@@ -471,7 +487,8 @@ EDodgeDirection UPlayerLocomotionComponent::CalculateDodgeDirectionFromInput(
 	return EDodgeDirection::Forward;
 }
 
-bool UPlayerLocomotionComponent::ShouldUseDirectionalDodge() const
+bool UPlayerLocomotionComponent::ShouldUseDirectionalDodge(
+	bool bIsAttackDodgeCancel) const
 {
 	if (!StateComponent)
 	{
@@ -488,7 +505,66 @@ bool UPlayerLocomotionComponent::ShouldUseDirectionalDodge() const
 			CombatTags::State_Movement_LockOn
 		);
 
-	return bIsArmed && bIsLockedOn;
+	// 무기 안 들었으면 기본적으로 방향 회피 안 씀.
+	if (!bIsArmed)
+	{
+		return false;
+	}
+
+	// 락온 중이면 기존처럼 8방향.
+	if (bIsLockedOn)
+	{
+		return true;
+	}
+
+	// 공격 후 Dodge Cancel이면 비락온이어도 8방향 허용.
+	if (bIsAttackDodgeCancel)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+FRotator UPlayerLocomotionComponent::GetDodgeBaseRotation() const
+{
+	if (!OwnerCharacter)
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	const bool bIsLockedOn =
+		StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Movement_LockOn
+		);
+
+	if (bIsLockedOn)
+	{
+		if (UPlayerCameraComponent* PlayerCameraComponent =
+			OwnerCharacter->GetPlayerCameraComponent())
+		{
+			if (AActor* LockOnTarget =
+				PlayerCameraComponent->GetCurrentLockOnTarget())
+			{
+				FVector ToTarget =
+					LockOnTarget->GetActorLocation() -
+					OwnerCharacter->GetActorLocation();
+
+				ToTarget.Z = 0.0f;
+
+				if (!ToTarget.IsNearlyZero())
+				{
+					return ToTarget.Rotation();
+				}
+			}
+		}
+	}
+
+	const FRotator ControlRotation =
+		OwnerCharacter->GetControlRotation();
+
+	return FRotator(0.0f, ControlRotation.Yaw, 0.0f);
 }
 
 bool UPlayerLocomotionComponent::TryStartDodge()

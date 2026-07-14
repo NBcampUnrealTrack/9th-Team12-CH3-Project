@@ -6,6 +6,7 @@
 #include "Entity/Enemy/AI/EnemyAIController.h"
 #include "Entity/Enemy/Component/EnemyAttackComponent.h"
 #include "Entity/Enemy/Component/EnemyDefenseComponent.h"
+#include "Entity/Enemy/Component/EnemyTransitionComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,6 +19,7 @@
 #include "BrainComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
+#include "NiagaraSystem.h"
 
 // Sets default values
 AEnemyCharacterBase::AEnemyCharacterBase()
@@ -30,6 +32,7 @@ AEnemyCharacterBase::AEnemyCharacterBase()
 	EnemyAttackComponent = CreateDefaultSubobject<UEnemyAttackComponent>(TEXT("EnemyAttackComponent"));
 	AttributeComponent = CreateDefaultSubobject<UEnemyAttributeComponent>(TEXT("AttributeComponent"));
 	EnemyDefenseComponent = CreateDefaultSubobject<UEnemyDefenseComponent>(TEXT("EnemyDefenseComponent"));
+	EnemyTransitionComponent = CreateDefaultSubobject<UEnemyTransitionComponent>(TEXT("EnemyTransitionComponent"));
 	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateTagComponent"));
 }
 
@@ -49,7 +52,7 @@ void AEnemyCharacterBase::BeginPlay()
 	// // 	MovementComponent->bUseControllerDesiredRotation = false;
 	// // 	MovementComponent->RotationRate = FRotator(0.f, 720.f, 0.f);
 	// // }
-	
+
 	AttributeComponent->OnEnemyDeath.AddDynamic(this, &AEnemyCharacterBase::OnDeath);
 	AttributeComponent->OnEnemyPostureBroken.AddDynamic(this, &AEnemyCharacterBase::HandlePostureBroken);
 }
@@ -80,14 +83,14 @@ void AEnemyCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
-float AEnemyCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
-	AController* EventInstigator, AActor* DamageCauser)
+float AEnemyCharacterBase::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent,
+                                      AController* EventInstigator, AActor* DamageCauser)
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	
+
 	// 임의로 체간 게이지는 두배로 받도록 설정
 	AttributeComponent->ApplyAttributeDamage(DamageAmount, DamageAmount * 2);
-	
+
 	return DamageAmount;
 }
 
@@ -96,7 +99,7 @@ void AEnemyCharacterBase::HandlePostureBroken()
 	EnemyAttackComponent->CancelAttack();
 	GetWorldTimerManager().ClearAllTimersForObject(this);
 	StopAILogic();
-	
+
 	PlayGroggyMontage();
 }
 
@@ -111,11 +114,11 @@ void AEnemyCharacterBase::PlayGroggyMontage()
 		{
 			return;
 		}
-		
+
 		FOnMontageEnded MontageEndedDelegate;
 		MontageEndedDelegate.BindUObject(
 			this, &AEnemyCharacterBase::OnGroggyMontageEnded);
-		
+
 		AnimInstance->Montage_Play(GroggyMontage);
 		AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, GroggyMontage);
 	}
@@ -130,33 +133,47 @@ void AEnemyCharacterBase::OnGroggyMontageEnded(UAnimMontage* Montage, bool bInte
 void AEnemyCharacterBase::OnDeath()
 {
 	StopAILogic();
-	
+
 	UCapsuleComponent* CollisionComponent = GetCapsuleComponent();
 	if (CollisionComponent)
 	{
 		CollisionComponent->SetCollisionProfileName(TEXT("NoCollision"));
 	}
-	
+
 	EnemyAttackComponent->CancelAttack();
 	GetWorldTimerManager().ClearAllTimersForObject(this);
 	PlayDeathMontage();
+	StartDeathTransition();
+	SetEnemyDestroyTimer();
 }
+
 
 void AEnemyCharacterBase::PlayDeathMontage()
 {
 	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
-	if (SkeletalMeshComponent)
+	if (!SkeletalMeshComponent)
 	{
-		UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
-		if (AnimInstance == nullptr
-			|| DeadMontage == nullptr)
-		{
-			SetEnemyDestroyTimer();
-			return;
-		}
-		
-		AnimInstance->Montage_Play(DeadMontage);
-		SetEnemyDestroyTimer();
+		return;
+	}
+
+	UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
+	if (!AnimInstance || !DeadMontage)
+	{
+		return;
+	}
+
+	AnimInstance->Montage_Play(DeadMontage);
+}
+
+void AEnemyCharacterBase::StartDeathTransition()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Enemy Death Transition Start / Mesh: %s / VFX: %s"),
+	       *GetNameSafe(GetMesh()),
+	       *GetNameSafe(DeathDisintegrationVFX.Get()));
+
+	if (EnemyTransitionComponent)
+	{
+		EnemyTransitionComponent->PlayDeathTransition(GetMesh(), DeathDisintegrationVFX);
 	}
 }
 
@@ -167,10 +184,10 @@ void AEnemyCharacterBase::SetEnemyDestroyTimer()
 	{
 		return;
 	}
-	
+
 	FTimerHandle DestroyHandle;
 	FTimerManager& WorldTimerManager = World->GetTimerManager();
-	WorldTimerManager.SetTimer(DestroyHandle, this, &AEnemyCharacterBase::DestroyEnemy, DestroyTime, false);	
+	WorldTimerManager.SetTimer(DestroyHandle, this, &AEnemyCharacterBase::DestroyEnemy, DestroyTime, false);
 }
 
 void AEnemyCharacterBase::DestroyEnemy()
@@ -226,7 +243,7 @@ void AEnemyCharacterBase::AttackAnimationEnd()
 void AEnemyCharacterBase::AttackHitCheckStart(int32 HitIndex)
 {
 	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. AttackComponent is invalid."));
-	
+
 	if (EnemyAttackComponent)
 	{
 		EnemyAttackComponent->StartHitCheck();
@@ -236,7 +253,7 @@ void AEnemyCharacterBase::AttackHitCheckStart(int32 HitIndex)
 void AEnemyCharacterBase::AttackHitCheckTick()
 {
 	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. AttackComponent is invalid."));
-	
+
 	if (EnemyAttackComponent)
 	{
 		EnemyAttackComponent->AttackTrace();
@@ -246,7 +263,7 @@ void AEnemyCharacterBase::AttackHitCheckTick()
 void AEnemyCharacterBase::AttackHitCheckEnd()
 {
 	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. AttackComponent is invalid."));
-	
+
 	if (EnemyAttackComponent)
 	{
 		EnemyAttackComponent->EndHitCheck();

@@ -7,12 +7,16 @@
 #include "Interface/AnimationAttackInterface.h"
 #include "EnemyCharacterBase.generated.h"
 
+
+class UNiagaraSystem;
+class UEnemyExecutionDataAsset;
 class UAnimMontage;
 class UStateTagComponent;
 class UEnemyAttackComponent;
 class UBehaviorTree;
 class UEnemyAttributeComponent;
 class UEnemyDefenseComponent;
+class UEnemyTransitionComponent;
 
 UCLASS()
 class CH3_TEAM12_API AEnemyCharacterBase : public ACharacter, public IAnimationAttackInterface
@@ -22,70 +26,84 @@ class CH3_TEAM12_API AEnemyCharacterBase : public ACharacter, public IAnimationA
 public:
 	// Sets default values for this character's properties
 	AEnemyCharacterBase();
-	
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
+
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
+	const UEnemyExecutionDataAsset* GetExecutionData() const { return ExecutionData; }
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
 	TObjectPtr<UEnemyAttackComponent> EnemyAttackComponent;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UStateTagComponent> StateTagComponent;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UEnemyAttributeComponent> AttributeComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UEnemyDefenseComponent> EnemyDefenseComponent;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UEnemyTransitionComponent> EnemyTransitionComponent;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
 	TObjectPtr<UAnimMontage> GroggyMontage;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
 	TObjectPtr<UAnimMontage> DeadMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
-	float DestroyTime = 10.0f;
+	float DestroyTime = 30.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Enemy | VFX")
+	TObjectPtr<UNiagaraSystem> DeathDisintegrationVFX;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	TObjectPtr<UEnemyExecutionDataAsset> ExecutionData;
+  
 protected:
 	UFUNCTION()
 	void HandlePostureBroken();
 	void PlayGroggyMontage();
 	void OnGroggyMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	
+
 	UFUNCTION()
 	void OnDeath();
-	
+
 	void PlayDeathMontage();
+	void StartDeathTransition();
 	void SetEnemyDestroyTimer();
-	
+
 	virtual void DestroyEnemy();
-	
+
 	void StopAILogic();
 	void ResumeAILogic();
-	
+
 public:
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 
 	UFUNCTION(BlueprintCallable)
 	UEnemyAttackComponent* GetEnemyAttackComponent() const { return EnemyAttackComponent; }
-	UStateTagComponent* GetStateTagComponent() const { return StateTagComponent;}
-	UEnemyAttributeComponent* GetEnemyAttributeComponent() const { return AttributeComponent;}
+
+	UStateTagComponent* GetStateTagComponent() const { return StateTagComponent; }
+	UEnemyAttributeComponent* GetEnemyAttributeComponent() const { return AttributeComponent; }
 	UEnemyDefenseComponent* GetEnemyDefenseComponent() const { return EnemyDefenseComponent; }
-	
+
 	// Attack Animation Interface's Section
-public:
 	virtual void AttackAnimationEnd() override;
 	virtual void AttackHitCheckStart(int32 HitIndex) override;
 	virtual void AttackHitCheckTick() override;
