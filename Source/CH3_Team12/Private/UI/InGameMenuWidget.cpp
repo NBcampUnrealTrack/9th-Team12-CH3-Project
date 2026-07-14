@@ -13,6 +13,11 @@ USoundSettingsWidget* UInGameMenuWidget::GetSoundSettingsWidget() const
 	return SoundSettingsWidget.Get();
 }
 
+UGraphicSettingsWidget* UInGameMenuWidget::GetGraphicSettingsWidget() const
+{
+	return GraphicSettingsWidget.Get();
+}
+
 void UInGameMenuWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
@@ -20,8 +25,8 @@ void UInGameMenuWidget::NativeOnInitialized()
 	BtnInventory->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnInventoryClicked);
 	BtnSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnSettingsClicked);
 
-	BtnChildGraphicsSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnChildGraphicsSettingsClicked);
 	BtnChildSoundSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnChildSoundSettingsClicked);
+	BtnChildGraphicsSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnChildGraphicsSettingsClicked);
 }
 
 void UInGameMenuWidget::HandleBtnInventoryClicked()
@@ -44,11 +49,13 @@ void UInGameMenuWidget::HandleBtnChildGraphicsSettingsClicked()
 	SettingsWidgetSwitcherChanged(1);
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void UInGameMenuWidget::WidgetSwitcherChanged(const int32 ActiveWidgetIndex)
 {
 	WidgetSwitcher->SetActiveWidgetIndex(ActiveWidgetIndex);
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void UInGameMenuWidget::SettingsWidgetSwitcherChanged(const int32 ActiveWidgetIndex)
 {
 	SettingsWidgetSwitcher->SetActiveWidgetIndex(ActiveWidgetIndex);

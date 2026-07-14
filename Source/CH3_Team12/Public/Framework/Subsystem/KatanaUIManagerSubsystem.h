@@ -7,6 +7,7 @@
 #include "UObject/ScriptInterface.h"
 #include "KatanaUIManagerSubsystem.generated.h"
 
+class UGraphicSettingsWidget;
 class UEnemyAttributeComponent;
 class UInventoryWidget;
 class USoundSettingsWidget;
@@ -54,6 +55,9 @@ public:
 	void RegisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
 	void UnregisterSoundSettingsWidget(USoundSettingsWidget* InWidget);
 
+	void RegisterGraphicSettingsWidget(UGraphicSettingsWidget* InWidget);
+	void UnregisterGraphicSettingsWidget(UGraphicSettingsWidget* InWidget);
+
 private:
 	const FName MainMenuWidgetName = FName("MainMenuWidget");
 	const FName MainMenuSettingsWidgetName = FName("MainMenuSettingsWidget");
@@ -66,6 +70,7 @@ private:
 
 	const FName InventoryWidgetName = FName("InventoryWidget");
 	const FName SoundSettingsWidgetName = FName("SoundSettingsWidget");
+	const FName GraphicSettingsWidgetName = FName("GraphicSettingsWidget");
 
 	UPROPERTY()
 	TSoftObjectPtr<UUIDataAsset> UIDataAsset = nullptr;

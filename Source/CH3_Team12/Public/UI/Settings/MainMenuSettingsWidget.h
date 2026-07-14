@@ -5,6 +5,7 @@
 #include "UI/UICommonTypes.h"
 #include "MainMenuSettingsWidget.generated.h"
 
+class UGraphicSettingsWidget;
 class UButton;
 class USoundSettingsWidget;
 
@@ -17,12 +18,10 @@ class CH3_TEAM12_API UMainMenuSettingsWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	//닫기 키 입력 추가
-	//단축키로 닫기 키를 누르게 유도 내부 들어가서는 결정과 뒤로 를 표시
-
 	FOnButtonClicked OnBtnBackClicked;
 
 	USoundSettingsWidget* GetSoundSettings() const;
+	UGraphicSettingsWidget* GetGraphicSettings() const;
 
 protected:
 	UFUNCTION()
@@ -36,9 +35,13 @@ private:
 	TObjectPtr<UButton> BtnSoundSettings;
 
 	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UButton> BtnGraphicSettings;
+
+	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<USoundSettingsWidget> SoundSettingsWidget;
 
-	//TODO GraphicSettingsWidget 추가
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UGraphicSettingsWidget> GraphicSettingsWidget;
 
 	UFUNCTION()
 	void HandleBtnBackClicked();
@@ -47,5 +50,11 @@ private:
 	void HandleBtnSoundSettingsClicked();
 
 	UFUNCTION()
+	void HandleBtnGraphicSettingsClicked();
+
+	UFUNCTION()
 	void HandleVisibilitySoundSettingsChanged(ESlateVisibility InVisibility);
+
+	UFUNCTION()
+	void HandleVisibilityGraphicSettingsChanged(ESlateVisibility InVisibility);
 };

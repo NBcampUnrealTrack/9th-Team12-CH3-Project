@@ -23,6 +23,7 @@ void UMainMenuSettingsPresenter::Initialize(UMainMenuSettingsWidget* InWidget)
 	}
 
 	UIManager->RegisterSoundSettingsWidget(MainMenuSettingsWidget->GetSoundSettings());
+	UIManager->RegisterGraphicSettingsWidget(MainMenuSettingsWidget->GetGraphicSettings());
 }
 
 void UMainMenuSettingsPresenter::Dispose()

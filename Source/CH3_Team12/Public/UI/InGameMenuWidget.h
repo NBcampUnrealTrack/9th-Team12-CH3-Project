@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "InGameMenuWidget.generated.h"
 
+class UGraphicSettingsWidget;
 class UInventoryWidget;
 class USoundSettingsWidget;
 class UWidgetSwitcher;
@@ -19,6 +20,7 @@ class CH3_TEAM12_API UInGameMenuWidget : public UUserWidget
 public:
 	UInventoryWidget* GetInventoryWidget() const;
 	USoundSettingsWidget* GetSoundSettingsWidget() const;
+	UGraphicSettingsWidget* GetGraphicSettingsWidget() const;
 
 protected:
 	UFUNCTION()
@@ -51,7 +53,8 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<USoundSettingsWidget> SoundSettingsWidget;
 
-	//TODO 그래픽 설정 추가;
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UGraphicSettingsWidget> GraphicSettingsWidget;
 
 	UFUNCTION()
 	void HandleBtnInventoryClicked();
