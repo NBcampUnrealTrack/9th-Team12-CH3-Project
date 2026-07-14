@@ -83,6 +83,10 @@ private:
 	
 	UPROPERTY()
 	TWeakObjectPtr<AEnemyCharacterBase> ExecutionTarget;
+	
+	void OnExecutionMontageEnded(
+		UAnimMontage* Montage,
+		bool bInterrupted);
 private:
 	// Components
 	UPROPERTY()

@@ -23,4 +23,5 @@ namespace CombatTags
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Action_Equipping);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Action_UsingItem);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Action_Executing);
 }

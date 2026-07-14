@@ -298,6 +298,7 @@ bool UPlayerAttackComponent::CanStartAttack() const
 	BlockTags.AddTag(CombatTags::State_Hit_Dead);
 	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
 	BlockTags.AddTag(CombatTags::State_Action_UsingItem);
+	BlockTags.AddTag(CombatTags::State_Action_Executing);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }
@@ -528,28 +529,53 @@ void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
 		return;
 	}
 	
+	StateComponent->AddStateTag(CombatTags::State_Action_Executing);
+	
 	ExecutionTarget = Enemy;
 
-	// 적 앞에서 일정 거리 떨어진 위치 계산
-	const FVector EnemyLocation = Enemy->GetActorLocation();
-	const FVector EnemyForward = Enemy->GetActorForwardVector();
+	ExecutionTarget->GetStateTagComponent()
+		->AddStateTag(CombatTags::State_Action_Executing);
 	
+	// 적 로컬 기준 오프셋 -> 월드 위치
 	const FVector TargetLocation =
-	Enemy->GetActorTransform().TransformPosition(
-		EnemyData->EnemyExecutionData.ExecutionOffset);
-	
-	// 적을 바라보도록 회전
-	const FRotator TargetRotation =
-		(EnemyLocation - TargetLocation).Rotation();
+		Enemy->GetActorTransform().TransformPosition(
+			EnemyData->EnemyExecutionData.ExecutionOffset);
 
-	OwnerCharacter->SetActorLocation(TargetLocation);
-	OwnerCharacter->SetActorRotation(TargetRotation);
+	// 플레이어가 적을 바라보도록
+	FRotator TargetRotation = Enemy->GetActorRotation();
+	TargetRotation.Yaw += 180.f;
+
+	OwnerCharacter->SetActorLocationAndRotation(
+		TargetLocation,
+		TargetRotation,
+		false,
+		nullptr,
+		ETeleportType::TeleportPhysics);
 	
-	OwnerCharacter->PlayAnimMontage(
+	UAnimInstance* AnimInstance =
+	OwnerCharacter->GetMesh()->GetAnimInstance();
+
+	if (!AnimInstance)
+	{
+		return;
+	}
+	
+	AnimInstance->Montage_Play(
 		AttackData->ExecutionData.PlayerMontage);
 
+	FOnMontageEnded Delegate;
+	Delegate.BindUObject(
+		this,
+		&UPlayerAttackComponent::OnExecutionMontageEnded);
+
+	AnimInstance->Montage_SetEndDelegate(
+		Delegate,
+		AttackData->ExecutionData.PlayerMontage);
+	
 	Enemy->PlayAnimMontage(
 		EnemyData->EnemyExecutionData.EnemyMontage);
+	
+	
 }
 
 AEnemyCharacterBase* UPlayerAttackComponent::FindExecutionTarget() const
@@ -608,6 +634,19 @@ AEnemyCharacterBase* UPlayerAttackComponent::FindExecutionTarget() const
 	}
 
 	return Enemy;
+}
+
+void UPlayerAttackComponent::OnExecutionMontageEnded(
+	UAnimMontage* Montage,
+	bool bInterrupted)
+{
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Action_Executing);
+	
+	ExecutionTarget->GetStateTagComponent()
+		->AddStateTag(CombatTags::State_Action_Executing);
+	
+	ExecutionTarget = nullptr;
 }
 
 const FAttackHitData*
