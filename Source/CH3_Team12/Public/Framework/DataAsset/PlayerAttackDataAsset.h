@@ -65,6 +65,9 @@ struct FAttackStepData
 	UPROPERTY(EditAnywhere)
 	TArray<FAttackHitData> Hits;
 	
+	UPROPERTY(EditAnywhere)
+	bool bRotateToInput = true;
+	
 	// 재생속도
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float PlayRate = 1.0f;
