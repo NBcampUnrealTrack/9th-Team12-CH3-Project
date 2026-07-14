@@ -5,6 +5,7 @@
 
 #include "Entity/Enemy/AI/EnemyAIController.h"
 #include "Entity/Enemy/Component/EnemyAttackComponent.h"
+#include "Entity/Enemy/Component/EnemyDefenseComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -28,6 +29,7 @@ AEnemyCharacterBase::AEnemyCharacterBase()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	EnemyAttackComponent = CreateDefaultSubobject<UEnemyAttackComponent>(TEXT("EnemyAttackComponent"));
 	AttributeComponent = CreateDefaultSubobject<UEnemyAttributeComponent>(TEXT("AttributeComponent"));
+	EnemyDefenseComponent = CreateDefaultSubobject<UEnemyDefenseComponent>(TEXT("EnemyDefenseComponent"));
 	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateTagComponent"));
 }
 
@@ -49,6 +51,7 @@ void AEnemyCharacterBase::BeginPlay()
 	// // }
 	
 	AttributeComponent->OnEnemyDeath.AddDynamic(this, &AEnemyCharacterBase::OnDeath);
+	AttributeComponent->OnEnemyPostureBroken.AddDynamic(this, &AEnemyCharacterBase::HandlePostureBroken);
 }
 
 // Called every frame
@@ -84,41 +87,49 @@ float AEnemyCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& Da
 	
 	// 임의로 체간 게이지는 두배로 받도록 설정
 	AttributeComponent->ApplyAttributeDamage(DamageAmount, DamageAmount * 2);
-
-	if (IsCommonState())
-	{
-		USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
-		if (SkeletalMeshComponent)
-		{
-			UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
-			if (AnimInstance
-				&& HitMontage)
-			{
-				AnimInstance->Montage_Play(HitMontage);
-			}
-		}
-	}
 	
 	return DamageAmount;
 }
 
-void AEnemyCharacterBase::OnDeath()
+void AEnemyCharacterBase::HandlePostureBroken()
 {
-	AEnemyAIController* AIController = Cast<AEnemyAIController>(GetController());
-	if (AIController)
+	EnemyAttackComponent->CancelAttack();
+	GetWorldTimerManager().ClearAllTimersForObject(this);
+	StopAILogic();
+	
+	PlayGroggyMontage();
+}
+
+void AEnemyCharacterBase::PlayGroggyMontage()
+{
+	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
+	if (SkeletalMeshComponent)
 	{
-		AIController->StopMovement();
-		if (UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement())
+		UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
+		if (AnimInstance == nullptr
+			|| GroggyMontage == nullptr)
 		{
-			CharacterMovementComponent->DisableMovement();
-		}
-		UBrainComponent* BrainComponent = AIController->GetBrainComponent();
-		if (BrainComponent)
-		{
-			BrainComponent->StopLogic(TEXT("Dead"));
+			return;
 		}
 		
+		FOnMontageEnded MontageEndedDelegate;
+		MontageEndedDelegate.BindUObject(
+			this, &AEnemyCharacterBase::OnGroggyMontageEnded);
+		
+		AnimInstance->Montage_Play(GroggyMontage);
+		AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, GroggyMontage);
 	}
+}
+
+void AEnemyCharacterBase::OnGroggyMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	StateTagComponent->RemoveStateTag(CombatTags::State_Hit_PostureBroken);
+	ResumeAILogic();
+}
+
+void AEnemyCharacterBase::OnDeath()
+{
+	StopAILogic();
 	
 	UCapsuleComponent* CollisionComponent = GetCapsuleComponent();
 	if (CollisionComponent)
@@ -167,15 +178,39 @@ void AEnemyCharacterBase::DestroyEnemy()
 	Destroy();
 }
 
-bool AEnemyCharacterBase::IsCommonState()
+void AEnemyCharacterBase::StopAILogic()
 {
-	bool Result = true;
-	FGameplayTagContainer UncommonState;
-	UncommonState.AddTag(CombatTags::State_Hit_Dead);
-	UncommonState.AddTag(CombatTags::State_Combat_Attacking);
-	Result = !(StateTagComponent->HasAnyStateTags(UncommonState));
-	
-	return Result;
+	AEnemyAIController* AIController = Cast<AEnemyAIController>(GetController());
+	if (AIController)
+	{
+		AIController->StopMovement();
+		if (UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement())
+		{
+			CharacterMovementComponent->DisableMovement();
+		}
+		UBrainComponent* BrainComponent = AIController->GetBrainComponent();
+		if (BrainComponent)
+		{
+			BrainComponent->StopLogic(TEXT("Dead"));
+		}
+	}
+}
+
+void AEnemyCharacterBase::ResumeAILogic()
+{
+	AEnemyAIController* AIController = Cast<AEnemyAIController>(GetController());
+	if (AIController)
+	{
+		if (UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement())
+		{
+			CharacterMovementComponent->SetMovementMode(MOVE_Walking);
+		}
+		UBrainComponent* BrainComponent = AIController->GetBrainComponent();
+		if (BrainComponent)
+		{
+			BrainComponent->RestartLogic();
+		}
+	}
 }
 
 void AEnemyCharacterBase::AttackAnimationEnd()

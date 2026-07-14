@@ -3,6 +3,8 @@
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Weapon/WeaponBase.h"
+#include "Entity/Enemy/EnemyCharacterBase.h"
+#include "Entity/Enemy/Component/EnemyDefenseComponent.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -275,13 +277,41 @@ void UPlayerWeaponComponent::ProcessHit(const FHitResult& Hit)
 	}
 	
 	UE_LOG(LogTemp, Warning, TEXT("Hit : %s"), *HitActor->GetName());
-	
-	UGameplayStatics::ApplyDamage(
+
+	if (AEnemyCharacterBase* EnemyCharacter = Cast<AEnemyCharacterBase>(HitActor))
+	{
+		if (UEnemyDefenseComponent* EnemyDefenseComponent =
+			EnemyCharacter->GetEnemyDefenseComponent())
+		{
+			FIncomingAttackContext Context;
+			Context.Attacker = OwnerCharacter;
+			Context.Hit = Hit;
+			Context.AttackInfo.Damage = CurrentHit->Damage;
+			Context.AttackInfo.PostureDamage = CurrentHit->PostureDamage;
+			Context.AttackInfo.bCanBeGuarded = true;
+			Context.AttackInfo.bCanBeParried = true;
+
+			FVector AttackDirection =
+				EnemyCharacter->GetActorLocation()
+				- OwnerCharacter->GetActorLocation();
+
+			AttackDirection.Z = 0.0f;
+			Context.AttackWorldDirection =
+				AttackDirection.GetSafeNormal();
+
+			EnemyDefenseComponent->ResolveIncomingAttack(Context);
+			return;
+		}
+	}
+	else
+	{
+		UGameplayStatics::ApplyDamage(
 		HitActor,
 		CurrentHit->Damage,
-	OwnerCharacter->GetController(),
-	OwnerCharacter,
-	nullptr);
+OwnerCharacter->GetController(),
+OwnerCharacter,
+nullptr);
+	}
 }
 
 void UPlayerWeaponComponent::WeaponTrace()

@@ -6,8 +6,12 @@
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerCameraComponent.h"
 #include "Entity/Player/PlayerDefenseComponent.h"
-
+#include "Entity/Player/PlayerItemUseComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/SkeletalMeshComponent.h"
 
 UPlayerLocomotionComponent::UPlayerLocomotionComponent()
 {
@@ -31,7 +35,9 @@ void UPlayerLocomotionComponent::BeginPlay()
 	MovementComponent = OwnerCharacter->GetCharacterMovement();
 	AttackComponent = OwnerCharacter->GetAttackComponent();
 	DefenseComponent = OwnerCharacter->GetDefenseComponent();
+	ItemUseComponent = OwnerCharacter->GetItemUseComponent();
 	
+	if (MovementComponent && LocomotionData)
 	{
 		MovementComponent->bOrientRotationToMovement = true;
 		MovementComponent->bUseControllerDesiredRotation = false;
@@ -39,7 +45,17 @@ void UPlayerLocomotionComponent::BeginPlay()
 		MovementComponent->MaxAcceleration = 2048.0f;
 		MovementComponent->GroundFriction = 4.0f;
 		MovementComponent->BrakingDecelerationWalking = 200.0f;
-		MovementComponent->GravityScale = 1.0f;
+		
+		MovementComponent->JumpZVelocity = LocomotionData->JumpZVelocity;
+		MovementComponent->GravityScale = LocomotionData->GravityScale;
+		MovementComponent->AirControl = LocomotionData->AirControl;
+		MovementComponent->FallingLateralFriction = 0.5f;
+	}
+	
+	if (OwnerCharacter)
+	{
+		OwnerCharacter->JumpMaxHoldTime = 0.0f;
+		OwnerCharacter->JumpMaxCount = 1;
 	}
 	
 	{
@@ -149,12 +165,21 @@ void UPlayerLocomotionComponent::RefreshMovementSettings()
 			CombatTags::State_Movement_Locked
 		);
 
+	const bool bIsUsingItem =
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Action_UsingItem
+		);
 	// =========================
 	// Speed
 	// =========================
 	if (bIsGuarding)
 	{
 		MovementComponent->MaxWalkSpeed = GuardWalkSpeed;
+	}
+	else if (bIsUsingItem)
+	{
+		MovementComponent->MaxWalkSpeed = 
+			NormalWalkSpeed * ItemUseComponent->GetCurrentMoveSpeedMultiplier();
 	}
 	else if (bIsSprinting)
 	{
@@ -543,23 +568,86 @@ bool UPlayerLocomotionComponent::TryConsumeBufferedDodge()
 	return TryStartDodge();
 }
 
-void UPlayerLocomotionComponent::DoStartJump(const FInputActionValue& value)
+void UPlayerLocomotionComponent::DoStartJump(
+	const FInputActionValue& Value)
 {
-	if (!OwnerCharacter) return;
-	
-	if (StateComponent && StateComponent->HasStateTag(CombatTags::State_Movement_Locked))
+	if (!CanStartJump())
 	{
-		return;	// 이동 불가 시
+		return;
 	}
-	
-	OwnerCharacter->Jump();
+
+	if (StateComponent)
+	{
+		StateComponent->AddStateTag(
+			CombatTags::State_Movement_JumpStarting
+		);
+	}
+
+	RefreshMovementSettings();
 }
 
-void UPlayerLocomotionComponent::DoStopJump(const FInputActionValue& value)
+void UPlayerLocomotionComponent::DoStopJump(
+	const FInputActionValue& Value)
 {
-	if (!OwnerCharacter) return;
-	
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+
 	OwnerCharacter->StopJumping();
+}
+
+bool UPlayerLocomotionComponent::CanStartJump() const
+{
+	if (!OwnerCharacter || !StateComponent || !MovementComponent)
+	{
+		return false;
+	}
+
+	if (!OwnerCharacter->CanJump())
+	{
+		return false;
+	}
+
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
+
+	return !StateComponent->HasAnyStateTags(BlockTags);
+}
+
+void UPlayerLocomotionComponent::CommitJump()
+{
+	if (!OwnerCharacter || !StateComponent || !MovementComponent)
+	{
+		return;
+	}
+
+	if (!StateComponent->HasStateTagExact(
+		CombatTags::State_Movement_JumpStarting))
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_JumpStarting
+	);
+
+	// 공중 진입 순간 Sprint 태그는 제거해도 됨.
+	// 기존 속도는 CharacterMovement Velocity에 남아 있음.
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Sprinting
+	);
+
+	OwnerCharacter->Jump();
+
+	RefreshMovementSettings();
 }
 
 void UPlayerLocomotionComponent::DoMove(
