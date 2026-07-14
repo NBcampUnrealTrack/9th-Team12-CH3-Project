@@ -387,10 +387,7 @@ void UPlayerAttackComponent::StartAttack(
 	ComboIndex = 0;
 	CurrentStep = &CurrentAttackData->Steps[ComboIndex];
 	
-	if (CurrentStep && CurrentStep->bRotateToInput)
-	{
-		StartAttackRotation();
-	}
+	StartAttackRotation();
 	
 	bComboWindow = false;
 	bComboBuffered = false;
