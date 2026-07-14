@@ -36,6 +36,7 @@ public:
 private:
 	bool IsGuarding() const;
 	bool IsParrying() const;
+	bool CanHitReaction() const;
 
 	void HandleParrySuccess(
 		const FIncomingAttackContext& Context,

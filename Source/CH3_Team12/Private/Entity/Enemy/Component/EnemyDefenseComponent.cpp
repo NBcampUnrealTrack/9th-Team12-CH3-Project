@@ -120,6 +120,18 @@ bool UEnemyDefenseComponent::IsParrying() const
 		);
 }
 
+bool UEnemyDefenseComponent::CanHitReaction() const 
+{
+	bool Result = true;
+	FGameplayTagContainer UnAllowState;
+	UnAllowState.AddTag(CombatTags::State_Hit_Dead);
+	UnAllowState.AddTag(CombatTags::State_Combat_Attacking);
+	UnAllowState.AddTag(CombatTags::State_Hit_PostureBroken);
+	Result = !(StateComponent->HasAnyStateTags(UnAllowState));
+
+	return Result;
+}
+
 EHitReactionDirection UEnemyDefenseComponent::CalculateHitReactionDirection(
 	const FIncomingAttackContext& Context) const
 {
@@ -239,14 +251,14 @@ void UEnemyDefenseComponent::HandleDirectHit(
 	StateComponent->AddStateTag(CombatTags::State_Hit_Reacting);
 	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
 
-	StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
-	StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
-	StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
-
-	if (AttackComponent)
-	{
-		AttackComponent->CancelAttack();
-	}
+	//StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
+	//StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
+	//StateComponent->RemoveStateTag(CombatTags::State_Combat_Parry);
+	
+	// if (AttackComponent)
+	// {
+	// 	AttackComponent->CancelAttack();
+	// }
 
 	if (AttributeComponent)
 	{
@@ -261,9 +273,12 @@ void UEnemyDefenseComponent::HandleDirectHit(
 		}
 	}
 
-	if (!PlayMontageSafe(HitReactionMontage))
+	if (CanHitReaction())
 	{
-		EndHitReaction();
+		if (!PlayMontageSafe(HitReactionMontage))
+		{
+			EndHitReaction();
+		}
 	}
 }
 
