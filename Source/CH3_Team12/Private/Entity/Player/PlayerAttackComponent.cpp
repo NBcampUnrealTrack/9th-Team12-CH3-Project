@@ -146,8 +146,6 @@ const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType
 		return &Data->JumpAttack;
 	case EAttackType::Dodge:
 		return &Data->DodgeAttack;
-	case EAttackType::Execution:
-		return &Data->ExecutionAttack;
 	default:
 		return nullptr;
 	}
@@ -155,9 +153,9 @@ const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType
 
 void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 {
-	if (CanExecution())
+	if (AEnemyCharacterBase* Enemy = FindExecutionTarget())
 	{
-		StartExecution();
+		StartExecution(Enemy);
 		return;
 	}
 	
@@ -424,6 +422,25 @@ void UPlayerAttackComponent::CanDodgeAttack()
 	bCanDodgeAttack = true;
 }
 
+void UPlayerAttackComponent::ExecutionHitNotify()
+{
+	 if (!ExecutionTarget.IsValid())
+        {
+            return;
+        }
+    
+        AEnemyCharacterBase* Enemy =
+            ExecutionTarget.Get();
+	
+        if (!GetAttackData())
+        {
+            return;
+        }
+    
+        Enemy->GetEnemyAttributeComponent()
+            ->ApplyHealthDamage(GetAttackData()->ExecutionData.Damage);
+}
+
 void UPlayerAttackComponent::OpenComboWindow()
 {
 	if (!CanContinueCombo())
@@ -485,44 +502,96 @@ void UPlayerAttackComponent::ContinueCombo()
 		CurrentAttackMontage);
 }
 
-void UPlayerAttackComponent::StartExecution()
+void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
 {
-	AEnemyCharacterBase* Enemy = ExecutableEnemy.Get();
-
 	if (!Enemy)
 	{
 		return;
 	}
 
-	const UEnemyExecutionDataAsset* Data =
+	const UEnemyExecutionDataAsset* EnemyData =
 		Enemy->GetExecutionData();
-
-	if (!Data)
+	
+	const UPlayerAttackDataAsset* AttackData = 
+		GetAttackData();
+	
+	ensure(AttackData);
+	ensure(EnemyData);
+	ensure(AttackData->ExecutionData.PlayerMontage);
+	ensure(EnemyData->EnemyExecutionData.EnemyMontage);
+	
+	if (!AttackData ||
+		!EnemyData		||
+		!AttackData->ExecutionData.PlayerMontage ||
+		!EnemyData->EnemyExecutionData.EnemyMontage)
 	{
 		return;
 	}
+	
+	ExecutionTarget = Enemy;
 
-	// 플레이어 위치 이동
+	// 적 앞에서 일정 거리 떨어진 위치 계산
+	const FVector EnemyLocation = Enemy->GetActorLocation();
+	const FVector EnemyForward = Enemy->GetActorForwardVector();
+	
 	const FVector TargetLocation =
-		Enemy->GetMesh()->GetSocketLocation(
-			Data->PlayerExecutionSocket);
+	Enemy->GetActorTransform().TransformPosition(
+		EnemyData->EnemyExecutionData.ExecutionOffset);
+	
+	// 적을 바라보도록 회전
+	const FRotator TargetRotation =
+		(EnemyLocation - TargetLocation).Rotation();
 
 	OwnerCharacter->SetActorLocation(TargetLocation);
-
-	// 플레이어 몽타주
+	OwnerCharacter->SetActorRotation(TargetRotation);
+	
 	OwnerCharacter->PlayAnimMontage(
-		Data->PlayerExecutionMontage);
+		AttackData->ExecutionData.PlayerMontage);
 
-	// 적 몽타주
 	Enemy->PlayAnimMontage(
-		Data->EnemyExecutionMontage);
+		EnemyData->EnemyExecutionData.EnemyMontage);
 }
 
-void UPlayerAttackComponent::RegisterEnemy(AEnemyCharacterBase* Enemy)
+AEnemyCharacterBase* UPlayerAttackComponent::FindExecutionTarget() const
 {
+	if (!OwnerCharacter)
+	{
+		return nullptr;
+	}
+
+	const FVector Start =
+		OwnerCharacter->GetActorLocation();
+
+	const FVector End =
+		Start +
+		OwnerCharacter->GetActorForwardVector() *
+		ExecutionTraceDistance;
+
+	FHitResult Hit;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(OwnerCharacter);
+
+	bool bHit = GetWorld()->SweepSingleByChannel(
+		Hit,
+		Start,
+		End,
+		FQuat::Identity,
+		ECC_Pawn,
+		FCollisionShape::MakeSphere(ExecutionTraceRadius),
+		Params);
+
+	if (!bHit)
+	{
+		return nullptr;
+	}
+
+	AEnemyCharacterBase* Enemy =
+		Cast<AEnemyCharacterBase>(Hit.GetActor());
+
 	if (!Enemy)
 	{
-		return;
+		return nullptr;
 	}
 
 	UEnemyAttributeComponent* Attribute =
@@ -530,61 +599,15 @@ void UPlayerAttackComponent::RegisterEnemy(AEnemyCharacterBase* Enemy)
 
 	if (!Attribute)
 	{
-		return;
+		return nullptr;
 	}
 
-	Attribute->OnEnemyPostureBroken.AddDynamic(
-		this,
-		&ThisClass::OnEnemyPostureBroken);
-
-	Attribute->OnEnemyPostureRecovered.AddDynamic(
-		this,
-		&ThisClass::OnEnemyPostureRecovered);
-
-	Attribute->OnEnemyDeath.AddDynamic(
-		this,
-		&ThisClass::OnEnemyDeath);
-}
-
-void UPlayerAttackComponent::OnEnemyPostureBroken()
-{
-	AEnemyCharacterBase* Enemy =
-		Cast<AEnemyCharacterBase>(GetCurrentLockOnTarget());
-
-	if (!Enemy)
+	if (!Attribute->IsPostureBroken())
 	{
-		return;
+		return nullptr;
 	}
 
-	ExecutableEnemy = Enemy;
-}
-
-void UPlayerAttackComponent::OnEnemyPostureRecovered()
-{
-	ExecutableEnemy = nullptr;
-}
-
-void UPlayerAttackComponent::OnEnemyDeath()
-{
-	ExecutableEnemy = nullptr;
-}
-
-bool UPlayerAttackComponent::CanExecution() const
-{
-	if (!ExecutableEnemy.IsValid())
-	{
-		return false;
-	}
-
-	const UEnemyExecutionDataAsset* Data =
-		ExecutableEnemy->GetExecutionData();
-
-	if (!Data)
-	{
-		return false;
-	}
-
-	return true;
+	return Enemy;
 }
 
 const FAttackHitData*

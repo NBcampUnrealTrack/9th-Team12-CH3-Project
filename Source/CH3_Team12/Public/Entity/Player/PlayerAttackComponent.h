@@ -37,6 +37,7 @@ public:
 	void OpenAttackRecovery();
 	void EndAttack();
 	void CanDodgeAttack();
+	void ExecutionHitNotify();
 	
 	const FAttackHitData* GetCurrentHit(int32 HitIndex) const;
 		
@@ -51,6 +52,11 @@ public:
 	void CancelAttackForDeath();
 	void CancelAttackForPostureBreak();
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Execution")
+	float ExecutionTraceDistance = 180.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Execution")
+	float ExecutionTraceRadius = 60.f;
 private:
 	// Attack
 	bool CanStartAttack() const;
@@ -71,15 +77,12 @@ private:
 		bool bInterrupted);
 	
 	// execution
-	void StartExecution();
-	void RegisterEnemy(AEnemyCharacterBase* Enemy);
-	UPROPERTY()
-	TWeakObjectPtr<AEnemyCharacterBase> ExecutableEnemy;
+	AEnemyCharacterBase* FindExecutionTarget() const;
 	
-	void OnEnemyPostureBroken();
-	void OnEnemyPostureRecovered();
-	void OnEnemyDeath();
-	bool CanExecution() const;
+	void StartExecution(AEnemyCharacterBase* Enemy);
+	
+	UPROPERTY()
+	TWeakObjectPtr<AEnemyCharacterBase> ExecutionTarget;
 private:
 	// Components
 	UPROPERTY()

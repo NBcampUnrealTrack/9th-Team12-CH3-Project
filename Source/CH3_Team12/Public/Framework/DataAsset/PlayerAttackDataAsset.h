@@ -90,8 +90,19 @@ enum class EAttackType : uint8
 	Light,
 	Heavy,
 	Jump,
-	Dodge,
-	Execution
+	Dodge
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionAttackData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	UAnimMontage* PlayerMontage;
+
+	UPROPERTY(EditAnywhere)
+	float Damage = 99999.f;
 };
 
 UCLASS(BlueprintType)
@@ -118,5 +129,5 @@ public:
 	
 	// 처형
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FAttackDefinition ExecutionAttack;
+	FExecutionAttackData ExecutionData;
 };
