@@ -50,7 +50,7 @@ protected:
 	TObjectPtr<UEnemyDefenseComponent> EnemyDefenseComponent;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
-	TObjectPtr<UAnimMontage> HitMontage;
+	TObjectPtr<UAnimMontage> GroggyMontage;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
 	TObjectPtr<UAnimMontage> DeadMontage;
@@ -60,6 +60,11 @@ protected:
 	
 protected:
 	UFUNCTION()
+	void HandlePostureBroken();
+	void PlayGroggyMontage();
+	void OnGroggyMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
+	UFUNCTION()
 	void OnDeath();
 	
 	void PlayDeathMontage();
@@ -67,9 +72,10 @@ protected:
 	
 	virtual void DestroyEnemy();
 	
-public:
-	bool IsCommonState();
+	void StopAILogic();
+	void ResumeAILogic();
 	
+public:
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 
 	UFUNCTION(BlueprintCallable)

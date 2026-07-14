@@ -303,13 +303,15 @@ void UPlayerWeaponComponent::ProcessHit(const FHitResult& Hit)
 			return;
 		}
 	}
-	
-	UGameplayStatics::ApplyDamage(
+	else
+	{
+		UGameplayStatics::ApplyDamage(
 		HitActor,
 		CurrentHit->Damage,
-	OwnerCharacter->GetController(),
-	OwnerCharacter,
-	nullptr);
+OwnerCharacter->GetController(),
+OwnerCharacter,
+nullptr);
+	}
 }
 
 void UPlayerWeaponComponent::WeaponTrace()
