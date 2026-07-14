@@ -108,7 +108,8 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentJumpStartMontage;
 	
-	bool ShouldUseDirectionalDodge() const;
+	bool ShouldUseDirectionalDodge(bool bIsAttackDodgeCancel) const;
+	FRotator GetDodgeBaseRotation() const;
 	
 	bool TryStartDodge();
 	void TryStartSprintAfterDodge();
