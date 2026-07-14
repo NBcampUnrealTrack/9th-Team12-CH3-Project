@@ -6,6 +6,7 @@
 #include "Framework/DataAsset/PlayerAttackDataAsset.h"
 #include "PlayerAttackComponent.generated.h"
 
+class UPlayerLocomotionComponent;
 class AEnemyCharacterBase;
 class APlayerCharacterBase;
 class UStateTagComponent;
@@ -52,11 +53,17 @@ public:
 	void CancelAttackForDeath();
 	void CancelAttackForPostureBreak();
 
+	virtual void TickComponent(
+		float DeltaTime,
+		ELevelTick TickType,
+		FActorComponentTickFunction* ThisTickFunction) override;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Execution")
 	float ExecutionTraceDistance = 180.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Execution")
 	float ExecutionTraceRadius = 60.f;
+	
 private:
 	// Attack
 	bool CanStartAttack() const;
@@ -64,7 +71,7 @@ private:
 	bool CanContinueCombo() const;
 	void StartAttack(const FAttackDefinition* AttackInfo);
 	void ContinueCombo();
-	
+	void StartRotateForCombo();
 	/** 현재 장착한 무기의 AttackDataAsset */
 	const UPlayerAttackDataAsset* GetAttackData() const;
 
@@ -99,7 +106,8 @@ private:
 	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
 	UPROPERTY()
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
-	
+	UPROPERTY()
+	TObjectPtr<UPlayerLocomotionComponent> LocoMotionComponent;
 	// Runtime
 	/** 현재 실행중인 공격 데이터 */
 	const FAttackDefinition* CurrentAttackData = nullptr;
@@ -123,4 +131,6 @@ private:
 	bool bCanDodgeAttack = false;
 	bool bMoveCancelWindowOpen = false;
 
+	FRotator TargetAttackRotation;
+	
 };
