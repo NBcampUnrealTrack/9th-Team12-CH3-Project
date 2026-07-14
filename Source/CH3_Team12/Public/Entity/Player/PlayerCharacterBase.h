@@ -7,6 +7,7 @@
 #include "Interface/AnimationAttackInterface.h"
 #include "PlayerCharacterBase.generated.h"
 
+class UNiagaraSystem;
 class APlayerControllerBase;
 class USpringArmComponent;
 class UCameraComponent;
@@ -32,7 +33,7 @@ class CH3_TEAM12_API APlayerCharacterBase : public ACharacter, public IAnimation
 public:
 	// Sets default values for this character's properties
 	APlayerCharacterBase();
-    UStateTagComponent* GetStateTagComponent() const;
+	UStateTagComponent* GetStateTagComponent() const;
 	UPlayerLocomotionComponent* GetLocomotionComponent() const;
 	UPlayerAttributeComponent* GetAttributeComponent() const;
 	UPlayerCameraComponent* GetPlayerCameraComponent() const;
@@ -50,7 +51,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
@@ -79,7 +80,7 @@ protected:
 	TObjectPtr<UPlayerAttackComponent> AttackComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerDebugOverlayComponent> DebugOverlayComponent;
-	
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -88,7 +89,6 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	// Attack Animation Interface's Section
-public:
 	virtual void AttackAnimationEnd() override;
 	virtual void AttackHitCheckStart(int32 HitIndex) override;
 	virtual void AttackHitCheckTick() override;
