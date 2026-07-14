@@ -5,6 +5,7 @@
 
 #include "Entity/Enemy/AI/EnemyAIController.h"
 #include "Entity/Enemy/Component/EnemyAttackComponent.h"
+#include "Entity/Enemy/Component/EnemyDefenseComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -28,6 +29,7 @@ AEnemyCharacterBase::AEnemyCharacterBase()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	EnemyAttackComponent = CreateDefaultSubobject<UEnemyAttackComponent>(TEXT("EnemyAttackComponent"));
 	AttributeComponent = CreateDefaultSubobject<UEnemyAttributeComponent>(TEXT("AttributeComponent"));
+	EnemyDefenseComponent = CreateDefaultSubobject<UEnemyDefenseComponent>(TEXT("EnemyDefenseComponent"));
 	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateTagComponent"));
 }
 

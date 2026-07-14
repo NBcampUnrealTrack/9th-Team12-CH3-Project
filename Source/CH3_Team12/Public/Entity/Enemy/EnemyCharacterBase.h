@@ -12,6 +12,7 @@ class UStateTagComponent;
 class UEnemyAttackComponent;
 class UBehaviorTree;
 class UEnemyAttributeComponent;
+class UEnemyDefenseComponent;
 
 UCLASS()
 class CH3_TEAM12_API AEnemyCharacterBase : public ACharacter, public IAnimationAttackInterface
@@ -44,6 +45,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UEnemyAttributeComponent> AttributeComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UEnemyDefenseComponent> EnemyDefenseComponent;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation")
 	TObjectPtr<UAnimMontage> HitMontage;
@@ -72,6 +76,7 @@ public:
 	UEnemyAttackComponent* GetEnemyAttackComponent() const { return EnemyAttackComponent; }
 	UStateTagComponent* GetStateTagComponent() const { return StateTagComponent;}
 	UEnemyAttributeComponent* GetEnemyAttributeComponent() const { return AttributeComponent;}
+	UEnemyDefenseComponent* GetEnemyDefenseComponent() const { return EnemyDefenseComponent; }
 	
 	// Attack Animation Interface's Section
 public:
