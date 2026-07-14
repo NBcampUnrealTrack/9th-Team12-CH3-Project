@@ -6,6 +6,7 @@
 #include "Framework/DataAsset/PlayerAttackDataAsset.h"
 #include "PlayerAttackComponent.generated.h"
 
+class AEnemyCharacterBase;
 class APlayerCharacterBase;
 class UStateTagComponent;
 class UPlayerAttributeComponent;
@@ -36,6 +37,7 @@ public:
 	void OpenAttackRecovery();
 	void EndAttack();
 	void CanDodgeAttack();
+	void ExecutionHitNotify();
 	
 	const FAttackHitData* GetCurrentHit(int32 HitIndex) const;
 		
@@ -50,6 +52,11 @@ public:
 	void CancelAttackForDeath();
 	void CancelAttackForPostureBreak();
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Execution")
+	float ExecutionTraceDistance = 180.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Execution")
+	float ExecutionTraceRadius = 60.f;
 private:
 	// Attack
 	bool CanStartAttack() const;
@@ -69,6 +76,17 @@ private:
 		UAnimMontage* Montage,
 		bool bInterrupted);
 	
+	// execution
+	AEnemyCharacterBase* FindExecutionTarget() const;
+	
+	void StartExecution(AEnemyCharacterBase* Enemy);
+	
+	UPROPERTY()
+	TWeakObjectPtr<AEnemyCharacterBase> ExecutionTarget;
+	
+	void OnExecutionMontageEnded(
+		UAnimMontage* Montage,
+		bool bInterrupted);
 private:
 	// Components
 	UPROPERTY()
@@ -91,7 +109,6 @@ private:
 	/** 현재 재생중인 몽타주 */
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> CurrentAttackMontage;
-	
 	
 	/** 현재 콤보 번호 */
 	int32 ComboIndex = 0;

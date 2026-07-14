@@ -322,6 +322,11 @@ bool UPlayerEquipmentComponent::CanChangeWeapon() const
 		return false;
 	}
 
+	if (StateComp->HasStateTag(CombatTags::State_Action_Executing))
+	{
+		return false;
+	}
+	
 	return true;
 }
 
