@@ -185,7 +185,8 @@ void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 
 	const FAttackDefinition* AttackData = nullptr;
 	
-	if (OwnerCharacter->GetCharacterMovement()->IsFalling())
+	if (OwnerCharacter->GetCharacterMovement()->IsFalling() ||
+		StateComponent->HasStateTagExact(CombatTags::State_Movement_JumpStarting))
 	{
 		AttackData = GetAttackDataByType(EAttackType::Jump);
 	}
@@ -530,6 +531,7 @@ void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
 	}
 	
 	StateComponent->AddStateTag(CombatTags::State_Action_Executing);
+	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
 	
 	ExecutionTarget = Enemy;
 
@@ -642,9 +644,11 @@ void UPlayerAttackComponent::OnExecutionMontageEnded(
 {
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Action_Executing);
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked);
 	
 	ExecutionTarget->GetStateTagComponent()
-		->AddStateTag(CombatTags::State_Action_Executing);
+		->RemoveStateTag(CombatTags::State_Action_Executing);
 	
 	ExecutionTarget = nullptr;
 }
