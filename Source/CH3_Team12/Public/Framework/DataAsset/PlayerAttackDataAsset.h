@@ -93,6 +93,18 @@ enum class EAttackType : uint8
 	Dodge
 };
 
+USTRUCT(BlueprintType)
+struct FExecutionAttackData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	UAnimMontage* PlayerMontage;
+
+	UPROPERTY(EditAnywhere)
+	float Damage = 99999.f;
+};
+
 UCLASS(BlueprintType)
 class CH3_TEAM12_API UPlayerAttackDataAsset : public UDataAsset
 {
@@ -114,4 +126,8 @@ public:
 	// 회피공격
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FAttackDefinition DodgeAttack;
+	
+	// 처형
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FExecutionAttackData ExecutionData;
 };

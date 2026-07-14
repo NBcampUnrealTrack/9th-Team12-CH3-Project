@@ -7,7 +7,9 @@
 #include "Interface/AnimationAttackInterface.h"
 #include "EnemyCharacterBase.generated.h"
 
+
 class UNiagaraSystem;
+class UEnemyExecutionDataAsset;
 class UAnimMontage;
 class UStateTagComponent;
 class UEnemyAttackComponent;
@@ -34,8 +36,10 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	virtual float TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator
-	                         , AActor* DamageCauser) override;
+
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
+	const UEnemyExecutionDataAsset* GetExecutionData() const { return ExecutionData; }
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
@@ -67,7 +71,11 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Enemy | VFX")
 	TObjectPtr<UNiagaraSystem> DeathDisintegrationVFX;
-
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	TObjectPtr<UEnemyExecutionDataAsset> ExecutionData;
+  
+protected:
 	UFUNCTION()
 	void HandlePostureBroken();
 	void PlayGroggyMontage();

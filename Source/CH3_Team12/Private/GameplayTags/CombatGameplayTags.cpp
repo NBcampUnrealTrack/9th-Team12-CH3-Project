@@ -11,7 +11,12 @@ namespace CombatTags
 		State_Combat_Dodging,
 		"State.Action.Dodging"
 	);
-
+	
+	UE_DEFINE_GAMEPLAY_TAG(
+		State_Action_Executing,
+		"State.Action.Executing"
+	);
+	
 	UE_DEFINE_GAMEPLAY_TAG(
 		State_Combat_Armed,
 		"State.Combat.Armed"
@@ -46,6 +51,11 @@ namespace CombatTags
 		State_Movement_Locked,
 		"State.Movement.Locked"
 	);
+	
+	UE_DEFINE_GAMEPLAY_TAG(
+		State_Movement_JumpStarting,
+		"State.Movement.JumpStarting"
+	);
 
 	UE_DEFINE_GAMEPLAY_TAG(
 		CombatTags::State_Hit_PostureBroken,
@@ -71,4 +81,7 @@ namespace CombatTags
 		State_Action_UsingItem,
 		TEXT("State.Action.UsingItem")
 	);
+	
+	
+	
 }

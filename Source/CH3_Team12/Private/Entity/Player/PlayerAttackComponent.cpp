@@ -5,6 +5,10 @@
 #include "Entity/Player/PlayerAttributeComponent.h"
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Player/PlayerWeaponComponent.h"
+#include "Entity/Enemy/EnemyCharacterBase.h"
+#include "Entity/Enemy/Component/EnemyAttributeComponent.h"
+#include "Entity/Enemy/Component/EnemyDefenseComponent.h"
+#include "Framework/DataAsset/EnemyExecutionDataAsset.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Framework/DataAsset/PlayerAttackDataAsset.h"
 #include "Animation/AnimInstance.h"
@@ -149,6 +153,12 @@ const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType
 
 void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 {
+	if (AEnemyCharacterBase* Enemy = FindExecutionTarget())
+	{
+		StartExecution(Enemy);
+		return;
+	}
+	
 	if (IsAttacking())
 	{
 		if (!CanContinueCombo())
@@ -175,7 +185,8 @@ void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 
 	const FAttackDefinition* AttackData = nullptr;
 	
-	if (OwnerCharacter->GetCharacterMovement()->IsFalling())
+	if (OwnerCharacter->GetCharacterMovement()->IsFalling() ||
+		StateComponent->HasStateTagExact(CombatTags::State_Movement_JumpStarting))
 	{
 		AttackData = GetAttackDataByType(EAttackType::Jump);
 	}
@@ -288,6 +299,7 @@ bool UPlayerAttackComponent::CanStartAttack() const
 	BlockTags.AddTag(CombatTags::State_Hit_Dead);
 	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
 	BlockTags.AddTag(CombatTags::State_Action_UsingItem);
+	BlockTags.AddTag(CombatTags::State_Action_Executing);
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }
@@ -412,6 +424,25 @@ void UPlayerAttackComponent::CanDodgeAttack()
 	bCanDodgeAttack = true;
 }
 
+void UPlayerAttackComponent::ExecutionHitNotify()
+{
+	 if (!ExecutionTarget.IsValid())
+        {
+            return;
+        }
+    
+        AEnemyCharacterBase* Enemy =
+            ExecutionTarget.Get();
+	
+        if (!GetAttackData())
+        {
+            return;
+        }
+    
+        Enemy->GetEnemyAttributeComponent()
+            ->ApplyHealthDamage(GetAttackData()->ExecutionData.Damage);
+}
+
 void UPlayerAttackComponent::OpenComboWindow()
 {
 	if (!CanContinueCombo())
@@ -471,6 +502,155 @@ void UPlayerAttackComponent::ContinueCombo()
 	AnimInstance->Montage_JumpToSection(
 		CurrentStep->SectionName,
 		CurrentAttackMontage);
+}
+
+void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
+{
+	if (!Enemy)
+	{
+		return;
+	}
+
+	const UEnemyExecutionDataAsset* EnemyData =
+		Enemy->GetExecutionData();
+	
+	const UPlayerAttackDataAsset* AttackData = 
+		GetAttackData();
+	
+	ensure(AttackData);
+	ensure(EnemyData);
+	ensure(AttackData->ExecutionData.PlayerMontage);
+	ensure(EnemyData->EnemyExecutionData.EnemyMontage);
+	
+	if (!AttackData ||
+		!EnemyData		||
+		!AttackData->ExecutionData.PlayerMontage ||
+		!EnemyData->EnemyExecutionData.EnemyMontage)
+	{
+		return;
+	}
+	
+	StateComponent->AddStateTag(CombatTags::State_Action_Executing);
+	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
+	
+	ExecutionTarget = Enemy;
+
+	ExecutionTarget->GetStateTagComponent()
+		->AddStateTag(CombatTags::State_Action_Executing);
+	
+	// 적 로컬 기준 오프셋 -> 월드 위치
+	const FVector TargetLocation =
+		Enemy->GetActorTransform().TransformPosition(
+			EnemyData->EnemyExecutionData.ExecutionOffset);
+
+	// 플레이어가 적을 바라보도록
+	FRotator TargetRotation = Enemy->GetActorRotation();
+	TargetRotation.Yaw += 180.f;
+
+	OwnerCharacter->SetActorLocationAndRotation(
+		TargetLocation,
+		TargetRotation,
+		false,
+		nullptr,
+		ETeleportType::TeleportPhysics);
+	
+	UAnimInstance* AnimInstance =
+	OwnerCharacter->GetMesh()->GetAnimInstance();
+
+	if (!AnimInstance)
+	{
+		return;
+	}
+	
+	AnimInstance->Montage_Play(
+		AttackData->ExecutionData.PlayerMontage);
+
+	FOnMontageEnded Delegate;
+	Delegate.BindUObject(
+		this,
+		&UPlayerAttackComponent::OnExecutionMontageEnded);
+
+	AnimInstance->Montage_SetEndDelegate(
+		Delegate,
+		AttackData->ExecutionData.PlayerMontage);
+	
+	Enemy->PlayAnimMontage(
+		EnemyData->EnemyExecutionData.EnemyMontage);
+	
+	
+}
+
+AEnemyCharacterBase* UPlayerAttackComponent::FindExecutionTarget() const
+{
+	if (!OwnerCharacter)
+	{
+		return nullptr;
+	}
+
+	const FVector Start =
+		OwnerCharacter->GetActorLocation();
+
+	const FVector End =
+		Start +
+		OwnerCharacter->GetActorForwardVector() *
+		ExecutionTraceDistance;
+
+	FHitResult Hit;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(OwnerCharacter);
+
+	bool bHit = GetWorld()->SweepSingleByChannel(
+		Hit,
+		Start,
+		End,
+		FQuat::Identity,
+		ECC_Pawn,
+		FCollisionShape::MakeSphere(ExecutionTraceRadius),
+		Params);
+
+	if (!bHit)
+	{
+		return nullptr;
+	}
+
+	AEnemyCharacterBase* Enemy =
+		Cast<AEnemyCharacterBase>(Hit.GetActor());
+
+	if (!Enemy)
+	{
+		return nullptr;
+	}
+
+	UEnemyAttributeComponent* Attribute =
+		Enemy->GetEnemyAttributeComponent();
+
+	if (!Attribute)
+	{
+		return nullptr;
+	}
+
+	if (!Attribute->IsPostureBroken())
+	{
+		return nullptr;
+	}
+
+	return Enemy;
+}
+
+void UPlayerAttackComponent::OnExecutionMontageEnded(
+	UAnimMontage* Montage,
+	bool bInterrupted)
+{
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Action_Executing);
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked);
+	
+	ExecutionTarget->GetStateTagComponent()
+		->RemoveStateTag(CombatTags::State_Action_Executing);
+	
+	ExecutionTarget = nullptr;
 }
 
 const FAttackHitData*

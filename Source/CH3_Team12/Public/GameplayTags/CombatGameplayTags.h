@@ -14,8 +14,8 @@ namespace CombatTags
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_LockOn);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_Sprinting);
-	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_Locked);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_JumpStarting);
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hit_PostureBroken);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hit_Dead);
@@ -23,4 +23,5 @@ namespace CombatTags
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Action_Equipping);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Action_UsingItem);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Action_Executing);
 }

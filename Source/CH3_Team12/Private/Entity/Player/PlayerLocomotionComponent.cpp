@@ -9,6 +9,10 @@
 #include "Entity/Player/PlayerItemUseComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/SkeletalMeshComponent.h"
+
 UPlayerLocomotionComponent::UPlayerLocomotionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -33,6 +37,7 @@ void UPlayerLocomotionComponent::BeginPlay()
 	DefenseComponent = OwnerCharacter->GetDefenseComponent();
 	ItemUseComponent = OwnerCharacter->GetItemUseComponent();
 	
+	if (MovementComponent && LocomotionData)
 	{
 		MovementComponent->bOrientRotationToMovement = true;
 		MovementComponent->bUseControllerDesiredRotation = false;
@@ -40,7 +45,17 @@ void UPlayerLocomotionComponent::BeginPlay()
 		MovementComponent->MaxAcceleration = 2048.0f;
 		MovementComponent->GroundFriction = 4.0f;
 		MovementComponent->BrakingDecelerationWalking = 200.0f;
-		MovementComponent->GravityScale = 1.0f;
+		
+		MovementComponent->JumpZVelocity = LocomotionData->JumpZVelocity;
+		MovementComponent->GravityScale = LocomotionData->GravityScale;
+		MovementComponent->AirControl = LocomotionData->AirControl;
+		MovementComponent->FallingLateralFriction = 0.5f;
+	}
+	
+	if (OwnerCharacter)
+	{
+		OwnerCharacter->JumpMaxHoldTime = 0.0f;
+		OwnerCharacter->JumpMaxCount = 1;
 	}
 	
 	{
@@ -270,14 +285,16 @@ void UPlayerLocomotionComponent::StartDodge()
 	{
 		return;
 	}
-	
-	if (AttackComponent && AttackComponent->CanDodgeCancel())
-	{
-		AttackComponent->CancelAttackForDodge();
-	}
+
+	const bool bIsAttackDodgeCancel =
+		AttackComponent &&
+		AttackComponent->CanDodgeCancel();
+
+	const bool bUseDirectionalDodge =
+		ShouldUseDirectionalDodge(bIsAttackDodgeCancel);
 
 	const EDodgeDirection DodgeDirection =
-		ShouldUseDirectionalDodge()
+		bUseDirectionalDodge
 			? CalculateDodgeDirectionFromInput(LastMovementInput)
 			: EDodgeDirection::Forward;
 
@@ -288,6 +305,19 @@ void UPlayerLocomotionComponent::StartDodge()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("StartDodge: EvadeData invalid"));
 		return;
+	}
+
+	if (bIsAttackDodgeCancel)
+	{
+		AttackComponent->CancelAttackForDodge();
+	}
+
+	if (bUseDirectionalDodge)
+	{
+		const FRotator DodgeBaseRotation =
+			GetDodgeBaseRotation();
+
+		OwnerCharacter->SetActorRotation(DodgeBaseRotation);
 	}
 
 	if (StateComponent->HasStateTagExact(
@@ -311,9 +341,10 @@ void UPlayerLocomotionComponent::StartDodge()
 	UE_LOG(
 		LogTemp,
 		Warning,
-		TEXT("Dodge Direction: %s / Directional: %s"),
+		TEXT("Dodge Direction: %s / Directional: %s / AttackCancel: %s"),
 		*UEnum::GetValueAsString(DodgeDirection),
-		ShouldUseDirectionalDodge() ? TEXT("true") : TEXT("false")
+		bUseDirectionalDodge ? TEXT("true") : TEXT("false"),
+		bIsAttackDodgeCancel ? TEXT("true") : TEXT("false")
 	);
 
 	PlayDodgeMontage(*EvadeData);
@@ -456,7 +487,8 @@ EDodgeDirection UPlayerLocomotionComponent::CalculateDodgeDirectionFromInput(
 	return EDodgeDirection::Forward;
 }
 
-bool UPlayerLocomotionComponent::ShouldUseDirectionalDodge() const
+bool UPlayerLocomotionComponent::ShouldUseDirectionalDodge(
+	bool bIsAttackDodgeCancel) const
 {
 	if (!StateComponent)
 	{
@@ -473,7 +505,66 @@ bool UPlayerLocomotionComponent::ShouldUseDirectionalDodge() const
 			CombatTags::State_Movement_LockOn
 		);
 
-	return bIsArmed && bIsLockedOn;
+	// 무기 안 들었으면 기본적으로 방향 회피 안 씀.
+	if (!bIsArmed)
+	{
+		return false;
+	}
+
+	// 락온 중이면 기존처럼 8방향.
+	if (bIsLockedOn)
+	{
+		return true;
+	}
+
+	// 공격 후 Dodge Cancel이면 비락온이어도 8방향 허용.
+	if (bIsAttackDodgeCancel)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+FRotator UPlayerLocomotionComponent::GetDodgeBaseRotation() const
+{
+	if (!OwnerCharacter)
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	const bool bIsLockedOn =
+		StateComponent &&
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Movement_LockOn
+		);
+
+	if (bIsLockedOn)
+	{
+		if (UPlayerCameraComponent* PlayerCameraComponent =
+			OwnerCharacter->GetPlayerCameraComponent())
+		{
+			if (AActor* LockOnTarget =
+				PlayerCameraComponent->GetCurrentLockOnTarget())
+			{
+				FVector ToTarget =
+					LockOnTarget->GetActorLocation() -
+					OwnerCharacter->GetActorLocation();
+
+				ToTarget.Z = 0.0f;
+
+				if (!ToTarget.IsNearlyZero())
+				{
+					return ToTarget.Rotation();
+				}
+			}
+		}
+	}
+
+	const FRotator ControlRotation =
+		OwnerCharacter->GetControlRotation();
+
+	return FRotator(0.0f, ControlRotation.Yaw, 0.0f);
 }
 
 bool UPlayerLocomotionComponent::TryStartDodge()
@@ -553,23 +644,86 @@ bool UPlayerLocomotionComponent::TryConsumeBufferedDodge()
 	return TryStartDodge();
 }
 
-void UPlayerLocomotionComponent::DoStartJump(const FInputActionValue& value)
+void UPlayerLocomotionComponent::DoStartJump(
+	const FInputActionValue& Value)
 {
-	if (!OwnerCharacter) return;
-	
-	if (StateComponent && StateComponent->HasStateTag(CombatTags::State_Movement_Locked))
+	if (!CanStartJump())
 	{
-		return;	// 이동 불가 시
+		return;
 	}
-	
-	OwnerCharacter->Jump();
+
+	if (StateComponent)
+	{
+		StateComponent->AddStateTag(
+			CombatTags::State_Movement_JumpStarting
+		);
+	}
+
+	RefreshMovementSettings();
 }
 
-void UPlayerLocomotionComponent::DoStopJump(const FInputActionValue& value)
+void UPlayerLocomotionComponent::DoStopJump(
+	const FInputActionValue& Value)
 {
-	if (!OwnerCharacter) return;
-	
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+
 	OwnerCharacter->StopJumping();
+}
+
+bool UPlayerLocomotionComponent::CanStartJump() const
+{
+	if (!OwnerCharacter || !StateComponent || !MovementComponent)
+	{
+		return false;
+	}
+
+	if (!OwnerCharacter->CanJump())
+	{
+		return false;
+	}
+
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
+	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Movement_Locked);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
+
+	return !StateComponent->HasAnyStateTags(BlockTags);
+}
+
+void UPlayerLocomotionComponent::CommitJump()
+{
+	if (!OwnerCharacter || !StateComponent || !MovementComponent)
+	{
+		return;
+	}
+
+	if (!StateComponent->HasStateTagExact(
+		CombatTags::State_Movement_JumpStarting))
+	{
+		return;
+	}
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_JumpStarting
+	);
+
+	// 공중 진입 순간 Sprint 태그는 제거해도 됨.
+	// 기존 속도는 CharacterMovement Velocity에 남아 있음.
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Sprinting
+	);
+
+	OwnerCharacter->Jump();
+
+	RefreshMovementSettings();
 }
 
 void UPlayerLocomotionComponent::DoMove(
