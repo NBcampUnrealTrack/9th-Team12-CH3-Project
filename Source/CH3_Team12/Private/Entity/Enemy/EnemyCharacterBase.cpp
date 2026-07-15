@@ -20,6 +20,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "NiagaraSystem.h"
+#include "Framework/DataAsset/EnemyExecutionDataAsset.h"
 
 // Sets default values
 AEnemyCharacterBase::AEnemyCharacterBase()
@@ -127,7 +128,28 @@ void AEnemyCharacterBase::PlayGroggyMontage()
 void AEnemyCharacterBase::OnGroggyMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	StateTagComponent->RemoveStateTag(CombatTags::State_Hit_PostureBroken);
-	ResumeAILogic();
+	if (StateTagComponent->HasStateTagExact(CombatTags::State_Action_Executing) == false)
+		ResumeAILogic();
+}
+
+bool AEnemyCharacterBase::CanExecuted()
+{
+	const UEnemyExecutionDataAsset* EnemyData = GetExecutionData();
+
+	bool Result = EnemyData->EnemyExecutionData.EnemyMontage && EnemyData;
+	
+	ensure(EnemyData);  
+	ensure(EnemyData->EnemyExecutionData.EnemyMontage);
+
+	return Result;
+}
+
+void AEnemyCharacterBase::StartExecuted()
+{
+	if (CanExecuted())
+	{
+		StartExecuted_Implement();	
+	}
 }
 
 void AEnemyCharacterBase::OnDeath()
@@ -229,6 +251,49 @@ void AEnemyCharacterBase::ResumeAILogic()
 			BrainComponent->RestartLogic();
 		}
 	}
+}
+
+void AEnemyCharacterBase::StartExecuted_Implement()
+{
+	if (StateTagComponent)
+	{
+		StateTagComponent->AddStateTag(CombatTags::State_Action_Executing);
+		
+		PlayExecutedMontage();
+		StopAILogic();
+	}	
+}
+
+void AEnemyCharacterBase::PlayExecutedMontage()
+{
+	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
+	if (!SkeletalMeshComponent)
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
+	if (!AnimInstance || !ExecutionData)
+	{
+		return;
+	}
+
+	UAnimMontage* ExecutedMontage = ExecutionData->EnemyExecutionData.EnemyMontage;
+	if (ExecutedMontage)
+	{
+		FOnMontageEnded OnMontageEndedDelegate;
+		OnMontageEndedDelegate.BindUObject(
+				this, &AEnemyCharacterBase::OnExecutedMontageEnded);
+		
+		AnimInstance->Montage_Play(ExecutedMontage);
+		AnimInstance->Montage_SetEndDelegate(OnMontageEndedDelegate, ExecutedMontage);
+	}
+}
+
+void AEnemyCharacterBase::OnExecutedMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	StateTagComponent->RemoveStateTag(CombatTags::State_Action_Executing);
+	ResumeAILogic();
 }
 
 void AEnemyCharacterBase::AttackAnimationEnd()
