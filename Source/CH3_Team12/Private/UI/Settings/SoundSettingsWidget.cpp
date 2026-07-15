@@ -10,9 +10,9 @@ void USoundSettingsWidget::UpdateWidget(const float MasterVolume, const float BG
 	SetBGMVolumeWidget(BGMVolume);
 	SetSFXVolumeWidget(SFXVolume);
 
-	HandleMasterVolumeChanged(MasterVolume);
-	HandleBGMVolumeChanged(BGMVolume);
-	HandleSFXVolumeChanged(SFXVolume);
+	(void)OnMasterVolumeChanged.ExecuteIfBound(MasterVolume);
+	(void)OnBGMVolumeChanged.ExecuteIfBound(BGMVolume);
+	(void)OnSFXVolumeChanged.ExecuteIfBound(SFXVolume);
 }
 
 void USoundSettingsWidget::NativeOnInitialized()

@@ -8,9 +8,7 @@ void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 	SoundSettingsWidget = InWidget;
 
 	if (!SoundSettingsWidget.IsValid())
-	{
 		return;
-	}
 
 	SoundSettingsWidget->OnMasterVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleMasterVolumeChanged);
 	SoundSettingsWidget->OnBGMVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleBGMVolumeChanged);
@@ -77,9 +75,9 @@ void USoundSettingsPresenter::HandleBtnResetClicked() const
 		return;
 
 	SoundSettingsWidget->UpdateWidget(
-		FKatanaSoundSettingDefaults::MasterVolume,
-		FKatanaSoundSettingDefaults::BGMVolume,
-		FKatanaSoundSettingDefaults::SFXVolume
+		SoundManagerSubsystem->GetDefaultVolume(EAudioType::Master),
+		SoundManagerSubsystem->GetDefaultVolume(EAudioType::BGM),
+		SoundManagerSubsystem->GetDefaultVolume(EAudioType::SFX)
 	);
 }
 
