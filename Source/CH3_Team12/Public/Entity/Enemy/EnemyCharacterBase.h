@@ -40,7 +40,10 @@ public:
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
 	const UEnemyExecutionDataAsset* GetExecutionData() const { return ExecutionData; }
-
+	
+	UFUNCTION(BlueprintCallable)
+	FString GetEnemyName() const { return EnemyName; }
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
@@ -68,6 +71,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
 	float DestroyTime = 30.0f;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+    FString EnemyName = TEXT("None");
 
 	UPROPERTY(EditDefaultsOnly, Category="Enemy | VFX")
 	TObjectPtr<UNiagaraSystem> DeathDisintegrationVFX;
