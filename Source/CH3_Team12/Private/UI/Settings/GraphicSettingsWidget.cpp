@@ -9,19 +9,16 @@ void UGraphicSettingsWidget::UpdateWidget(const EKatanaWindowMode WindowMode, co
                                           const EKatanaGraphicQuality Quality, const bool bVSync,
                                           const int32 RefreshRate)
 {
+	bIsUpdatingWidget = true;
+
 	SetWindowModeWidget(WindowMode);
 	SetResolutionWidget(Resolution);
 	SetQualityWidget(Quality);
 	SetVSyncWidget(bVSync);
 	SetRefreshRateWidget(RefreshRate);
 
-	(void)OnWindowModeChanged.ExecuteIfBound(WindowMode);
-	(void)OnResolutionChanged.ExecuteIfBound(Resolution);
-	(void)OnQualityChanged.ExecuteIfBound(Quality);
-	(void)OnVSyncChanged.ExecuteIfBound(bVSync);
-	(void)OnRefreshRateChanged.ExecuteIfBound(RefreshRate);
-
 	UpdateResolutionUIState(WindowMode); //창 모드에 따라 해상도 콤보박스 활성/비활성
+	bIsUpdatingWidget = false;
 }
 
 void UGraphicSettingsWidget::NativeOnInitialized()
@@ -115,6 +112,8 @@ void UGraphicSettingsWidget::HandleQualitySelectionChanged(FString SelectedItem,
 
 void UGraphicSettingsWidget::HandleVSyncCheckStateChanged(bool bIsChecked) const
 {
+	if (bIsUpdatingWidget) return;
+
 	(void)OnVSyncChanged.ExecuteIfBound(bIsChecked);
 }
 
@@ -213,7 +212,6 @@ void UGraphicSettingsWidget::UpdateResolutionUIState(const EKatanaWindowMode Win
 		{
 			const FIntPoint DesktopRes = UserSettings->GetDesktopResolution();
 			SetResolutionWidget(DesktopRes);
-			(void)OnResolutionChanged.ExecuteIfBound(DesktopRes);
 		}
 	}
 	else

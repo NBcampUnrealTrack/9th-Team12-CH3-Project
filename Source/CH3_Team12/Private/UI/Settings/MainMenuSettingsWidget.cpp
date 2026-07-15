@@ -2,6 +2,7 @@
 
 #include "Components/Button.h"
 #include "UI/Settings/GraphicSettingsWidget.h"
+#include "UI/Settings/InputSettingsWidget.h"
 #include "UI/Settings/SoundSettingsWidget.h"
 
 USoundSettingsWidget* UMainMenuSettingsWidget::GetSoundSettings() const
@@ -12,6 +13,11 @@ USoundSettingsWidget* UMainMenuSettingsWidget::GetSoundSettings() const
 UGraphicSettingsWidget* UMainMenuSettingsWidget::GetGraphicSettings() const
 {
 	return GraphicSettingsWidget.Get();
+}
+
+UInputSettingsWidget* UMainMenuSettingsWidget::GetInputSettings() const
+{
+	return InputSettingsWidget.Get();
 }
 
 void UMainMenuSettingsWidget::NativeOnInitialized()
@@ -29,6 +35,11 @@ void UMainMenuSettingsWidget::NativeOnInitialized()
 	GraphicSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
 	GraphicSettingsWidget->OnVisibilityChanged.AddDynamic(
 		this, &UMainMenuSettingsWidget::HandleVisibilityGraphicSettingsChanged);
+
+	BtnInputSettings->OnClicked.AddDynamic(this, &UMainMenuSettingsWidget::HandleBtnInputSettingsClicked);
+	InputSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
+	InputSettingsWidget->OnVisibilityChanged.AddDynamic(
+		this, &UMainMenuSettingsWidget::HandleVisibilityInputSettingsChanged);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
@@ -58,6 +69,16 @@ void UMainMenuSettingsWidget::HandleBtnGraphicSettingsClicked()
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
+void UMainMenuSettingsWidget::HandleBtnInputSettingsClicked()
+{
+	if (BtnInputSettings)
+		BtnInputSettings->SetIsEnabled(false);
+
+	if (InputSettingsWidget)
+		InputSettingsWidget->SetVisibility(ESlateVisibility::Visible);
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
 void UMainMenuSettingsWidget::HandleVisibilitySoundSettingsChanged(const ESlateVisibility InVisibility)
 {
 	if (InVisibility == ESlateVisibility::Collapsed)
@@ -74,5 +95,15 @@ void UMainMenuSettingsWidget::HandleVisibilityGraphicSettingsChanged(const ESlat
 	{
 		if (BtnGraphicSettings)
 			BtnGraphicSettings->SetIsEnabled(true);
+	}
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UMainMenuSettingsWidget::HandleVisibilityInputSettingsChanged(ESlateVisibility InVisibility)
+{
+	if (InVisibility == ESlateVisibility::Collapsed)
+	{
+		if (BtnInputSettings)
+			BtnInputSettings->SetIsEnabled(true);
 	}
 }

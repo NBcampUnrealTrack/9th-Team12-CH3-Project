@@ -19,22 +19,22 @@ struct CH3_TEAM12_API FInventoryItemData
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FText Name;
+	FText Name = FText::GetEmpty();
 
 	UPROPERTY()
-	UTexture2D* Icon;
+	UTexture2D* Icon = nullptr;
 
 	UPROPERTY()
-	int32 Count;
+	int32 Count = 0;
 
 	UPROPERTY()
-	int32 MaxCount;
+	int32 MaxCount = 0;
 
 	UPROPERTY()
-	FText Description;
+	FText Description = FText::GetEmpty();
 
 	UPROPERTY()
-	TObjectPtr<UItemInstance> ItemInstance;
+	TObjectPtr<UItemInstance> ItemInstance = nullptr;
 };
 
 /**

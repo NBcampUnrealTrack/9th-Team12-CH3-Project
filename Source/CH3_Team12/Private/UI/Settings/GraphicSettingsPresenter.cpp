@@ -28,12 +28,18 @@ void UGraphicSettingsPresenter::Initialize(UGraphicSettingsWidget* InWidget)
 		return;
 	}
 
+	PendingWindowMode = GraphicManagerSubsystem->GetWindowMode();
+	PendingResolution = GraphicManagerSubsystem->GetResolution();
+	PendingQuality = GraphicManagerSubsystem->GetGraphicQuality();
+	bPendingVSync = GraphicManagerSubsystem->IsVSyncEnabled();
+	PendingRefreshRate = GraphicManagerSubsystem->GetFrameRateLimit();
+
 	GraphicSettingsWidget->UpdateWidget(
-		GraphicManagerSubsystem->GetWindowMode(),
-		GraphicManagerSubsystem->GetResolution(),
-		GraphicManagerSubsystem->GetGraphicQuality(),
-		GraphicManagerSubsystem->IsVSyncEnabled(),
-		GraphicManagerSubsystem->GetFrameRateLimit()
+		PendingWindowMode,
+		PendingResolution,
+		PendingQuality,
+		bPendingVSync,
+		PendingRefreshRate
 	);
 }
 
@@ -51,93 +57,72 @@ void UGraphicSettingsPresenter::Dispose()
 	}
 }
 
-void UGraphicSettingsPresenter::HandleWindowModeChanged(const EKatanaWindowMode NewWindowMode) const
+void UGraphicSettingsPresenter::HandleWindowModeChanged(const EKatanaWindowMode NewWindowMode)
 {
-	if (!GraphicManagerSubsystem.IsValid())
-		return;
+	PendingWindowMode = NewWindowMode;
 
-	UE_LOG(LogTemp, Warning, TEXT("Window Mode Changed to: %d"), static_cast<int32>(NewWindowMode));
-	GraphicManagerSubsystem->SetWindowMode(NewWindowMode);
+	if (NewWindowMode != EKatanaWindowMode::Windowed)
+	{
+		if (const UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
+		{
+			PendingResolution = UserSettings->GetDesktopResolution();
+		}
+	}
 }
 
-void UGraphicSettingsPresenter::HandleResolutionChanged(const FIntPoint NewResolution) const
+void UGraphicSettingsPresenter::HandleResolutionChanged(const FIntPoint NewResolution)
 {
-	if (!GraphicManagerSubsystem.IsValid())
-		return;
-
-	UE_LOG(LogTemp, Warning, TEXT("Resolution Changed to: %dx%d"), NewResolution.X, NewResolution.Y);
-	GraphicManagerSubsystem->SetResolution(NewResolution);
+	PendingResolution = NewResolution;
 }
 
-void UGraphicSettingsPresenter::HandleQualityChanged(const EKatanaGraphicQuality NewQuality) const
+void UGraphicSettingsPresenter::HandleQualityChanged(const EKatanaGraphicQuality NewQuality)
 {
-	if (!GraphicManagerSubsystem.IsValid())
-		return;
-
-	UE_LOG(LogTemp, Warning, TEXT("Graphic Quality Changed to: %d"), static_cast<int32>(NewQuality));
-	GraphicManagerSubsystem->SetGraphicQuality(NewQuality);
+	PendingQuality = NewQuality;
 }
 
-void UGraphicSettingsPresenter::HandleVSyncChanged(const bool bIsVSync) const
+void UGraphicSettingsPresenter::HandleVSyncChanged(const bool bIsVSync)
 {
-	if (!GraphicManagerSubsystem.IsValid())
-		return;
-
-	UE_LOG(LogTemp, Warning, TEXT("VSync Changed to: %s"), bIsVSync ? TEXT("True") : TEXT("False"));
-	GraphicManagerSubsystem->SetVSyncEnabled(bIsVSync);
+	bPendingVSync = bIsVSync;
 }
 
-void UGraphicSettingsPresenter::HandleRefreshRateChanged(const int32 NewRefreshRate) const
+void UGraphicSettingsPresenter::HandleRefreshRateChanged(const int32 NewRefreshRate)
 {
-	if (!GraphicManagerSubsystem.IsValid())
-		return;
-
-	UE_LOG(LogTemp, Warning, TEXT("Refresh Rate Changed to: %d"), NewRefreshRate);
-	GraphicManagerSubsystem->SetFrameRateLimit(NewRefreshRate);
+	PendingRefreshRate = NewRefreshRate;
 }
 
-void UGraphicSettingsPresenter::HandleBtnResetClicked() const
+void UGraphicSettingsPresenter::HandleBtnResetClicked()
 {
 	if (!GraphicSettingsWidget.IsValid() || !GraphicManagerSubsystem.IsValid())
 		return;
 
-	UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings();
-	if (!UserSettings) return;
+	PendingWindowMode = FKatanaGraphicSettingDefaults::WindowMode;
+	PendingResolution = FKatanaGraphicSettingDefaults::Resolution;
+	PendingQuality = FKatanaGraphicSettingDefaults::Quality;
+	bPendingVSync = FKatanaGraphicSettingDefaults::bVSync;
+	PendingRefreshRate = FKatanaGraphicSettingDefaults::FrameRateLimit;
 
-	UserSettings->SetToDefaults(); //임시로 기본값으로 되돌림
-
-	const FIntPoint DefaultResolution = UserSettings->GetScreenResolution();
-	const bool bDefaultVSync = UserSettings->IsVSyncEnabled();
-
-	EKatanaWindowMode DefaultWindowMode = EKatanaWindowMode::Windowed;
-	const EWindowMode::Type EngineWindowMode = UserSettings->GetFullscreenMode();
-	if (EngineWindowMode == EWindowMode::Fullscreen) DefaultWindowMode = EKatanaWindowMode::Fullscreen;
-	else if (EngineWindowMode == EWindowMode::WindowedFullscreen) DefaultWindowMode =
-		EKatanaWindowMode::WindowedFullscreen;
-
-	const int32 ScalabilityLevel = FMath::Clamp(UserSettings->GetOverallScalabilityLevel(), 0, 3);
-	const EKatanaGraphicQuality DefaultQuality = static_cast<EKatanaGraphicQuality>(ScalabilityLevel);
-
-	const int32 DefaultRefreshRate = UserSettings->GetFrameRateLimit();
-
-	UserSettings->LoadSettings(true);
-
-	GraphicSettingsWidget->UpdateWidget(DefaultWindowMode, DefaultResolution, DefaultQuality, bDefaultVSync,
-	                                    DefaultRefreshRate);
+	GraphicSettingsWidget->UpdateWidget(
+		PendingWindowMode,
+		PendingResolution,
+		PendingQuality,
+		bPendingVSync,
+		PendingRefreshRate
+	);
 }
 
 void UGraphicSettingsPresenter::HandleBtnDoneClicked() const
 {
-	if (!GraphicSettingsWidget.IsValid())
+	if (!GraphicSettingsWidget.IsValid() || !GraphicManagerSubsystem.IsValid())
 		return;
 
-	if (GraphicManagerSubsystem.IsValid())
-	{
-		GraphicManagerSubsystem->ApplyAndSaveGraphicSettings();
-	}
+	GraphicManagerSubsystem->SetWindowMode(PendingWindowMode);
+	GraphicManagerSubsystem->SetResolution(PendingResolution);
+	GraphicManagerSubsystem->SetGraphicQuality(PendingQuality);
+	GraphicManagerSubsystem->SetVSyncEnabled(bPendingVSync);
+	GraphicManagerSubsystem->SetFrameRateLimit(PendingRefreshRate);
+
+	GraphicManagerSubsystem->ApplyAndSaveGraphicSettings();
 
 	if (GraphicSettingsWidget->bDoneAfterCollapsed)
-	{
 		GraphicSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
-	}
 }

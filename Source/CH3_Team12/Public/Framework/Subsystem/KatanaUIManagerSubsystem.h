@@ -7,6 +7,7 @@
 #include "UObject/ScriptInterface.h"
 #include "KatanaUIManagerSubsystem.generated.h"
 
+class UInputSettingsWidget;
 class UGraphicSettingsWidget;
 class UEnemyAttributeComponent;
 class UInventoryWidget;
@@ -58,6 +59,9 @@ public:
 	void RegisterGraphicSettingsWidget(UGraphicSettingsWidget* InWidget);
 	void UnregisterGraphicSettingsWidget(UGraphicSettingsWidget* InWidget);
 
+	void RegisterInputSettingsWidget(UInputSettingsWidget* InWidget);
+	void UnregisterInputSettingsWidget(UInputSettingsWidget* InWidget);
+
 private:
 	const FName MainMenuWidgetName = FName("MainMenuWidget");
 	const FName MainMenuSettingsWidgetName = FName("MainMenuSettingsWidget");
@@ -71,6 +75,7 @@ private:
 	const FName InventoryWidgetName = FName("InventoryWidget");
 	const FName SoundSettingsWidgetName = FName("SoundSettingsWidget");
 	const FName GraphicSettingsWidgetName = FName("GraphicSettingsWidget");
+	const FName InputSettingsWidgetName = FName("InputSettingsWidget");
 
 	UPROPERTY()
 	TSoftObjectPtr<UUIDataAsset> UIDataAsset = nullptr;
@@ -90,6 +95,17 @@ private:
 		if (UIDataAsset.IsNull())
 		{
 			UE_LOG(LogTemp, Error, TEXT("UKatanaUIManagerSubsystem: UIDataAsset is null"));
+			return nullptr;
+		}
+
+		if (UIDataAsset.IsPending())
+		{
+			(void)UIDataAsset.LoadSynchronous();
+		}
+
+		if (!UIDataAsset.IsValid())
+		{
+			UE_LOG(LogTemp, Error, TEXT("UKatanaUIManagerSubsystem: Failed to load UIDataAsset"));
 			return nullptr;
 		}
 

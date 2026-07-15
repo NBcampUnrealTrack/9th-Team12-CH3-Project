@@ -18,6 +18,11 @@ UGraphicSettingsWidget* UInGameMenuWidget::GetGraphicSettingsWidget() const
 	return GraphicSettingsWidget.Get();
 }
 
+UInputSettingsWidget* UInGameMenuWidget::GetInputSettingsWidget() const
+{
+	return InputSettingsWidget.Get();
+}
+
 void UInGameMenuWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
@@ -27,6 +32,7 @@ void UInGameMenuWidget::NativeOnInitialized()
 
 	BtnChildSoundSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnChildSoundSettingsClicked);
 	BtnChildGraphicsSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnChildGraphicsSettingsClicked);
+	BtnChildInputSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnChildInputSettingsClicked);
 }
 
 void UInGameMenuWidget::HandleBtnInventoryClicked()
@@ -47,6 +53,11 @@ void UInGameMenuWidget::HandleBtnChildSoundSettingsClicked()
 void UInGameMenuWidget::HandleBtnChildGraphicsSettingsClicked()
 {
 	SettingsWidgetSwitcherChanged(1);
+}
+
+void UInGameMenuWidget::HandleBtnChildInputSettingsClicked()
+{
+	SettingsWidgetSwitcherChanged(2);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

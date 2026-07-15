@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "InGameMenuWidget.generated.h"
 
+class UInputSettingsWidget;
 class UGraphicSettingsWidget;
 class UInventoryWidget;
 class USoundSettingsWidget;
@@ -21,6 +22,7 @@ public:
 	UInventoryWidget* GetInventoryWidget() const;
 	USoundSettingsWidget* GetSoundSettingsWidget() const;
 	UGraphicSettingsWidget* GetGraphicSettingsWidget() const;
+	UInputSettingsWidget* GetInputSettingsWidget() const;
 
 protected:
 	UFUNCTION()
@@ -46,6 +48,9 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> BtnChildGraphicsSettings;
 
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UButton> BtnChildInputSettings;
+
 	//설정 탭 관련
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UWidgetSwitcher> SettingsWidgetSwitcher;
@@ -55,6 +60,9 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UGraphicSettingsWidget> GraphicSettingsWidget;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UInputSettingsWidget> InputSettingsWidget;
 
 	UFUNCTION()
 	void HandleBtnInventoryClicked();
@@ -67,6 +75,9 @@ private:
 
 	UFUNCTION()
 	void HandleBtnChildGraphicsSettingsClicked();
+
+	UFUNCTION()
+	void HandleBtnChildInputSettingsClicked();
 
 	void WidgetSwitcherChanged(int32 ActiveWidgetIndex);
 	void SettingsWidgetSwitcherChanged(int32 ActiveWidgetIndex);

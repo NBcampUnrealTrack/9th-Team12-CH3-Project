@@ -5,6 +5,7 @@
 #include "UI/UICommonTypes.h"
 #include "MainMenuSettingsWidget.generated.h"
 
+class UInputSettingsWidget;
 class UGraphicSettingsWidget;
 class UButton;
 class USoundSettingsWidget;
@@ -22,6 +23,7 @@ public:
 
 	USoundSettingsWidget* GetSoundSettings() const;
 	UGraphicSettingsWidget* GetGraphicSettings() const;
+	UInputSettingsWidget* GetInputSettings() const;
 
 protected:
 	UFUNCTION()
@@ -38,10 +40,16 @@ private:
 	TObjectPtr<UButton> BtnGraphicSettings;
 
 	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UButton> BtnInputSettings;
+
+	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<USoundSettingsWidget> SoundSettingsWidget;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UGraphicSettingsWidget> GraphicSettingsWidget;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UInputSettingsWidget> InputSettingsWidget;
 
 	UFUNCTION()
 	void HandleBtnBackClicked();
@@ -53,8 +61,14 @@ private:
 	void HandleBtnGraphicSettingsClicked();
 
 	UFUNCTION()
+	void HandleBtnInputSettingsClicked();
+
+	UFUNCTION()
 	void HandleVisibilitySoundSettingsChanged(ESlateVisibility InVisibility);
 
 	UFUNCTION()
 	void HandleVisibilityGraphicSettingsChanged(ESlateVisibility InVisibility);
+
+	UFUNCTION()
+	void HandleVisibilityInputSettingsChanged(ESlateVisibility InVisibility);
 };

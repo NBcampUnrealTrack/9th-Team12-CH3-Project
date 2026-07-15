@@ -28,23 +28,29 @@ private:
 	UPROPERTY()
 	TWeakObjectPtr<UGraphicSettingsWidget> GraphicSettingsWidget;
 
-	UFUNCTION()
-	void HandleWindowModeChanged(EKatanaWindowMode NewWindowMode) const;
+	EKatanaWindowMode PendingWindowMode;
+	FIntPoint PendingResolution;
+	EKatanaGraphicQuality PendingQuality;
+	bool bPendingVSync;
+	int32 PendingRefreshRate;
 
 	UFUNCTION()
-	void HandleResolutionChanged(FIntPoint NewResolution) const;
+	void HandleWindowModeChanged(EKatanaWindowMode NewWindowMode);
 
 	UFUNCTION()
-	void HandleQualityChanged(EKatanaGraphicQuality NewQuality) const;
+	void HandleResolutionChanged(FIntPoint NewResolution);
 
 	UFUNCTION()
-	void HandleVSyncChanged(bool bIsVSync) const;
+	void HandleQualityChanged(EKatanaGraphicQuality NewQuality);
 
 	UFUNCTION()
-	void HandleRefreshRateChanged(int32 NewRefreshRate) const;
+	void HandleVSyncChanged(bool bIsVSync);
 
 	UFUNCTION()
-	void HandleBtnResetClicked() const;
+	void HandleRefreshRateChanged(int32 NewRefreshRate);
+
+	UFUNCTION()
+	void HandleBtnResetClicked();
 
 	UFUNCTION()
 	void HandleBtnDoneClicked() const;

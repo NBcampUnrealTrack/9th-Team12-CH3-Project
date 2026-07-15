@@ -58,6 +58,8 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> BtnDone;
 
+	bool bIsUpdatingWidget = false;
+
 	UFUNCTION()
 	void InitializeComboBoxOptions() const;
 

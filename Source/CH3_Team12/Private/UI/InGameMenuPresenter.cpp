@@ -23,6 +23,7 @@ void UInGameMenuPresenter::Initialize(UInGameMenuWidget* InWidget)
 	UIManagerSubsystem->RegisterInventoryWidget(InGameMenuWidget->GetInventoryWidget());
 	UIManagerSubsystem->RegisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
 	UIManagerSubsystem->RegisterGraphicSettingsWidget(InGameMenuWidget->GetGraphicSettingsWidget());
+	UIManagerSubsystem->RegisterInputSettingsWidget(InGameMenuWidget->GetInputSettingsWidget());
 }
 
 void UInGameMenuPresenter::Dispose()
@@ -43,4 +44,5 @@ void UInGameMenuPresenter::Dispose()
 	UIManagerSubsystem->UnregisterInventoryWidget(InGameMenuWidget->GetInventoryWidget());
 	UIManagerSubsystem->UnregisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
 	UIManagerSubsystem->UnregisterGraphicSettingsWidget(InGameMenuWidget->GetGraphicSettingsWidget());
+	UIManagerSubsystem->UnregisterInputSettingsWidget(InGameMenuWidget->GetInputSettingsWidget());
 }

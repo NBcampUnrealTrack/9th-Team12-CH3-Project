@@ -15,6 +15,7 @@
 #include "UI/HUD/PlayerPresenter.h"
 #include "UI/HUD/PlayerWidget.h"
 #include "UI/Settings/GraphicSettingsPresenter.h"
+#include "UI/Settings/InputSettingsPresenter.h"
 #include "UI/Settings/MainMenuSettingsPresenter.h"
 #include "UI/Settings/MainMenuSettingsWidget.h"
 #include "UI/Settings/SoundSettingsPresenter.h"
@@ -286,6 +287,31 @@ void UKatanaUIManagerSubsystem::RegisterGraphicSettingsWidget(UGraphicSettingsWi
 void UKatanaUIManagerSubsystem::UnregisterGraphicSettingsWidget(UGraphicSettingsWidget* InWidget)
 {
 	OpHideUI(GraphicSettingsWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::RegisterInputSettingsWidget(UInputSettingsWidget* InWidget)
+{
+	const FName WidgetName = InputSettingsWidgetName;
+	if (!InWidget)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Widget 이 유효하지 않습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	UInputSettingsPresenter* NewPresenter = NewObject<UInputSettingsPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(InWidget);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::UnregisterInputSettingsWidget(UInputSettingsWidget* InWidget)
+{
+	OpHideUI(InputSettingsWidgetName);
 }
 
 void UKatanaUIManagerSubsystem::OpHideUI(const FName UIName)
