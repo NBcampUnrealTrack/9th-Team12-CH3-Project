@@ -41,6 +41,9 @@ private:
 	void HandleVSyncChanged(bool bIsVSync) const;
 
 	UFUNCTION()
+	void HandleRefreshRateChanged(int32 NewRefreshRate) const;
+
+	UFUNCTION()
 	void HandleBtnResetClicked() const;
 
 	UFUNCTION()

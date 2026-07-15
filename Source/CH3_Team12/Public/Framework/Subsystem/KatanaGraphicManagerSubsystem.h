@@ -22,6 +22,15 @@ enum class EKatanaGraphicQuality : uint8
     Epic    UMETA(DisplayName = "Epic")
 };
 
+struct FKatanaGraphicSettingDefaults
+{
+    inline static const FIntPoint Resolution = {1920, 1080};
+    static constexpr EKatanaWindowMode WindowMode = EKatanaWindowMode::Windowed;
+    static constexpr EKatanaGraphicQuality Quality = EKatanaGraphicQuality::High; // 텍스처, 그림자, 안티앨리어싱 등
+    static constexpr bool bVSync = false;
+    static constexpr float FrameRateLimit = 0.0f; // 0은 제한 없음
+};
+
 UCLASS()
 class CH3_TEAM12_API UKatanaGraphicManagerSubsystem : public UGameInstanceSubsystem
 {

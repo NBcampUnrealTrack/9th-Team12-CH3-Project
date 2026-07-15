@@ -16,6 +16,8 @@ void UGraphicSettingsPresenter::Initialize(UGraphicSettingsWidget* InWidget)
 	GraphicSettingsWidget->OnResolutionChanged.BindDynamic(this, &UGraphicSettingsPresenter::HandleResolutionChanged);
 	GraphicSettingsWidget->OnQualityChanged.BindDynamic(this, &UGraphicSettingsPresenter::HandleQualityChanged);
 	GraphicSettingsWidget->OnVSyncChanged.BindDynamic(this, &UGraphicSettingsPresenter::HandleVSyncChanged);
+	GraphicSettingsWidget->OnRefreshRateChanged.BindDynamic(this, &UGraphicSettingsPresenter::HandleRefreshRateChanged);
+
 	GraphicSettingsWidget->OnBtnResetClicked.BindDynamic(this, &UGraphicSettingsPresenter::HandleBtnResetClicked);
 	GraphicSettingsWidget->OnBtnDoneClicked.BindDynamic(this, &UGraphicSettingsPresenter::HandleBtnDoneClicked);
 
@@ -26,10 +28,13 @@ void UGraphicSettingsPresenter::Initialize(UGraphicSettingsWidget* InWidget)
 		return;
 	}
 
-	GraphicSettingsWidget->SetWindowModeWidget(GraphicManagerSubsystem->GetWindowMode());
-	GraphicSettingsWidget->SetResolutionWidget(GraphicManagerSubsystem->GetResolution());
-	GraphicSettingsWidget->SetQualityWidget(GraphicManagerSubsystem->GetGraphicQuality());
-	GraphicSettingsWidget->SetVSyncWidget(GraphicManagerSubsystem->IsVSyncEnabled());
+	GraphicSettingsWidget->UpdateWidget(
+		GraphicManagerSubsystem->GetWindowMode(),
+		GraphicManagerSubsystem->GetResolution(),
+		GraphicManagerSubsystem->GetGraphicQuality(),
+		GraphicManagerSubsystem->IsVSyncEnabled(),
+		GraphicManagerSubsystem->GetFrameRateLimit()
+	);
 }
 
 void UGraphicSettingsPresenter::Dispose()
@@ -40,6 +45,7 @@ void UGraphicSettingsPresenter::Dispose()
 		GraphicSettingsWidget->OnResolutionChanged.Unbind();
 		GraphicSettingsWidget->OnQualityChanged.Unbind();
 		GraphicSettingsWidget->OnVSyncChanged.Unbind();
+		GraphicSettingsWidget->OnRefreshRateChanged.Unbind();
 		GraphicSettingsWidget->OnBtnResetClicked.Unbind();
 		GraphicSettingsWidget->OnBtnDoneClicked.Unbind();
 	}
@@ -81,12 +87,43 @@ void UGraphicSettingsPresenter::HandleVSyncChanged(const bool bIsVSync) const
 	GraphicManagerSubsystem->SetVSyncEnabled(bIsVSync);
 }
 
-void UGraphicSettingsPresenter::HandleBtnResetClicked() const
+void UGraphicSettingsPresenter::HandleRefreshRateChanged(const int32 NewRefreshRate) const
 {
-	if (!GraphicSettingsWidget.IsValid())
+	if (!GraphicManagerSubsystem.IsValid())
 		return;
 
-	GraphicSettingsWidget->ResetGraphics();
+	UE_LOG(LogTemp, Warning, TEXT("Refresh Rate Changed to: %d"), NewRefreshRate);
+	GraphicManagerSubsystem->SetFrameRateLimit(NewRefreshRate);
+}
+
+void UGraphicSettingsPresenter::HandleBtnResetClicked() const
+{
+	if (!GraphicSettingsWidget.IsValid() || !GraphicManagerSubsystem.IsValid())
+		return;
+
+	UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings();
+	if (!UserSettings) return;
+
+	UserSettings->SetToDefaults(); //임시로 기본값으로 되돌림
+
+	const FIntPoint DefaultResolution = UserSettings->GetScreenResolution();
+	const bool bDefaultVSync = UserSettings->IsVSyncEnabled();
+
+	EKatanaWindowMode DefaultWindowMode = EKatanaWindowMode::Windowed;
+	const EWindowMode::Type EngineWindowMode = UserSettings->GetFullscreenMode();
+	if (EngineWindowMode == EWindowMode::Fullscreen) DefaultWindowMode = EKatanaWindowMode::Fullscreen;
+	else if (EngineWindowMode == EWindowMode::WindowedFullscreen) DefaultWindowMode =
+		EKatanaWindowMode::WindowedFullscreen;
+
+	const int32 ScalabilityLevel = FMath::Clamp(UserSettings->GetOverallScalabilityLevel(), 0, 3);
+	const EKatanaGraphicQuality DefaultQuality = static_cast<EKatanaGraphicQuality>(ScalabilityLevel);
+
+	const int32 DefaultRefreshRate = UserSettings->GetFrameRateLimit();
+
+	UserSettings->LoadSettings(true);
+
+	GraphicSettingsWidget->UpdateWidget(DefaultWindowMode, DefaultResolution, DefaultQuality, bDefaultVSync,
+	                                    DefaultRefreshRate);
 }
 
 void UGraphicSettingsPresenter::HandleBtnDoneClicked() const

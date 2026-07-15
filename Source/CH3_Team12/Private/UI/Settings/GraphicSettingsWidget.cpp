@@ -4,6 +4,26 @@
 #include "Components/ComboBoxString.h"
 #include "Components/CheckBox.h"
 
+// ReSharper disable once CppMemberFunctionMayBeConst
+void UGraphicSettingsWidget::UpdateWidget(const EKatanaWindowMode WindowMode, const FIntPoint Resolution,
+                                          const EKatanaGraphicQuality Quality, const bool bVSync,
+                                          const int32 RefreshRate)
+{
+	SetWindowModeWidget(WindowMode);
+	SetResolutionWidget(Resolution);
+	SetQualityWidget(Quality);
+	SetVSyncWidget(bVSync);
+	SetRefreshRateWidget(RefreshRate);
+
+	(void)OnWindowModeChanged.ExecuteIfBound(WindowMode);
+	(void)OnResolutionChanged.ExecuteIfBound(Resolution);
+	(void)OnQualityChanged.ExecuteIfBound(Quality);
+	(void)OnVSyncChanged.ExecuteIfBound(bVSync);
+	(void)OnRefreshRateChanged.ExecuteIfBound(RefreshRate);
+
+	UpdateResolutionUIState(WindowMode); //창 모드에 따라 해상도 콤보박스 활성/비활성
+}
+
 void UGraphicSettingsWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
@@ -14,9 +34,118 @@ void UGraphicSettingsWidget::NativeOnInitialized()
 	ResolutionComboBox->OnSelectionChanged.AddDynamic(this, &UGraphicSettingsWidget::HandleResolutionSelectionChanged);
 	QualityComboBox->OnSelectionChanged.AddDynamic(this, &UGraphicSettingsWidget::HandleQualitySelectionChanged);
 	VSyncCheckBox->OnCheckStateChanged.AddDynamic(this, &UGraphicSettingsWidget::HandleVSyncCheckStateChanged);
+	RefreshRateComboBox->OnSelectionChanged.AddDynamic(this, &UGraphicSettingsWidget::HandleRefreshRateSelectionChanged);
 
 	BtnReset->OnClicked.AddDynamic(this, &UGraphicSettingsWidget::HandleBtnResetClicked);
 	BtnDone->OnClicked.AddDynamic(this, &UGraphicSettingsWidget::HandleBtnDoneClicked);
+}
+
+void UGraphicSettingsWidget::InitializeComboBoxOptions() const
+{
+	WindowModeComboBox->ClearOptions();
+	WindowModeComboBox->AddOption(TEXT("Fullscreen"));
+	WindowModeComboBox->AddOption(TEXT("Borderless"));
+	WindowModeComboBox->AddOption(TEXT("Windowed"));
+
+	ResolutionComboBox->ClearOptions();
+	ResolutionComboBox->AddOption(TEXT("3840x2160"));
+	ResolutionComboBox->AddOption(TEXT("2560x1440"));
+	ResolutionComboBox->AddOption(TEXT("1920x1080"));
+	ResolutionComboBox->AddOption(TEXT("1600x900"));
+	ResolutionComboBox->AddOption(TEXT("1280x720"));
+
+	QualityComboBox->ClearOptions();
+	QualityComboBox->AddOption(TEXT("Low"));
+	QualityComboBox->AddOption(TEXT("Medium"));
+	QualityComboBox->AddOption(TEXT("High"));
+	QualityComboBox->AddOption(TEXT("Epic"));
+
+	RefreshRateComboBox->ClearOptions();
+	RefreshRateComboBox->AddOption(TEXT("Unlimited"));
+	RefreshRateComboBox->AddOption(TEXT("15"));
+	RefreshRateComboBox->AddOption(TEXT("30"));
+	RefreshRateComboBox->AddOption(TEXT("60"));
+	RefreshRateComboBox->AddOption(TEXT("90"));
+	RefreshRateComboBox->AddOption(TEXT("120"));
+	RefreshRateComboBox->AddOption(TEXT("144"));
+	RefreshRateComboBox->AddOption(TEXT("240"));
+}
+
+// ReSharper disable once CppPassValueParameterByConstReference
+void UGraphicSettingsWidget::HandleWindowModeSelectionChanged(FString SelectedItem,
+                                                              ESelectInfo::Type SelectionType) const
+{
+	if (SelectionType == ESelectInfo::Direct) return;
+
+	EKatanaWindowMode SelectedMode = EKatanaWindowMode::Windowed;
+	if (SelectedItem == TEXT("Fullscreen")) SelectedMode = EKatanaWindowMode::Fullscreen;
+	else if (SelectedItem == TEXT("Borderless")) SelectedMode = EKatanaWindowMode::WindowedFullscreen;
+
+	(void)OnWindowModeChanged.ExecuteIfBound(SelectedMode);
+
+	UpdateResolutionUIState(SelectedMode);
+}
+
+// ReSharper disable once CppPassValueParameterByConstReference
+void UGraphicSettingsWidget::HandleResolutionSelectionChanged(FString SelectedItem,
+                                                              ESelectInfo::Type SelectionType) const
+{
+	if (SelectionType == ESelectInfo::Direct) return;
+
+	FString Left, Right;
+	if (SelectedItem.Split(TEXT("x"), &Left, &Right))
+	{
+		const FIntPoint NewResolution(FCString::Atoi(*Left), FCString::Atoi(*Right));
+		(void)OnResolutionChanged.ExecuteIfBound(NewResolution);
+	}
+}
+
+// ReSharper disable once CppPassValueParameterByConstReference
+void UGraphicSettingsWidget::HandleQualitySelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType) const
+{
+	if (SelectionType == ESelectInfo::Direct) return;
+
+	EKatanaGraphicQuality SelectedQuality = EKatanaGraphicQuality::High;
+	if (SelectedItem == TEXT("Low")) SelectedQuality = EKatanaGraphicQuality::Low;
+	else if (SelectedItem == TEXT("Medium")) SelectedQuality = EKatanaGraphicQuality::Medium;
+	else if (SelectedItem == TEXT("Epic")) SelectedQuality = EKatanaGraphicQuality::Epic;
+
+	(void)OnQualityChanged.ExecuteIfBound(SelectedQuality);
+}
+
+void UGraphicSettingsWidget::HandleVSyncCheckStateChanged(bool bIsChecked) const
+{
+	(void)OnVSyncChanged.ExecuteIfBound(bIsChecked);
+}
+
+void UGraphicSettingsWidget::HandleRefreshRateSelectionChanged(FString SelectedItem,
+                                                               ESelectInfo::Type SelectionType) const
+{
+	{
+		if (SelectionType == ESelectInfo::Direct) return;
+
+		int32 RefreshRate;
+		if (SelectedItem == TEXT("무제한") || SelectedItem == TEXT("Unlimited"))
+		{
+			RefreshRate = 0;
+		}
+		else
+		{
+			RefreshRate = FCString::Atoi(*SelectedItem);
+		}
+
+		(void)OnRefreshRateChanged.ExecuteIfBound(RefreshRate);
+	}
+}
+
+void UGraphicSettingsWidget::HandleBtnResetClicked() const
+{
+	(void)OnBtnResetClicked.ExecuteIfBound();
+}
+
+void UGraphicSettingsWidget::HandleBtnDoneClicked() const
+{
+	(void)OnBtnDoneClicked.ExecuteIfBound();
 }
 
 void UGraphicSettingsWidget::SetWindowModeWidget(const EKatanaWindowMode WindowMode) const
@@ -62,96 +191,33 @@ void UGraphicSettingsWidget::SetVSyncWidget(const bool bIsVSync) const
 	VSyncCheckBox->SetIsChecked(bIsVSync);
 }
 
-void UGraphicSettingsWidget::ResetGraphics() const
+void UGraphicSettingsWidget::SetRefreshRateWidget(const int32 RefreshRate) const
 {
-	constexpr EKatanaWindowMode DefaultWindowMode = EKatanaWindowMode::WindowedFullscreen;
-	const FIntPoint DefaultResolution(1920, 1080);
-	constexpr EKatanaGraphicQuality DefaultQuality = EKatanaGraphicQuality::High;
-	constexpr bool bDefaultVSync = false;
-
-	SetWindowModeWidget(DefaultWindowMode);
-	SetResolutionWidget(DefaultResolution);
-	SetQualityWidget(DefaultQuality);
-	SetVSyncWidget(bDefaultVSync);
-
-	(void)OnWindowModeChanged.ExecuteIfBound(DefaultWindowMode);
-	(void)OnResolutionChanged.ExecuteIfBound(DefaultResolution);
-	(void)OnQualityChanged.ExecuteIfBound(DefaultQuality);
-	(void)OnVSyncChanged.ExecuteIfBound(bDefaultVSync);
-}
-
-void UGraphicSettingsWidget::InitializeComboBoxOptions() const
-{
-	WindowModeComboBox->ClearOptions();
-	WindowModeComboBox->AddOption(TEXT("Fullscreen"));
-	WindowModeComboBox->AddOption(TEXT("Borderless"));
-	WindowModeComboBox->AddOption(TEXT("Windowed"));
-
-	ResolutionComboBox->ClearOptions();
-	ResolutionComboBox->AddOption(TEXT("3840x2160"));
-	ResolutionComboBox->AddOption(TEXT("2560x1440"));
-	ResolutionComboBox->AddOption(TEXT("1920x1080"));
-	ResolutionComboBox->AddOption(TEXT("1600x900"));
-	ResolutionComboBox->AddOption(TEXT("1280x720"));
-
-	QualityComboBox->ClearOptions();
-	QualityComboBox->AddOption(TEXT("Low"));
-	QualityComboBox->AddOption(TEXT("Medium"));
-	QualityComboBox->AddOption(TEXT("High"));
-	QualityComboBox->AddOption(TEXT("Epic"));
-}
-
-// ReSharper disable once CppPassValueParameterByConstReference
-void UGraphicSettingsWidget::HandleWindowModeSelectionChanged(FString SelectedItem,
-                                                              ESelectInfo::Type SelectionType) const
-{
-	if (SelectionType != ESelectInfo::Direct) return;
-
-	EKatanaWindowMode SelectedMode = EKatanaWindowMode::Windowed;
-	if (SelectedItem == TEXT("Fullscreen")) SelectedMode = EKatanaWindowMode::Fullscreen;
-	else if (SelectedItem == TEXT("Borderless")) SelectedMode = EKatanaWindowMode::WindowedFullscreen;
-
-	(void)OnWindowModeChanged.ExecuteIfBound(SelectedMode);
-}
-
-// ReSharper disable once CppPassValueParameterByConstReference
-void UGraphicSettingsWidget::HandleResolutionSelectionChanged(FString SelectedItem,
-                                                              ESelectInfo::Type SelectionType) const
-{
-	if (SelectionType != ESelectInfo::Direct) return;
-
-	FString Left, Right;
-	if (SelectedItem.Split(TEXT("x"), &Left, &Right))
+	if (RefreshRate == 0)
 	{
-		FIntPoint NewResolution(FCString::Atoi(*Left), FCString::Atoi(*Right));
-		(void)OnResolutionChanged.ExecuteIfBound(NewResolution);
+		RefreshRateComboBox->SetSelectedOption(TEXT("Unlimited"));
+	}
+	else
+	{
+		RefreshRateComboBox->SetSelectedOption(FString::Printf(TEXT("%d"), RefreshRate));
 	}
 }
 
-// ReSharper disable once CppPassValueParameterByConstReference
-void UGraphicSettingsWidget::HandleQualitySelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType) const
+void UGraphicSettingsWidget::UpdateResolutionUIState(const EKatanaWindowMode WindowMode) const
 {
-	if (SelectionType != ESelectInfo::Direct) return;
+	if (WindowMode != EKatanaWindowMode::Windowed)
+	{
+		ResolutionComboBox->SetIsEnabled(false);
 
-	EKatanaGraphicQuality SelectedQuality = EKatanaGraphicQuality::High;
-	if (SelectedItem == TEXT("Low")) SelectedQuality = EKatanaGraphicQuality::Low;
-	else if (SelectedItem == TEXT("Medium")) SelectedQuality = EKatanaGraphicQuality::Medium;
-	else if (SelectedItem == TEXT("Epic")) SelectedQuality = EKatanaGraphicQuality::Epic;
-
-	(void)OnQualityChanged.ExecuteIfBound(SelectedQuality);
-}
-
-void UGraphicSettingsWidget::HandleVSyncCheckStateChanged(bool bIsChecked) const
-{
-	(void)OnVSyncChanged.ExecuteIfBound(bIsChecked);
-}
-
-void UGraphicSettingsWidget::HandleBtnResetClicked() const
-{
-	(void)OnBtnResetClicked.ExecuteIfBound();
-}
-
-void UGraphicSettingsWidget::HandleBtnDoneClicked() const
-{
-	(void)OnBtnDoneClicked.ExecuteIfBound();
+		if (const UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
+		{
+			const FIntPoint DesktopRes = UserSettings->GetDesktopResolution();
+			SetResolutionWidget(DesktopRes);
+			(void)OnResolutionChanged.ExecuteIfBound(DesktopRes);
+		}
+	}
+	else
+	{
+		ResolutionComboBox->SetIsEnabled(true);
+	}
 }
