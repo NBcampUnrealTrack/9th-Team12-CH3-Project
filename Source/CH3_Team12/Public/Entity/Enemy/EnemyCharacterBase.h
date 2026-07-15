@@ -86,7 +86,7 @@ protected:
 	UFUNCTION()
 	void OnDeath();
 
-	void PlayDeathMontage();
+	bool PlayDeathMontage();
 	void StartDeathTransition();
 	void SetEnemyDestroyTimer();
 
@@ -96,7 +96,7 @@ protected:
 	void ResumeAILogic();
 
 	void StartExecuted_Implement();
-	void PlayExecutedMontage();
+	bool PlayExecutedMontage();
 	void OnExecutedMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	
 public:

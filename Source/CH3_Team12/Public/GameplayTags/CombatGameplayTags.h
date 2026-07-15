@@ -11,6 +11,8 @@ namespace CombatTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Guarding);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Invincible);
+	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_FallDown);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_LockOn);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_Sprinting);

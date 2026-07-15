@@ -164,28 +164,32 @@ void AEnemyCharacterBase::OnDeath()
 
 	EnemyAttackComponent->CancelAttack();
 	GetWorldTimerManager().ClearAllTimersForObject(this);
-	PlayDeathMontage();
+	bool Result = PlayDeathMontage();
+	
+	StartDeathTransition();
+	
 	StartDeathTransition();
 	SetEnemyDestroyTimer();
 }
 
 
-void AEnemyCharacterBase::PlayDeathMontage()
+bool AEnemyCharacterBase::PlayDeathMontage()
 {
 	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
 	if (!SkeletalMeshComponent)
 	{
-		return;
+		return false;
 	}
 
 	UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
 	if (!AnimInstance || !DeadMontage)
 	{
-		return;
+		return false;
 	}
 
 	AnimInstance->Montage_Play(DeadMontage);
-	StartDeathTransition();
+	
+	return true;
 }
 
 void AEnemyCharacterBase::StartDeathTransition()
@@ -259,23 +263,26 @@ void AEnemyCharacterBase::StartExecuted_Implement()
 	{
 		StateTagComponent->AddStateTag(CombatTags::State_Action_Executing);
 		
-		PlayExecutedMontage();
 		StopAILogic();
+		if (!PlayExecutedMontage())
+		{
+			OnExecutedMontageEnded(nullptr, false);
+		}
 	}	
 }
 
-void AEnemyCharacterBase::PlayExecutedMontage()
+bool AEnemyCharacterBase::PlayExecutedMontage()
 {
 	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
 	if (!SkeletalMeshComponent)
 	{
-		return;
+		return false;
 	}
 
 	UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
 	if (!AnimInstance || !ExecutionData)
 	{
-		return;
+		return false;
 	}
 
 	UAnimMontage* ExecutedMontage = ExecutionData->EnemyExecutionData.EnemyMontage;
@@ -287,7 +294,11 @@ void AEnemyCharacterBase::PlayExecutedMontage()
 		
 		AnimInstance->Montage_Play(ExecutedMontage);
 		AnimInstance->Montage_SetEndDelegate(OnMontageEndedDelegate, ExecutedMontage);
+		
+		return true;
 	}
+
+	return false;
 }
 
 void AEnemyCharacterBase::OnExecutedMontageEnded(UAnimMontage* Montage, bool bInterrupted)

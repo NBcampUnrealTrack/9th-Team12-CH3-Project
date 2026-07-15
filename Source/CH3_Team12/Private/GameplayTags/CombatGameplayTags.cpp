@@ -36,6 +36,11 @@ namespace CombatTags
 		State_Combat_Invincible,
 		"State.Combat.Invincible"
 	);
+	
+	UE_DEFINE_GAMEPLAY_TAG(
+		State_Combat_FallDown,
+		"State.Combat.FallDown"
+	);
 
 	UE_DEFINE_GAMEPLAY_TAG(
 		State_Movement_LockOn,

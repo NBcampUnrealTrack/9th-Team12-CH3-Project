@@ -720,9 +720,6 @@ void UPlayerAttackComponent::OnExecutionMontageEnded(
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Movement_Locked);
 	
-	ExecutionTarget->GetStateTagComponent()
-		->RemoveStateTag(CombatTags::State_Action_Executing);
-	
 	ExecutionTarget = nullptr;
 }
 
