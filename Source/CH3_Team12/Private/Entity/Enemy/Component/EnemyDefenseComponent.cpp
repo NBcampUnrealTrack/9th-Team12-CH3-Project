@@ -127,6 +127,7 @@ bool UEnemyDefenseComponent::CanHitReaction() const
 	UnAllowState.AddTag(CombatTags::State_Hit_Dead);
 	UnAllowState.AddTag(CombatTags::State_Combat_Attacking);
 	UnAllowState.AddTag(CombatTags::State_Hit_PostureBroken);
+	UnAllowState.AddTag(CombatTags::State_Action_Executing);
 	Result = !(StateComponent->HasAnyStateTags(UnAllowState));
 
 	return Result;

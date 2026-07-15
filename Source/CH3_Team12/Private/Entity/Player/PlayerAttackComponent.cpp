@@ -589,22 +589,21 @@ void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
 	{
 		return;
 	}
-
-	const UEnemyExecutionDataAsset* EnemyData =
-		Enemy->GetExecutionData();
 	
 	const UPlayerAttackDataAsset* AttackData = 
 		GetAttackData();
 	
+	const UEnemyExecutionDataAsset* EnemyData =  
+		Enemy->GetExecutionData();
+	
 	ensure(AttackData);
-	ensure(EnemyData);
-	ensure(AttackData->ExecutionData.PlayerMontage);
-	ensure(EnemyData->EnemyExecutionData.EnemyMontage);
+	ensure(AttackData->ExecutionData.PlayerMontage);  
 	
 	if (!AttackData ||
-		!EnemyData		||
+		!EnemyData	||
 		!AttackData->ExecutionData.PlayerMontage ||
-		!EnemyData->EnemyExecutionData.EnemyMontage)
+		!Enemy->CanExecuted()
+		)
 	{
 		return;
 	}
@@ -613,9 +612,6 @@ void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
 	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
 	
 	ExecutionTarget = Enemy;
-
-	ExecutionTarget->GetStateTagComponent()
-		->AddStateTag(CombatTags::State_Action_Executing);
 	
 	// 적 로컬 기준 오프셋 -> 월드 위치
 	const FVector TargetLocation =
@@ -653,9 +649,7 @@ void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
 		Delegate,
 		AttackData->ExecutionData.PlayerMontage);
 	
-	Enemy->PlayAnimMontage(
-		EnemyData->EnemyExecutionData.EnemyMontage);
-	
+	Enemy->StartExecuted();
 	
 }
 
@@ -725,9 +719,6 @@ void UPlayerAttackComponent::OnExecutionMontageEnded(
 		CombatTags::State_Action_Executing);
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Movement_Locked);
-	
-	ExecutionTarget->GetStateTagComponent()
-		->RemoveStateTag(CombatTags::State_Action_Executing);
 	
 	ExecutionTarget = nullptr;
 }
