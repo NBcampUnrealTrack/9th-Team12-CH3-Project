@@ -12,6 +12,7 @@
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 UPlayerItemUseComponent::UPlayerItemUseComponent()
 {
@@ -173,6 +174,11 @@ void UPlayerItemUseComponent::UseConsumable(
 		return;
 	}
 
+	UGameplayStatics::PlaySoundAtLocation(
+		this,
+		CurrentUsingItem->GetItemData()->UseSound,
+		OwnerCharacter->GetActorLocation());
+	
 	UE_LOG(LogTemp, Warning, TEXT("Item Use %s, Item Count : %d"), 
 			*ConsumableData->ItemName.ToString(),
 			Item->GetCount());
