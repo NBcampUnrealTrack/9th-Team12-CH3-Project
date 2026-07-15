@@ -40,7 +40,9 @@ public:
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
 	const UEnemyExecutionDataAsset* GetExecutionData() const { return ExecutionData; }
-
+	bool CanExecuted();
+	void StartExecuted();
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
@@ -84,7 +86,7 @@ protected:
 	UFUNCTION()
 	void OnDeath();
 
-	void PlayDeathMontage();
+	bool PlayDeathMontage();
 	void StartDeathTransition();
 	void SetEnemyDestroyTimer();
 
@@ -93,6 +95,10 @@ protected:
 	void StopAILogic();
 	void ResumeAILogic();
 
+	void StartExecuted_Implement();
+	bool PlayExecutedMontage();
+	void OnExecutedMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
 public:
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 

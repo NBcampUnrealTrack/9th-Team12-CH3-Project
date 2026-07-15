@@ -145,7 +145,17 @@ void UEnemyAttributeComponent::ApplyPostureDamage(float PostureDamage)
 	{
 		return;
 	}
-
+	
+	if (OwnerCharacter)
+	{
+		UStateTagComponent* StateTagComponent = OwnerCharacter->GetStateTagComponent();
+		if (StateTagComponent
+			&& StateTagComponent->HasStateTagExact(CombatTags::State_Action_Executing))
+		{
+			return;
+		}
+	}
+	
 	CurrentPosture = FMath::Clamp(
 		CurrentPosture + PostureDamage,
 		0.0f,
