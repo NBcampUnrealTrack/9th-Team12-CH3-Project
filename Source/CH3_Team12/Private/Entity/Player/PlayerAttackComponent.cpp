@@ -23,7 +23,8 @@
 
 UPlayerAttackComponent::UPlayerAttackComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.SetTickFunctionEnable(false);
 }
 
 void UPlayerAttackComponent::BeginPlay()
@@ -48,18 +49,27 @@ void UPlayerAttackComponent::BeginPlay()
 	if (!AttributeComponent)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : AttributeComponent is nullptr"));
+		return;
 	}
 	
 	EquipmentComponent = OwnerCharacter->GetEquipmentComponent();
 	if (!EquipmentComponent)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : EquipmentComponent is nullptr"));
+		return;
 	}
 	
 	WeaponComponent = OwnerCharacter->GetWeaponComponent();
 	if (!WeaponComponent)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : WeaponComponent is nullptr"));
+		return;
+	}
+	LocoMotionComponent = OwnerCharacter->GetLocomotionComponent();
+	if (!LocoMotionComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : LocoMotionComponent is nullptr"));
+		return;
 	}
 }
 
@@ -273,6 +283,32 @@ void UPlayerAttackComponent::CancelAttackForPostureBreak()
 	CancelAttackInternal();
 }
 
+void UPlayerAttackComponent::TickComponent(
+	float DeltaTime, 
+	ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(
+		DeltaTime, 
+		TickType,
+		ThisTickFunction);
+
+	FRotator NewRot =
+		FMath::RInterpConstantTo(
+			OwnerCharacter->GetActorRotation(),
+			TargetAttackRotation,
+			DeltaTime,
+			720.f);
+
+	OwnerCharacter->SetActorRotation(NewRot);
+
+	if (NewRot.Equals(TargetAttackRotation, 0.1f))
+	{
+		OwnerCharacter->SetActorRotation(TargetAttackRotation);
+		SetComponentTickEnabled(false);
+	}
+}
+
 bool UPlayerAttackComponent::CanStartAttack() const
 {
 	if (!OwnerCharacter || !StateComponent)
@@ -345,11 +381,13 @@ void UPlayerAttackComponent::StartAttack(
 	{
 		return;
 	}
-
+	
 	CurrentAttackData = AttackInfo;
 	CurrentAttackMontage = AttackInfo->Montage;
 	ComboIndex = 0;
 	CurrentStep = &CurrentAttackData->Steps[ComboIndex];
+	
+	StartAttackRotation();
 	
 	bComboWindow = false;
 	bComboBuffered = false;
@@ -494,7 +532,12 @@ void UPlayerAttackComponent::ContinueCombo()
 
 	StateComponent->AddStateTag(
 		CombatTags::State_Movement_Locked);
-
+	
+	if (CurrentStep && CurrentStep->bRotateToInput)
+	{
+		StartAttackRotation();
+	}
+	
 	AnimInstance->Montage_SetPlayRate(
 		CurrentAttackMontage,
 		CurrentStep->PlayRate);
@@ -502,6 +545,38 @@ void UPlayerAttackComponent::ContinueCombo()
 	AnimInstance->Montage_JumpToSection(
 		CurrentStep->SectionName,
 		CurrentAttackMontage);
+}
+
+void UPlayerAttackComponent::StartAttackRotation()
+{
+	FVector2D BufferedAttackInput = LocoMotionComponent->GetLastMovementInput();
+	
+	if (BufferedAttackInput.IsNearlyZero())
+	{
+		return;
+	}
+
+	const FRotator ControlRot =
+		OwnerCharacter->GetControlRotation();
+
+	const FRotator YawRot(
+		0.f,
+		ControlRot.Yaw,
+		0.f);
+
+	FVector Dir =
+		FRotationMatrix(YawRot).GetUnitAxis(EAxis::X)
+		* BufferedAttackInput.X;
+
+	Dir +=
+		FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y)
+		* BufferedAttackInput.Y;
+
+	Dir.Normalize();
+
+	TargetAttackRotation = Dir.Rotation();
+
+	SetComponentTickEnabled(true);
 }
 
 void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
