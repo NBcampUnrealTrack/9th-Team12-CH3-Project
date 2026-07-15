@@ -163,7 +163,7 @@ const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType
 
 void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 {
-	if (StateComponent->HasStateTag(CombatTags::State_Action_Executing))
+	if (!StateComponent->HasStateTag(CombatTags::State_Action_Executing))
 	{
 		if (AEnemyCharacterBase* Enemy = FindExecutionTarget())
 		{
