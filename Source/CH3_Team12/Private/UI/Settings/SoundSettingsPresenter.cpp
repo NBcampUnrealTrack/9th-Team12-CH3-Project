@@ -25,9 +25,11 @@ void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 		return;
 	}
 
-	SoundSettingsWidget->SetMasterVolumeWidget(SoundManagerSubsystem->GetVolume(EAudioType::Master));
-	SoundSettingsWidget->SetBGMVolumeWidget(SoundManagerSubsystem->GetVolume(EAudioType::BGM));
-	SoundSettingsWidget->SetSFXVolumeWidget(SoundManagerSubsystem->GetVolume(EAudioType::SFX));
+	SoundSettingsWidget->UpdateWidget(
+		SoundManagerSubsystem->GetVolume(EAudioType::Master),
+		SoundManagerSubsystem->GetVolume(EAudioType::BGM),
+		SoundManagerSubsystem->GetVolume(EAudioType::SFX)
+	);
 }
 
 void USoundSettingsPresenter::Dispose()
@@ -74,7 +76,11 @@ void USoundSettingsPresenter::HandleBtnResetClicked() const
 	if (!SoundSettingsWidget.IsValid())
 		return;
 
-	SoundSettingsWidget->ResetVolume();
+	SoundSettingsWidget->UpdateWidget(
+		FKatanaSoundSettingDefaults::MasterVolume,
+		FKatanaSoundSettingDefaults::BGMVolume,
+		FKatanaSoundSettingDefaults::SFXVolume
+	);
 }
 
 void USoundSettingsPresenter::HandleBtnDoneClicked() const

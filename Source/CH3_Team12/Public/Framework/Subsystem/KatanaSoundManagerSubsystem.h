@@ -18,6 +18,13 @@ enum class EAudioType : uint8
 	SFX     UMETA(DisplayName = "Sound Effects")
 };
 
+struct FKatanaSoundSettingDefaults
+{
+	static constexpr float MasterVolume = 1.0f;
+	static constexpr float BGMVolume = 1.0f;
+	static constexpr float SFXVolume = 1.0f;
+};
+
 UCLASS()
 class CH3_TEAM12_API UKatanaSoundManagerSubsystem : public UGameInstanceSubsystem
 {

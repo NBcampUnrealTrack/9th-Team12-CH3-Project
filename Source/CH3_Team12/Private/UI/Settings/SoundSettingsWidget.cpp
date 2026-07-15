@@ -3,6 +3,18 @@
 #include "Components/Button.h"
 #include "UI/Widget/StepProgressBar.h"
 
+// ReSharper disable once CppMemberFunctionMayBeConst
+void USoundSettingsWidget::UpdateWidget(const float MasterVolume, const float BGMVolume, const float SFXVolume)
+{
+	SetMasterVolumeWidget(MasterVolume);
+	SetBGMVolumeWidget(BGMVolume);
+	SetSFXVolumeWidget(SFXVolume);
+
+	HandleMasterVolumeChanged(MasterVolume);
+	HandleBGMVolumeChanged(BGMVolume);
+	HandleSFXVolumeChanged(SFXVolume);
+}
+
 void USoundSettingsWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
@@ -16,32 +28,6 @@ void USoundSettingsWidget::NativeOnInitialized()
 
 	if (BtnDone)
 		BtnDone->OnClicked.AddDynamic(this, &USoundSettingsWidget::HandleBtnDoneClicked);
-}
-
-void USoundSettingsWidget::SetMasterVolumeWidget(const float Volume) const
-{
-	MasterVolumeStep->SetPercent(Volume);
-}
-
-void USoundSettingsWidget::SetBGMVolumeWidget(const float Volume) const
-{
-	BGMVolumeStep->SetPercent(Volume);
-}
-
-void USoundSettingsWidget::SetSFXVolumeWidget(const float Volume) const
-{
-	SFXVolumeStep->SetPercent(Volume);
-}
-
-void USoundSettingsWidget::ResetVolume() const
-{
-	SetMasterVolumeWidget(1.0f);
-	SetBGMVolumeWidget(1.0f);
-	SetSFXVolumeWidget(1.0f);
-
-	HandleMasterVolumeChanged(1.0f);
-	HandleBGMVolumeChanged(1.0f);
-	HandleSFXVolumeChanged(1.0f);
 }
 
 void USoundSettingsWidget::HandleMasterVolumeChanged(const float Volume) const
@@ -67,4 +53,19 @@ void USoundSettingsWidget::HandleBtnResetClicked() const
 void USoundSettingsWidget::HandleBtnDoneClicked() const
 {
 	(void)OnBtnDoneClicked.ExecuteIfBound();
+}
+
+void USoundSettingsWidget::SetMasterVolumeWidget(const float Volume) const
+{
+	MasterVolumeStep->SetPercent(Volume);
+}
+
+void USoundSettingsWidget::SetBGMVolumeWidget(const float Volume) const
+{
+	BGMVolumeStep->SetPercent(Volume);
+}
+
+void USoundSettingsWidget::SetSFXVolumeWidget(const float Volume) const
+{
+	SFXVolumeStep->SetPercent(Volume);
 }
