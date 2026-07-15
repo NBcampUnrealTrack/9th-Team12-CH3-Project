@@ -495,19 +495,26 @@ const FAttackAnimationData* UEnemyAttackComponent::GetSelectedPatternData(int32 
 	{
 		// NormalAttackMontage1 
 		//SelectedMontage = NormalAttack0;
-		CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_2;
+		if (FMath::RandBool())
+		{
+			CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_2;
+		}
+		else
+		{
+			CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_3;
+		}
 	}
 	else if (InSelectedAction == 2 && InSelectedPattern == 0)
 	{
 		// StrongAttackMontage0 
 		//SelectedMontage = NormalAttack0;
-		CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_1;
+		CurrentPlayingPattern = EEnemyAttackPattern::FarStrongAttack;
 	}
 	else if (InSelectedAction == 2 && InSelectedPattern == 1)
 	{
 		// FarStrongAttackMontage 재생
 		//SelectedMontage = FarStrongAttack;
-		CurrentPlayingPattern = EEnemyAttackPattern::FarStrongAttack;
+		CurrentPlayingPattern = EEnemyAttackPattern::StrongAttack_1;
 	}
 	
 	return AttackData->GetAttackAnimationData(static_cast<int8>(CurrentPlayingPattern));
