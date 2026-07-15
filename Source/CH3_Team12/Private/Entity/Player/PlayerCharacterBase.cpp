@@ -5,6 +5,7 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/Player.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -50,6 +51,10 @@ APlayerCharacterBase::APlayerCharacterBase()
 	DefenseComponent = CreateDefaultSubobject<UPlayerDefenseComponent>(TEXT("DefenseComponent"));
 	DebugOverlayComponent = CreateDefaultSubobject<UPlayerDebugOverlayComponent>(TEXT("DebugOverlayComponent"));
 	ItemUseComponent = CreateDefaultSubobject<UPlayerItemUseComponent>(TEXT("ItemUseComponent"));
+	
+	HeadMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Head"));
+	HeadMesh->SetupAttachment(GetMesh());
+	HeadMesh->SetLeaderPoseComponent(GetMesh());
 }
 
 UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const

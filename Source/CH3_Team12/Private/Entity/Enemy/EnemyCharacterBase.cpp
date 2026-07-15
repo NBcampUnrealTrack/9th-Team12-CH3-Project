@@ -163,6 +163,7 @@ void AEnemyCharacterBase::PlayDeathMontage()
 	}
 
 	AnimInstance->Montage_Play(DeadMontage);
+	StartDeathTransition();
 }
 
 void AEnemyCharacterBase::StartDeathTransition()
