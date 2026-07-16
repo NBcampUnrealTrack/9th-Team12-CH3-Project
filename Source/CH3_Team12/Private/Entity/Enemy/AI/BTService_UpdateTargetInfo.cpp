@@ -47,7 +47,7 @@ void UBTService_UpdateTargetInfo::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	const FVector PawnLocation = ControlledPawn->GetActorLocation();
 	const FVector TargetLocation = TargetActor->GetActorLocation();
 
-	const float DistanceToTarget = FVector::Dist(PawnLocation, TargetLocation);
+	const float DistanceToTarget = FVector::Dist2D(PawnLocation, TargetLocation);
 	BlackboardComponent->SetValueAsFloat(DistanceToTargetKeyName, DistanceToTarget);
 
 	bool bCanStartCombat = false;
