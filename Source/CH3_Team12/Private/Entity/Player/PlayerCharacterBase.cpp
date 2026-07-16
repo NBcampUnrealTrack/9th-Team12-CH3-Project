@@ -22,6 +22,7 @@
 #include "Entity/Player/PlayerDebugOverlayComponent.h"
 #include "Entity/Player/PlayerItemUseComponent.h"
 #include "Entity/Player/CombatFeedbackComponent.h"
+#include "Entity/Player/FootstepComponent.h"
 
 // Sets default values
 APlayerCharacterBase::APlayerCharacterBase()
@@ -53,6 +54,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	DebugOverlayComponent = CreateDefaultSubobject<UPlayerDebugOverlayComponent>(TEXT("DebugOverlayComponent"));
 	ItemUseComponent = CreateDefaultSubobject<UPlayerItemUseComponent>(TEXT("ItemUseComponent"));
 	CombatFeedbackComponent = CreateDefaultSubobject<UCombatFeedbackComponent>(TEXT("CombatFeedbackComponent"));
+	FootstepComponent = CreateDefaultSubobject<UFootstepComponent>(TEXT("FootstepComponent"));
 	
 	HeadMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Head"));
 	HeadMesh->SetupAttachment(GetMesh());
@@ -112,6 +114,11 @@ UPlayerDebugOverlayComponent* APlayerCharacterBase::GetDebugOverlayComponent() c
 UCombatFeedbackComponent* APlayerCharacterBase::GetCombatFeedbackComponent() const
 {
 	return CombatFeedbackComponent;
+}
+
+UFootstepComponent* APlayerCharacterBase::GetFootstepComponent() const
+{
+	return FootstepComponent;
 }
 
 UPlayerCameraComponent* APlayerCharacterBase::GetPlayerCameraComponent() const
