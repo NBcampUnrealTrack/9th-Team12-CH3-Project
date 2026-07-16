@@ -32,10 +32,13 @@ void UPlayerCameraComponent::BeginPlay()
 
 	CameraBoom = OwnerActor->GetCameraBoom();
 	FollowCamera = OwnerActor->GetFollowCamera();
-
 	StateTagComponent = OwnerActor->GetStateTagComponent();
 
-	check(StateTagComponent);
+	if (!CameraBoom || !FollowCamera || !StateTagComponent || !CameraData)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerCameraComponent: Required reference is missing"));
+		return;
+	}
 
 	ApplyNormalCameraInstant();
 }
@@ -45,8 +48,10 @@ void UPlayerCameraComponent::Look(const FInputActionValue& Value)
 	if (!OwnerActor)
 		return;
 
-	if (IsLockOn())
+	if (CameraMode != EPlayerCameraMode::Normal)
+	{
 		return;
+	}
 
 	const FVector2D LookInput = Value.Get<FVector2D>();
 
@@ -61,12 +66,8 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 		return;
 	}
 
-	if (APlayerController* PlayerController =
-		Cast<APlayerController>(OwnerActor->GetController()))
-	{
-		PlayerController->SetIgnoreLookInput(true);
-	}
-
+	CameraMode = EPlayerCameraMode::LockOn;
+	
 	StateTagComponent->AddStateTag(
 		CombatTags::State_Movement_LockOn
 	);
@@ -76,8 +77,7 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 	CameraBoom->bInheritYaw = true;
 	CameraBoom->bInheritRoll = false;
 
-	// 임시 처리. 나중에 Enemy는 Camera 채널 Ignore로 바꾸는 게 맞음.
-	CameraBoom->bDoCollisionTest = false;
+	ApplyCameraCollisionSettings();
 
 	FollowCamera->bUsePawnControlRotation = false;
 
@@ -106,6 +106,59 @@ bool UPlayerCameraComponent::IsLockOn() const
 		StateTagComponent->HasStateTagExact(CombatTags::State_Movement_LockOn);
 }
 
+void UPlayerCameraComponent::StartExecutionCamera(AActor* ExecutionTarget)
+{
+	if (!OwnerActor || !CameraBoom || !FollowCamera || !CameraData || !ExecutionTarget)
+	{
+		return;
+	}
+
+	CurrentExecutionTarget = ExecutionTarget;
+
+	if (IsLockOn())
+	{
+		CurrentLockOnTarget = ExecutionTarget;
+	}
+	
+	CameraMode = EPlayerCameraMode::Execution;
+
+	CameraBoom->SetAbsolute(true, false, false);
+
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bInheritPitch = true;
+	CameraBoom->bInheritYaw = true;
+	CameraBoom->bInheritRoll = false;
+
+	CameraBoom->TargetArmLength = 0.0f;
+	CameraBoom->SocketOffset = FVector::ZeroVector;
+	CameraBoom->TargetOffset = FVector::ZeroVector;
+
+	CameraBoom->bEnableCameraLag = false;
+	CameraBoom->bEnableCameraRotationLag = false;
+	CameraBoom->bDoCollisionTest = false;
+
+	FollowCamera->bUsePawnControlRotation = false;
+
+	if (CameraData->Execution.bSnapOnStart)
+	{
+		ApplyExecutionCamera(0.0f, true);
+	}
+}
+
+void UPlayerCameraComponent::EndExecutionCamera()
+{
+	if (CameraMode != EPlayerCameraMode::Execution)
+	{
+		return;
+	}
+
+	CurrentExecutionTarget = nullptr;
+
+	PrepareNormalCameraTransitionFromExecution();
+
+	StartNormalCameraTransition();
+}
+
 // 락온 상태면 해제, 아니면 락온 시도
 void UPlayerCameraComponent::LockOn()
 {
@@ -132,14 +185,21 @@ void UPlayerCameraComponent::TickComponent(
 )
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	switch (CameraMode)
+	{
+	case EPlayerCameraMode::Execution:
+		UpdateExecutionCamera(DeltaTime);
+		break;
 
-	if (IsLockOn())
-	{
+	case EPlayerCameraMode::LockOn:
 		UpdateLockOnCamera(DeltaTime);
-	}
-	else
-	{
+		break;
+
+	case EPlayerCameraMode::Normal:
+	default:
 		UpdateNormalCamera(DeltaTime);
+		break;
 	}
 }
 
@@ -156,9 +216,9 @@ void UPlayerCameraComponent::UpdateNormalCamera(float DeltaTime)
 	// =========================
 	// 락온 중에 보정되었던 카메라 값을
 	// 노말 카메라 기본값으로 부드럽게 되돌린다.
-
+	
 	const FNormalCameraSettings& Normal = CameraData->Normal;
-	const float InterpSpeed = CameraData->NormalCameraInterpSpeed;
+	const float InterpSpeed = Normal.NormalCameraInterpSpeed;
 
 	CameraBoom->SetRelativeLocation(
 		FMath::VInterpTo(
@@ -189,6 +249,128 @@ void UPlayerCameraComponent::UpdateNormalCamera(float DeltaTime)
 		DeltaTime,
 		InterpSpeed
 	);
+	
+	const bool bAlmostNormal =
+	CameraBoom->GetRelativeLocation().Equals(
+		Normal.CameraBoomRelativeLocation,
+		3.0f
+	) &&
+	FMath::IsNearlyEqual(
+		CameraBoom->TargetArmLength,
+		Normal.TargetArmLength,
+		3.0f
+	);
+
+	if (bAlmostNormal)
+	{
+		CameraBoom->bEnableCameraLag = true;
+		CameraBoom->bEnableCameraRotationLag = true;
+	}
+}
+
+void UPlayerCameraComponent::UpdateExecutionCamera(float DeltaTime)
+{
+	ApplyExecutionCamera(DeltaTime, false);
+}
+
+void UPlayerCameraComponent::ApplyExecutionCamera(
+	float DeltaTime,
+	bool bInstant)
+{
+	if (!OwnerActor || !CameraBoom || !CameraData)
+	{
+		return;
+	}
+
+	if (!IsValid(CurrentExecutionTarget))
+	{
+		return;
+	}
+	
+	AController* OwnerController = OwnerActor->GetController();
+
+	if (!OwnerController)
+	{
+		return;
+	}
+
+	const FExecutionCameraSettings& Execution = CameraData->Execution;
+
+	const FVector PlayerLocation =
+		OwnerActor->GetActorLocation();
+
+	const FVector TargetLocation =
+		CurrentExecutionTarget->GetActorLocation();
+
+	FVector ToTarget = TargetLocation - PlayerLocation;
+	ToTarget.Z = 0.0f;
+
+	if (!ToTarget.Normalize())
+	{
+		ToTarget = OwnerActor->GetActorForwardVector();
+		ToTarget.Z = 0.0f;
+		ToTarget.Normalize();
+	}
+
+	// 플레이어-보스 라인을 기준으로 한 오른쪽 방향.
+	// 플레이어가 보스를 바라보게 정렬되어 있다면 ActorRightVector와 거의 같다.
+	const FVector RightDirection =
+		FVector::CrossProduct(FVector::UpVector, ToTarget).GetSafeNormal();
+
+	const FVector DesiredCameraLocation =
+		PlayerLocation
+		+ RightDirection * Execution.RightOffset
+		- ToTarget * Execution.BackOffset
+		+ FVector::UpVector * Execution.UpOffset;
+
+	const FVector PlayerFocus =
+		PlayerLocation + FVector::UpVector * Execution.PlayerFocusHeight;
+
+	const FVector TargetFocus =
+		TargetLocation + FVector::UpVector * Execution.TargetFocusHeight;
+
+	const FVector FocusPoint =
+		FMath::Lerp(PlayerFocus, TargetFocus, Execution.FocusBias);
+
+	FRotator DesiredRotation =
+		UKismetMathLibrary::FindLookAtRotation(
+			DesiredCameraLocation,
+			FocusPoint
+		);
+
+	DesiredRotation.Pitch = FMath::Clamp(
+		DesiredRotation.Pitch,
+		Execution.MinPitch,
+		Execution.MaxPitch
+	);
+
+	DesiredRotation.Roll = 0.0f;
+
+	if (bInstant)
+	{
+		CameraBoom->SetWorldLocation(DesiredCameraLocation);
+		OwnerController->SetControlRotation(DesiredRotation);
+		return;
+	}
+
+	const FVector SmoothCameraLocation =
+		FMath::VInterpTo(
+			CameraBoom->GetComponentLocation(),
+			DesiredCameraLocation,
+			DeltaTime,
+			Execution.LocationInterpSpeed
+		);
+
+	const FRotator SmoothRotation =
+		FMath::RInterpTo(
+			OwnerController->GetControlRotation(),
+			DesiredRotation,
+			DeltaTime,
+			Execution.RotationInterpSpeed
+		);
+
+	CameraBoom->SetWorldLocation(SmoothCameraLocation);
+	OwnerController->SetControlRotation(SmoothRotation);
 }
 
 void UPlayerCameraComponent::ApplyNormalCameraInstant()
@@ -198,6 +380,7 @@ void UPlayerCameraComponent::ApplyNormalCameraInstant()
 		return;
 	}
 
+	
 	const FNormalCameraSettings& Normal = CameraData->Normal;
 
 	CameraBoom->TargetArmLength = Normal.TargetArmLength;
@@ -208,16 +391,17 @@ void UPlayerCameraComponent::ApplyNormalCameraInstant()
 	CameraBoom->CameraLagSpeed = 4.0f;
 	CameraBoom->CameraLagMaxDistance = 200.0f;
 	CameraBoom->CameraRotationLagSpeed = 12.0f;
-
+	CameraBoom->SetAbsolute(false, false, false);
+	
 	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->bInheritPitch = true;
 	CameraBoom->bInheritYaw = true;
 	CameraBoom->bInheritRoll = false;
-	CameraBoom->bDoCollisionTest = false;
 	CameraBoom->bEnableCameraRotationLag = true;
-	CameraBoom->bDoCollisionTest = false;
 
+	ApplyCameraCollisionSettings();
+	
 	FollowCamera->bUsePawnControlRotation = false;
 }
 
@@ -228,11 +412,9 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 		return;
 	}
 
-	if (APlayerController* PlayerController =
-		Cast<APlayerController>(OwnerActor->GetController()))
-	{
-		PlayerController->SetIgnoreLookInput(false);
-	}
+	CameraMode = EPlayerCameraMode::Normal;
+
+	CameraBoom->SetAbsolute(false, false, false);
 
 	if (StateTagComponent)
 	{
@@ -247,7 +429,11 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 	CameraBoom->bInheritPitch = true;
 	CameraBoom->bInheritYaw = true;
 	CameraBoom->bInheritRoll = false;
-	CameraBoom->bDoCollisionTest = false;
+
+	CameraBoom->bEnableCameraLag = false;
+	CameraBoom->bEnableCameraRotationLag = false;
+
+	ApplyCameraCollisionSettings();
 
 	FollowCamera->bUsePawnControlRotation = false;
 
@@ -259,8 +445,6 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 	}
 
 	OwnerActor->bUseControllerRotationYaw = false;
-
-	// OnLockOnStateChanged.Broadcast(false);
 
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerActor->GetLocomotionComponent())
@@ -529,4 +713,64 @@ FVector UPlayerCameraComponent::GetLockOnFocusLocation(
 
 	return Actor->GetActorLocation()
 		+ FVector(0.0f, 0.0f, HalfHeight * HeightRatio);
+}
+
+void UPlayerCameraComponent::ApplyCameraCollisionSettings()
+{
+	if (!CameraBoom || !CameraData)
+	{
+		return;
+	}
+
+	CameraBoom->bDoCollisionTest =
+		CameraData->Collision.bDoCollisionTest;
+
+	CameraBoom->ProbeSize =
+		CameraData->Collision.ProbeSize;
+
+	CameraBoom->ProbeChannel =
+		CameraData->Collision.ProbeChannel;
+}
+
+void UPlayerCameraComponent::PrepareNormalCameraTransitionFromExecution()
+{
+	if (!CameraBoom || !FollowCamera || !CameraData)
+	{
+		return;
+	}
+
+	const FVector CurrentWorldLocation =
+		CameraBoom->GetComponentLocation();
+
+	CameraBoom->SetAbsolute(false, false, false);
+
+	if (USceneComponent* Parent = CameraBoom->GetAttachParent())
+	{
+		const FVector RelativeLocation =
+			Parent->GetComponentTransform()
+			.InverseTransformPosition(CurrentWorldLocation);
+
+		CameraBoom->SetRelativeLocation(RelativeLocation);
+	}
+	else
+	{
+		CameraBoom->SetWorldLocation(CurrentWorldLocation);
+	}
+
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bInheritPitch = true;
+	CameraBoom->bInheritYaw = true;
+	CameraBoom->bInheritRoll = false;
+
+	CameraBoom->TargetArmLength = 0.0f;
+	CameraBoom->SocketOffset = FVector::ZeroVector;
+	CameraBoom->TargetOffset = FVector::ZeroVector;
+
+	// 전환 중 이중 보간/버벅임 방지
+	CameraBoom->bEnableCameraLag = false;
+	CameraBoom->bEnableCameraRotationLag = false;
+
+	ApplyCameraCollisionSettings();
+
+	FollowCamera->bUsePawnControlRotation = false;
 }

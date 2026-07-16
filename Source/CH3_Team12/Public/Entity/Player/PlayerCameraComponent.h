@@ -12,6 +12,14 @@ class UCameraComponent;
 class UStateTagComponent;
 class UPlayerCameraDataAsset;
 
+UENUM(BlueprintType)
+enum class EPlayerCameraMode : uint8
+{
+	Normal,
+	LockOn,
+	Execution
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UPlayerCameraComponent : public UActorComponent
 {
@@ -27,6 +35,9 @@ public:
 
 	AActor* GetCurrentLockOnTarget() const { return CurrentLockOnTarget; }
 	bool IsLockOn() const;
+	
+	void StartExecutionCamera(AActor* ExecutionTarget);
+	void EndExecutionCamera();
 
 protected:
 	virtual void TickComponent(
@@ -42,7 +53,11 @@ private:
 
 	void UpdateLockOnCamera(float DeltaTime);
 	void UpdateNormalCamera(float DeltaTime);
-
+	
+	float GetActorHalfHeight(AActor* Actor) const;
+	void UpdateExecutionCamera(float DeltaTime);
+	void ApplyExecutionCamera(float DeltaTime, bool bInstant);
+	
 	void ApplyNormalCameraInstant();
 	void StartNormalCameraTransition();
 
@@ -52,10 +67,14 @@ private:
 		AActor* Actor,
 		float HeightRatio
 	) const;
+	void ApplyCameraCollisionSettings();
+	void PrepareNormalCameraTransitionFromExecution();
 
-	float GetActorHalfHeight(AActor* Actor) const;
+	UPROPERTY()
+	TObjectPtr<AActor> CurrentExecutionTarget;
+	
+	EPlayerCameraMode CameraMode = EPlayerCameraMode::Normal;
 
-private:
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerActor;
 

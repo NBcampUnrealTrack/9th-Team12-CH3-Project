@@ -23,6 +23,9 @@ struct FNormalCameraSettings
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FVector TargetOffset = FVector::ZeroVector;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float NormalCameraInterpSpeed = 10.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -43,7 +46,7 @@ struct FLockOnCameraSettings
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float BreakDistance = 1500.0f;
+	float BreakDistance = 3000.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float NearDistance = 100.0f;
@@ -103,6 +106,60 @@ struct FLockOnCameraSettings
 	float MaxPitch = 5.0f;
 };
 
+USTRUCT(BlueprintType)
+struct FCameraCollisionSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bDoCollisionTest = true;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float ProbeSize = 12.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TEnumAsByte<ECollisionChannel> ProbeChannel = ECC_Camera;
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionCameraSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float RightOffset = 120.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float BackOffset = 220.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float UpOffset = 90.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float PlayerFocusHeight = 80.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float TargetFocusHeight = 90.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float FocusBias = 0.60f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float LocationInterpSpeed = 14.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float RotationInterpSpeed = 14.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float MinPitch = -35.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float MaxPitch = 10.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bSnapOnStart = true;
+};
+
 UCLASS(BlueprintType)
 class CH3_TEAM12_API UPlayerCameraDataAsset : public UDataAsset
 {
@@ -117,7 +174,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Camera|LockOn")
 	FLockOnCameraSettings LockOn;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Camera|Interp")
-	float NormalCameraInterpSpeed = 6.0f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Camera|Collision")
+	FCameraCollisionSettings Collision;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Camera|Execution")
+	FExecutionCameraSettings Execution;
 };

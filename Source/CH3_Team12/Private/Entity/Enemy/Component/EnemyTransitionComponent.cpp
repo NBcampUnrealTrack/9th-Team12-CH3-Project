@@ -151,7 +151,9 @@ void UEnemyTransitionComponent::SetDissolveAmount(float Amount)
 }
 
 void UEnemyTransitionComponent::FinishTransition()
-{
+{	
+	OnTransitionFinishedDelegate.Broadcast();
+	
 	bTransitioning = false;
 	SetComponentTickEnabled(false);
 
