@@ -15,6 +15,7 @@ class UStateTagComponent;
 class UPlayerAttributeComponent;
 class UPlayerEquipmentComponent;
 class UPlayerWeaponComponent;
+class UCombatFeedbackComponent;
 
 class UAnimMontage;
 class UNiagaraSystem;
@@ -48,6 +49,8 @@ public:
 	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
 	UPROPERTY()
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
+	UPROPERTY()
+	TObjectPtr<UCombatFeedbackComponent> CombatFeedbackComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Data")
 	TObjectPtr<UPlayerDefenseDataAsset> DefenseData;
@@ -64,78 +67,9 @@ public:
 
 	EDefenseResult ResolveIncomingAttack(const FIncomingAttackContext& Context);
 
-private:
-	bool IsGuarding() const;
-	bool IsParrying() const;
-
-	void PlayParryReaction(EHitReactionDirection AttackDirection);
-	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
-	void PlayHitReaction(EHitReactionDirection ReactionDirection);
-	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	void EndHitReaction();
-
-	bool PlayMontageSafe(
-		UAnimMontage* Montage,
-		float PlayRate = 1.0f
-	) const;
-
-public:
-	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
-
-private:
-	void HandleParrySuccess(
-		const FIncomingAttackContext& Context,
-		EHitReactionDirection ReactionDirection
-	);
-	void HandleGuardSuccess(
-		const FIncomingAttackContext& Context,
-		EHitReactionDirection ReactionDirection
-	);
-	void HandleDirectHit(
-		const FIncomingAttackContext& Context,
-		EHitReactionDirection ReactionDirection
-	);
-
-	bool bInvincible = false;
-
-public:
 	void EnableInvincible();
 	void DisableInvincible();
-
-private:
-	// HitStop
-	UPROPERTY()
-	TArray<TWeakObjectPtr<AActor>> HitStopActors;
-	FTimerHandle HitStopTimerHandle;
-
-	void TriggerCombatHitStop(
-		const FIncomingAttackContext& Context,
-		float Duration,
-		float TimeDilation
-	);
-
-	void ResetCombatHitStop();
-	void PlayCombatFeedback(const FIncomingAttackContext& Context, const FCombatFeedbackData& Feedback);
-
-	FVector MakeCombatEffectLocation(
-		const FIncomingAttackContext& Context,
-		ECombatEffectLocationMode LocationMode
-	) const;
-
-	FVector GetWeaponClashEffectLocation(
-		const FIncomingAttackContext& Context
-	) const;
-
-	FVector GetHitImpactEffectLocation(
-		const FIncomingAttackContext& Context
-	) const;
-
-	FVector GetFallbackEffectLocation() const;
-
-	FRotator MakeCombatEffectRotation(const FIncomingAttackContext& Context,
-	                                  ECombatEffectRotationMode RotationMode) const;
-
-public:
+	
 	// Debug
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackFront();
@@ -156,8 +90,51 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Combat|Debug")
 	float DebugAttackPostureDamage = 10.0f;
+	
+	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
+	
+	void FinalizeDead();
 
+	// Posture
+	UFUNCTION()
+	void HandleOwnerPostureBroken();
+
+	UFUNCTION()
+	void HandleOwnerPostureRecovered();
+
+	void PlayPostureBrokenMontage();
+	void ClearCombatStatesForPostureBreak();
+	
 private:
+	bool IsGuarding() const;
+	bool IsParrying() const;
+
+	void PlayParryReaction(EHitReactionDirection AttackDirection);
+	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
+	void PlayHitReaction(EHitReactionDirection ReactionDirection);
+	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void EndHitReaction();
+
+	bool PlayMontageSafe(
+		UAnimMontage* Montage,
+		float PlayRate = 1.0f
+	) const;
+	
+	void HandleParrySuccess(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+	void HandleGuardSuccess(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+	void HandleDirectHit(
+		const FIncomingAttackContext& Context,
+		EHitReactionDirection ReactionDirection
+	);
+
+	bool bInvincible = false;
+
 	// Dead
 	bool bDeadHandled = false;
 
@@ -173,16 +150,4 @@ private:
 		bool bInterrupted
 	);
 
-public:
-	void FinalizeDead();
-
-	// Posture
-	UFUNCTION()
-	void HandleOwnerPostureBroken();
-
-	UFUNCTION()
-	void HandleOwnerPostureRecovered();
-
-	void PlayPostureBrokenMontage();
-	void ClearCombatStatesForPostureBreak();
 };

@@ -170,7 +170,7 @@ void UKatanaUIManagerSubsystem::HideLoadingWidget()
 	OpHideUI(LoadingWidgetName);
 }
 
-void UKatanaUIManagerSubsystem::ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent)
+void UKatanaUIManagerSubsystem::ShowPlayerWidget(APlayerCharacterBase* InPlayerCharacterBase)
 {
 	const FName WidgetName = PlayerWidgetName;
 	UPlayerWidget* ActiveView = OpShowUI<UPlayerWidget>(WidgetName);
@@ -183,7 +183,7 @@ void UKatanaUIManagerSubsystem::ShowPlayerWidget(UPlayerAttributeComponent* InAt
 		return;
 	}
 
-	NewPresenter->Initialize(InAttributeComponent, ActiveView);
+	NewPresenter->Initialize(InPlayerCharacterBase, ActiveView);
 	ActivePresenters.Add(WidgetName, NewPresenter);
 }
 
@@ -192,7 +192,7 @@ void UKatanaUIManagerSubsystem::HidePlayerWidget()
 	OpHideUI(PlayerWidgetName);
 }
 
-void UKatanaUIManagerSubsystem::ShowEnemyWidget(const FString& InName, UEnemyAttributeComponent* InAttributeComponent)
+void UKatanaUIManagerSubsystem::ShowEnemyWidget(AEnemyCharacterBase* InEnemyCharacterBase)
 {
 	const FName WidgetName = EnemyWidgetName;
 	UEnemyWidget* ActiveView = OpShowUI<UEnemyWidget>(WidgetName);
@@ -205,7 +205,7 @@ void UKatanaUIManagerSubsystem::ShowEnemyWidget(const FString& InName, UEnemyAtt
 		return;
 	}
 
-	NewPresenter->Initialize(InName, InAttributeComponent, ActiveView);
+	NewPresenter->Initialize(InEnemyCharacterBase, ActiveView);
 	ActivePresenters.Add(WidgetName, NewPresenter);
 }
 
