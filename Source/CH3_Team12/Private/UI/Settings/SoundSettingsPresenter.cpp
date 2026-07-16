@@ -8,9 +8,7 @@ void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 	SoundSettingsWidget = InWidget;
 
 	if (!SoundSettingsWidget.IsValid())
-	{
 		return;
-	}
 
 	SoundSettingsWidget->OnMasterVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleMasterVolumeChanged);
 	SoundSettingsWidget->OnBGMVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleBGMVolumeChanged);
@@ -25,9 +23,11 @@ void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 		return;
 	}
 
-	SoundSettingsWidget->SetMasterVolumeWidget(SoundManagerSubsystem->GetVolume(EAudioType::Master));
-	SoundSettingsWidget->SetBGMVolumeWidget(SoundManagerSubsystem->GetVolume(EAudioType::BGM));
-	SoundSettingsWidget->SetSFXVolumeWidget(SoundManagerSubsystem->GetVolume(EAudioType::SFX));
+	SoundSettingsWidget->UpdateWidget(
+		SoundManagerSubsystem->GetVolume(EAudioType::Master),
+		SoundManagerSubsystem->GetVolume(EAudioType::BGM),
+		SoundManagerSubsystem->GetVolume(EAudioType::SFX)
+	);
 }
 
 void USoundSettingsPresenter::Dispose()
@@ -74,7 +74,11 @@ void USoundSettingsPresenter::HandleBtnResetClicked() const
 	if (!SoundSettingsWidget.IsValid())
 		return;
 
-	SoundSettingsWidget->ResetVolume();
+	SoundSettingsWidget->UpdateWidget(
+		SoundManagerSubsystem->GetDefaultVolume(EAudioType::Master),
+		SoundManagerSubsystem->GetDefaultVolume(EAudioType::BGM),
+		SoundManagerSubsystem->GetDefaultVolume(EAudioType::SFX)
+	);
 }
 
 void USoundSettingsPresenter::HandleBtnDoneClicked() const

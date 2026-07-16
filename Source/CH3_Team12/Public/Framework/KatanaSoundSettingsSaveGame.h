@@ -2,31 +2,26 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
-#include "AudioSaveGame.generated.h"
+#include "KatanaSoundSettingsSaveGame.generated.h"
 
 /**
  *
  */
 UCLASS()
-class CH3_TEAM12_API UAudioSaveGame : public USaveGame
+class CH3_TEAM12_API UKatanaSoundSettingsSaveGame : public USaveGame
 {
 	GENERATED_BODY()
 
 public:
-	UAudioSaveGame()
-	{
-		MasterVolume = 1.0f;
-		BGMVolume = 0.8f;
-		SFXVolume = 0.8f;
-	}
+	UKatanaSoundSettingsSaveGame();
 
 	// 사운드 분류별 볼륨 값 (0.0 ~ 1.0)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	float MasterVolume = 1.0f;
+	float MasterVolume;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	float BGMVolume = 0.8f;
+	float BGMVolume;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	float SFXVolume = 0.8f;
+	float SFXVolume;
 };

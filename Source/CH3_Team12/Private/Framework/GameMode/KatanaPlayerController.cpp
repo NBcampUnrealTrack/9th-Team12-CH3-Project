@@ -6,6 +6,7 @@
 #include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
+#include "UserSettings/EnhancedInputUserSettings.h"
 
 APlayerCharacterBase* AKatanaPlayerController::GetPlayerCharacter() const
 {
@@ -17,7 +18,7 @@ APlayerCharacterBase* AKatanaPlayerController::GetPlayerCharacter() const
 
 void AKatanaPlayerController::BeginPlay()
 {
-	Super::BeginPlay();
+	// Super::BeginPlay();
 
 	bShowMouseCursor = false;
 	const FInputModeGameOnly InputMode;
@@ -56,18 +57,6 @@ void AKatanaPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	if (const ULocalPlayer* LocalPlayer = GetLocalPlayer())
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-			LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-		{
-			if (InputMappingContextUI)
-			{
-				Subsystem->AddMappingContext(InputMappingContextUI, 2);
-			}
-		}
-	}
-
 	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
 	if (!EnhancedInputComponent)
 		return;
@@ -89,7 +78,7 @@ AEnemyCharacterBase* AKatanaPlayerController::FindEnemyCharacter() const
 		AEnemyCharacterBase* FoundActor = *It;
 		if (!FoundActor)
 			continue;
-		return  FoundActor;
+		return FoundActor;
 	}
 
 	return nullptr;
