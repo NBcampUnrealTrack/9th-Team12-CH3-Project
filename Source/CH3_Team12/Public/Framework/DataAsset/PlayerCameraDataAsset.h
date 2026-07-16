@@ -260,7 +260,7 @@ struct FExecutionCameraSettings
 	// 값이 클수록 카메라가 위로 올라간다.
 	// 너무 높으면 내려다보는 느낌이 강해지고, 너무 낮으면 캐릭터 몸에 시야가 가릴 수 있다.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float UpOffset = 90.0f;
+	float UpOffset = 0.0f;
 
 	// 처형 카메라가 플레이어를 바라볼 때 사용하는 기준 높이.
 	// 값이 높을수록 플레이어 상체 쪽을 바라본다.
