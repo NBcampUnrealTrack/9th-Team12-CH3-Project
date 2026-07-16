@@ -225,19 +225,22 @@ void UEnemyAttackComponent::StartHitCheck()
 	{
 		const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
 	
-		TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
-	
-		for (FHitBoxData HitBoxData : HitBoxDatas)
+		if (AttackAnimationData)
 		{
-			USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
-			if (SkeletalMeshComponent == nullptr)
-				return;
+			TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
+	
+			for (FHitBoxData HitBoxData : HitBoxDatas)
+			{
+				USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
+				if (SkeletalMeshComponent == nullptr)
+					return;
 		
-			FName SocketName = HitBoxData.ActiveHitSocket;
-			FVector SocketLocation{};
-			FRotator SocketRotation{};
-			SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
-			DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
+				FName SocketName = HitBoxData.ActiveHitSocket;
+				FVector SocketLocation{};
+				FRotator SocketRotation{};
+				SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
+				DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
+			}
 		}
 	}
 	
