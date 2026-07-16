@@ -23,12 +23,12 @@ class USoundBase;
 struct FInputActionValue;
 struct FHitResult;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UPlayerDefenseComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	// Sets default values for this component's properties
 	UPlayerDefenseComponent();
 
@@ -48,38 +48,37 @@ public:
 	TObjectPtr<UPlayerEquipmentComponent> EquipmentComponent;
 	UPROPERTY()
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Data")
 	TObjectPtr<UPlayerDefenseDataAsset> DefenseData;
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Data")
 	TObjectPtr<UPlayerCombatFeedbackDataAsset> FeedbackData;
-	
-public:
+
 	void StartGuard(const FInputActionValue& Value);
 	void StopGuard(const FInputActionValue& Value);
-	
+
 	bool CanGuard() const;
-		
+
 	void OpenParryWindow();
 	void CloseParryWindow();
 
 	EDefenseResult ResolveIncomingAttack(const FIncomingAttackContext& Context);
-	
+
 private:
 	bool IsGuarding() const;
 	bool IsParrying() const;
-	
+
 	void PlayParryReaction(EHitReactionDirection AttackDirection);
 	void PlayGuardHitReaction(EHitReactionDirection AttackDirection);
 	void PlayHitReaction(EHitReactionDirection ReactionDirection);
 	void OnHitReactionMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void EndHitReaction();
-	
+
 	bool PlayMontageSafe(
 		UAnimMontage* Montage,
 		float PlayRate = 1.0f
 	) const;
-	
+
 public:
 	EHitReactionDirection CalculateHitReactionDirection(const FIncomingAttackContext& Context) const;
 
@@ -96,13 +95,13 @@ private:
 		const FIncomingAttackContext& Context,
 		EHitReactionDirection ReactionDirection
 	);
-	
+
 	bool bInvincible = false;
-	
+
 public:
 	void EnableInvincible();
 	void DisableInvincible();
-	
+
 private:
 	// HitStop
 	UPROPERTY()
@@ -132,9 +131,9 @@ private:
 	) const;
 
 	FVector GetFallbackEffectLocation() const;
-	
+
 	FRotator MakeCombatEffectRotation(const FIncomingAttackContext& Context,
-									  ECombatEffectRotationMode RotationMode) const;
+	                                  ECombatEffectRotationMode RotationMode) const;
 
 public:
 	// Debug
@@ -143,7 +142,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackBack();
-	
+
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackLeft();
 
@@ -151,17 +150,17 @@ public:
 	void Debug_ReceiveTestAttackRight();
 
 	void Debug_ReceiveTestAttack(EHitReactionDirection Direction);
-	
+
 	UPROPERTY(EditAnywhere, Category="Combat|Debug")
 	float DebugAttackDamage = 10.0f;
 
 	UPROPERTY(EditAnywhere, Category="Combat|Debug")
 	float DebugAttackPostureDamage = 10.0f;
-	
+
 private:
 	// Dead
 	bool bDeadHandled = false;
-	
+
 	UFUNCTION()
 	void HandleOwnerDead();
 
@@ -173,10 +172,10 @@ private:
 		UAnimMontage* Montage,
 		bool bInterrupted
 	);
-	
+
 public:
 	void FinalizeDead();
-	
+
 	// Posture
 	UFUNCTION()
 	void HandleOwnerPostureBroken();

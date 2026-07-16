@@ -10,18 +10,18 @@ UAnimMontage* UPlayerDefenseDataAsset::GetParryReactionMontage(
 	{
 	case EHitReactionDirection::Left:
 		return ParryLeftMontage
-			? ParryLeftMontage
-			: ParryRightMontage;
+			       ? ParryLeftMontage
+			       : ParryRightMontage;
 
 	case EHitReactionDirection::Right:
 		return ParryRightMontage
-			? ParryRightMontage
-			: ParryLeftMontage;
+			       ? ParryRightMontage
+			       : ParryLeftMontage;
 
 	default:
 		return ParryRightMontage
-			? ParryRightMontage
-			: ParryLeftMontage;
+			       ? ParryRightMontage
+			       : ParryLeftMontage;
 	}
 }
 
@@ -31,18 +31,18 @@ UAnimMontage* UPlayerDefenseDataAsset::GetGuardHitMontage(EHitReactionDirection 
 	{
 	case EHitReactionDirection::Left:
 		return GuardHitLeftMontage
-			? GuardHitLeftMontage
-			: GuardHitRightMontage;
+			       ? GuardHitLeftMontage
+			       : GuardHitRightMontage;
 
 	case EHitReactionDirection::Right:
 		return GuardHitRightMontage
-			? GuardHitRightMontage
-			: GuardHitLeftMontage;
+			       ? GuardHitRightMontage
+			       : GuardHitLeftMontage;
 
 	default:
 		return GuardHitRightMontage
-			? GuardHitRightMontage
-			: GuardHitLeftMontage;
+			       ? GuardHitRightMontage
+			       : GuardHitLeftMontage;
 	}
 }
 
@@ -52,18 +52,18 @@ UAnimMontage* UPlayerDefenseDataAsset::GetHitReactionMontage(EHitReactionDirecti
 	{
 	case EHitReactionDirection::Left:
 		return HitLeftMontage
-			? HitLeftMontage
-			: HitFrontMontage;
+			       ? HitLeftMontage
+			       : HitFrontMontage;
 
 	case EHitReactionDirection::Right:
 		return HitRightMontage
-			? HitRightMontage
-			: HitFrontMontage;
+			       ? HitRightMontage
+			       : HitFrontMontage;
 
 	case EHitReactionDirection::Back:
 		return HitBackMontage
-			? HitBackMontage
-			: HitFrontMontage;
+			       ? HitBackMontage
+			       : HitFrontMontage;
 
 	case EHitReactionDirection::Front:
 	default:

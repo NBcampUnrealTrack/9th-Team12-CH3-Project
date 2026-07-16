@@ -37,6 +37,7 @@ void UPlayerDefenseComponent::BeginPlay()
 		return;
 	}
 
+
 	StateComponent = OwnerCharacter->GetStateTagComponent();
 	AttributeComponent = OwnerCharacter->GetAttributeComponent();
 	EquipmentComponent = OwnerCharacter->GetEquipmentComponent();
@@ -92,7 +93,7 @@ void UPlayerDefenseComponent::EndPlay(
 			this,
 			&UPlayerDefenseComponent::HandleOwnerDead
 		);
-		
+
 		AttributeComponent->OnPostureBroken.RemoveDynamic(
 			this,
 			&UPlayerDefenseComponent::HandleOwnerPostureBroken
@@ -1249,7 +1250,6 @@ void UPlayerDefenseComponent::PlayPostureBrokenMontage()
 
 	if (Duration <= 0.0f)
 	{
-		return;
 	}
 }
 
