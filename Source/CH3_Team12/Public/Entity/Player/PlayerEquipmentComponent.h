@@ -93,4 +93,15 @@ private:
 	/** 장착 예정 Item */
 	UPROPERTY()
 	TObjectPtr<UItemInstance> PendingEquipItem;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Scabbard")
+	TObjectPtr<UStaticMesh> ScabbardMesh;
+
+	UPROPERTY(EditDefaultsOnly, Category="Weapon|Scabbard")
+	FName ScabbardSocketName = TEXT("Scabbard_Target01Socket");
+
+	UPROPERTY()
+	TObjectPtr<UStaticMeshComponent> ScabbardMeshComponent;
+	
+	void SpawnAndAttachScabbard();
 };

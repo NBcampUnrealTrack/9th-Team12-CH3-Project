@@ -41,6 +41,62 @@ void UPlayerEquipmentComponent::BeginPlay()
 	{
 		SpawnWeaponToSheath();
 	}
+	
+	SpawnAndAttachScabbard();
+}
+
+
+void UPlayerEquipmentComponent::SpawnAndAttachScabbard()
+{
+	if (!OwnerCharacter || !ScabbardMesh)
+	{
+		return;
+	}
+
+	USkeletalMeshComponent* CharacterMesh = OwnerCharacter->GetMesh();
+
+	if (!CharacterMesh)
+	{
+		return;
+	}
+
+	if (!CharacterMesh->DoesSocketExist(ScabbardSocketName))
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Scabbard socket does not exist: %s"),
+			*ScabbardSocketName.ToString()
+		);
+		return;
+	}
+
+	ScabbardMeshComponent = NewObject<UStaticMeshComponent>(
+		OwnerCharacter,
+		UStaticMeshComponent::StaticClass(),
+		TEXT("ScabbardMeshComponent")
+	);
+
+	if (!ScabbardMeshComponent)
+	{
+		return;
+	}
+
+	ScabbardMeshComponent->SetStaticMesh(ScabbardMesh);
+
+	ScabbardMeshComponent->SetCollisionEnabled(
+		ECollisionEnabled::NoCollision
+	);
+
+	ScabbardMeshComponent->SetGenerateOverlapEvents(false);
+
+	ScabbardMeshComponent->RegisterComponent();
+
+	ScabbardMeshComponent->AttachToComponent(
+		CharacterMesh,
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		ScabbardSocketName
+	);
 }
 
 void UPlayerEquipmentComponent::ToggleWeaponInput(
