@@ -1,23 +1,7 @@
 #include "Framework/KatanaInputSettingsSaveGame.h"
 
+#include "Framework/InputActionNames.h"
 #include "InputCoreTypes.h"
-
-namespace InputActionNames
-{
-	const FName MoveForward(TEXT("MoveForward"));
-	const FName MoveBackward(TEXT("MoveBackward"));
-	const FName MoveLeft(TEXT("MoveLeft"));
-	const FName MoveRight(TEXT("MoveRight"));
-	const FName Jump(TEXT("Jump"));
-	const FName Dodge(TEXT("Dodge"));
-	const FName Guard(TEXT("Guard"));
-	const FName Attack(TEXT("Attack"));
-	const FName LockOn(TEXT("LockOn"));
-	const FName UseItem(TEXT("UseItem"));
-	const FName Equip(TEXT("Equip"));
-	const FName Special(TEXT("Special"));
-	const FName InGameMenu(TEXT("InGameMenu"));
-}
 
 UKatanaInputSettingsSaveGame::UKatanaInputSettingsSaveGame()
 {
