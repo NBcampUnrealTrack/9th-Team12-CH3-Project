@@ -13,6 +13,8 @@ class UStateTagComponent;
 class UPlayerAttributeComponent;
 class UPlayerEquipmentComponent;
 class UPlayerWeaponComponent;
+class UPlayerCameraComponent;
+
 struct FAttackDefinition;
 struct FInputActionValue;
 struct FHitResult;
@@ -133,4 +135,5 @@ private:
 
 	FRotator TargetAttackRotation;
 	
+	void StopAttackRotation();
 };
