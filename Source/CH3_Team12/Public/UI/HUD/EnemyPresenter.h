@@ -5,6 +5,7 @@
 #include "UObject/Object.h"
 #include "EnemyPresenter.generated.h"
 
+class AEnemyCharacterBase;
 class UEnemyAttributeComponent;
 class UEnemyWidget;
 /**
@@ -16,7 +17,7 @@ class CH3_TEAM12_API UEnemyPresenter : public UObject, public IPresenterInterfac
 	GENERATED_BODY()
 
 public:
-	void Initialize(const FString& InName, UEnemyAttributeComponent* InAttributeComponent, UEnemyWidget* InWidget);
+	void Initialize(const AEnemyCharacterBase* InEnemyCharacterBase, UEnemyWidget* InWidget);
 	virtual void Dispose() override;
 
 private:

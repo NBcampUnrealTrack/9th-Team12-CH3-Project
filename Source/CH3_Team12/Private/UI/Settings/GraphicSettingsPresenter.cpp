@@ -45,16 +45,16 @@ void UGraphicSettingsPresenter::Initialize(UGraphicSettingsWidget* InWidget)
 
 void UGraphicSettingsPresenter::Dispose()
 {
-	if (GraphicSettingsWidget.IsValid())
-	{
-		GraphicSettingsWidget->OnWindowModeChanged.Unbind();
-		GraphicSettingsWidget->OnResolutionChanged.Unbind();
-		GraphicSettingsWidget->OnQualityChanged.Unbind();
-		GraphicSettingsWidget->OnVSyncChanged.Unbind();
-		GraphicSettingsWidget->OnRefreshRateChanged.Unbind();
-		GraphicSettingsWidget->OnBtnResetClicked.Unbind();
-		GraphicSettingsWidget->OnBtnDoneClicked.Unbind();
-	}
+	if (!GraphicSettingsWidget.IsValid())
+		return;
+
+	GraphicSettingsWidget->OnWindowModeChanged.Unbind();
+	GraphicSettingsWidget->OnResolutionChanged.Unbind();
+	GraphicSettingsWidget->OnQualityChanged.Unbind();
+	GraphicSettingsWidget->OnVSyncChanged.Unbind();
+	GraphicSettingsWidget->OnRefreshRateChanged.Unbind();
+	GraphicSettingsWidget->OnBtnResetClicked.Unbind();
+	GraphicSettingsWidget->OnBtnDoneClicked.Unbind();
 }
 
 void UGraphicSettingsPresenter::HandleWindowModeChanged(const EKatanaWindowMode NewWindowMode)
