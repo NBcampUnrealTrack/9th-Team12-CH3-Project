@@ -28,6 +28,14 @@ public:
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
+	void LoadAudioSettings();
+
+	float GetDefaultVolume(EAudioType AudioType) const;
+
+	float GetVolume(EAudioType AudioType);
+	void SetVolume(EAudioType AudioType, float NewVolume);
+
+
 	UFUNCTION()
 	UAudioComponent* PlaySound2D(EAudioType AudioType, FString SoundKey, float VolumeMultiplier = 1.0f,
 	                             float PitchMultiplier = 1.0f);
@@ -35,15 +43,6 @@ public:
 	UFUNCTION()
 	UAudioComponent* PlaySound3DAtLocation(EAudioType AudioType, FString SoundKey, FVector Location,
 	                                       USoundAttenuation* AttenuationSettings = nullptr);
-
-	UFUNCTION()
-	float GetVolume(EAudioType AudioType);
-
-	UFUNCTION()
-	void SetVolume(EAudioType AudioType, float NewVolume);
-
-	UFUNCTION()
-	void LoadAudioSettings();
 
 private:
 	UPROPERTY()

@@ -22,6 +22,7 @@ public:
 	void ClearItemWidgets();
 
 	void UpdateHealthBar(float Percent, bool bImmediately = false);
+	void UpdateDetailWidget(const FText& Text, UTexture2D* Icon, int32 Count, int32 MaxCount, const FText& Description);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

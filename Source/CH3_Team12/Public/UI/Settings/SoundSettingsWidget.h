@@ -23,23 +23,20 @@ public:
 	FOnButtonClicked OnBtnResetClicked;
 	FOnButtonClicked OnBtnDoneClicked;
 
-	void SetMasterVolumeWidget(const float Volume) const;
-	void SetBGMVolumeWidget(const float Volume) const;
-	void SetSFXVolumeWidget(const float Volume) const;
-	void ResetVolume() const;
+	void UpdateWidget(float MasterVolume, float BGMVolume, float SFXVolume);
 
 protected:
 	virtual void NativeOnInitialized() override;
 
 private:
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UStepProgressBar> MasterVolumeStep; //TODO 임시
+	TObjectPtr<UStepProgressBar> MasterVolumeStep;
 
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UStepProgressBar> BGMVolumeStep; //TODO 임시
+	TObjectPtr<UStepProgressBar> BGMVolumeStep;
 
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UStepProgressBar> SFXVolumeStep; //TODO 임시
+	TObjectPtr<UStepProgressBar> SFXVolumeStep;
 
 	UPROPERTY(meta=(BindWidget, OptionalWidget=true))
 	TObjectPtr<UButton> BtnReset;
@@ -61,4 +58,8 @@ private:
 
 	UFUNCTION()
 	void HandleBtnDoneClicked() const;
+
+	void SetMasterVolumeWidget(const float Volume) const;
+	void SetBGMVolumeWidget(const float Volume) const;
+	void SetSFXVolumeWidget(const float Volume) const;
 };

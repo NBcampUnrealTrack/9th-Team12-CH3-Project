@@ -20,6 +20,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "NiagaraSystem.h"
+#include "Framework/DataAsset/EnemyExecutionDataAsset.h"
 
 // Sets default values
 AEnemyCharacterBase::AEnemyCharacterBase()
@@ -127,7 +128,28 @@ void AEnemyCharacterBase::PlayGroggyMontage()
 void AEnemyCharacterBase::OnGroggyMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	StateTagComponent->RemoveStateTag(CombatTags::State_Hit_PostureBroken);
-	ResumeAILogic();
+	if (StateTagComponent->HasStateTagExact(CombatTags::State_Action_Executing) == false)
+		ResumeAILogic();
+}
+
+bool AEnemyCharacterBase::CanExecuted()
+{
+	const UEnemyExecutionDataAsset* EnemyData = GetExecutionData();
+
+	bool Result = EnemyData->EnemyExecutionData.EnemyMontage && EnemyData;
+	
+	ensure(EnemyData);  
+	ensure(EnemyData->EnemyExecutionData.EnemyMontage);
+
+	return Result;
+}
+
+void AEnemyCharacterBase::StartExecuted()
+{
+	if (CanExecuted())
+	{
+		StartExecuted_Implement();	
+	}
 }
 
 void AEnemyCharacterBase::OnDeath()
@@ -142,28 +164,32 @@ void AEnemyCharacterBase::OnDeath()
 
 	EnemyAttackComponent->CancelAttack();
 	GetWorldTimerManager().ClearAllTimersForObject(this);
-	PlayDeathMontage();
+	bool Result = PlayDeathMontage();
+	
+	StartDeathTransition();
+	
 	StartDeathTransition();
 	SetEnemyDestroyTimer();
 }
 
 
-void AEnemyCharacterBase::PlayDeathMontage()
+bool AEnemyCharacterBase::PlayDeathMontage()
 {
 	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
 	if (!SkeletalMeshComponent)
 	{
-		return;
+		return false;
 	}
 
 	UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
 	if (!AnimInstance || !DeadMontage)
 	{
-		return;
+		return false;
 	}
 
 	AnimInstance->Montage_Play(DeadMontage);
-	StartDeathTransition();
+	
+	return true;
 }
 
 void AEnemyCharacterBase::StartDeathTransition()
@@ -229,6 +255,56 @@ void AEnemyCharacterBase::ResumeAILogic()
 			BrainComponent->RestartLogic();
 		}
 	}
+}
+
+void AEnemyCharacterBase::StartExecuted_Implement()
+{
+	if (StateTagComponent)
+	{
+		StateTagComponent->AddStateTag(CombatTags::State_Action_Executing);
+		
+		StopAILogic();
+		if (!PlayExecutedMontage())
+		{
+			OnExecutedMontageEnded(nullptr, false);
+		}
+	}	
+}
+
+bool AEnemyCharacterBase::PlayExecutedMontage()
+{
+	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
+	if (!SkeletalMeshComponent)
+	{
+		return false;
+	}
+
+	UAnimInstance* AnimInstance = SkeletalMeshComponent->GetAnimInstance();
+	if (!AnimInstance || !ExecutionData)
+	{
+		return false;
+	}
+
+	UAnimMontage* ExecutedMontage = ExecutionData->EnemyExecutionData.EnemyMontage;
+	if (ExecutedMontage)
+	{
+		FOnMontageEnded OnMontageEndedDelegate;
+		OnMontageEndedDelegate.BindUObject(
+				this, &AEnemyCharacterBase::OnExecutedMontageEnded);
+		
+		AnimInstance->Montage_Play(ExecutedMontage);
+		AnimInstance->Montage_SetEndDelegate(OnMontageEndedDelegate, ExecutedMontage);
+		
+		return true;
+	}
+
+	return false;
+}
+
+void AEnemyCharacterBase::OnExecutedMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	StateTagComponent->RemoveStateTag(CombatTags::State_Action_Executing);
+	ResumeAILogic();
 }
 
 void AEnemyCharacterBase::AttackAnimationEnd()

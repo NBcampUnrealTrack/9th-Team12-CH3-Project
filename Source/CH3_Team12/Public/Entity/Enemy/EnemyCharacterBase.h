@@ -43,6 +43,8 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	FString GetEnemyName() const { return EnemyName; }
+	bool CanExecuted();
+	void StartExecuted();
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
@@ -90,7 +92,7 @@ protected:
 	UFUNCTION()
 	void OnDeath();
 
-	void PlayDeathMontage();
+	bool PlayDeathMontage();
 	void StartDeathTransition();
 	void SetEnemyDestroyTimer();
 
@@ -99,6 +101,10 @@ protected:
 	void StopAILogic();
 	void ResumeAILogic();
 
+	void StartExecuted_Implement();
+	bool PlayExecutedMontage();
+	void OnExecutedMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
 public:
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 

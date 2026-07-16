@@ -13,14 +13,17 @@ void UInGameMenuPresenter::Initialize(UInGameMenuWidget* InWidget)
 		return;
 	}
 
-	UKatanaUIManagerSubsystem* KatanaUIManagerSubsystem = UKatanaUIManagerSubsystem::Get(this);
-	if (!ensure(KatanaUIManagerSubsystem))
+	UKatanaUIManagerSubsystem* UIManagerSubsystem = UKatanaUIManagerSubsystem::Get(this);
+	if (!ensure(UIManagerSubsystem))
 	{
+		UE_LOG(LogTemp, Error, TEXT("UIManagerSubsystem 이 유효하지 않습니다."));
 		return;
 	}
 
-	KatanaUIManagerSubsystem->RegisterInventoryWidget(InGameMenuWidget->GetInventoryWidget());
-	KatanaUIManagerSubsystem->RegisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
+	UIManagerSubsystem->RegisterInventoryWidget(InGameMenuWidget->GetInventoryWidget());
+	UIManagerSubsystem->RegisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
+	UIManagerSubsystem->RegisterGraphicSettingsWidget(InGameMenuWidget->GetGraphicSettingsWidget());
+	UIManagerSubsystem->RegisterInputSettingsWidget(InGameMenuWidget->GetInputSettingsWidget());
 }
 
 void UInGameMenuPresenter::Dispose()
@@ -31,12 +34,15 @@ void UInGameMenuPresenter::Dispose()
 		return;
 	}
 
-	UKatanaUIManagerSubsystem* KatanaUIManagerSubsystem = UKatanaUIManagerSubsystem::Get(this);
-	if (!ensure(KatanaUIManagerSubsystem))
+	UKatanaUIManagerSubsystem* UIManagerSubsystem = UKatanaUIManagerSubsystem::Get(this);
+	if (!ensure(UIManagerSubsystem))
 	{
+		UE_LOG(LogTemp, Error, TEXT("UIManagerSubsystem 이 유효하지 않습니다."));
 		return;
 	}
 
-	KatanaUIManagerSubsystem->UnregisterInventoryWidget(InGameMenuWidget->GetInventoryWidget());
-	KatanaUIManagerSubsystem->UnregisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
+	UIManagerSubsystem->UnregisterInventoryWidget(InGameMenuWidget->GetInventoryWidget());
+	UIManagerSubsystem->UnregisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
+	UIManagerSubsystem->UnregisterGraphicSettingsWidget(InGameMenuWidget->GetGraphicSettingsWidget());
+	UIManagerSubsystem->UnregisterInputSettingsWidget(InGameMenuWidget->GetInputSettingsWidget());
 }
