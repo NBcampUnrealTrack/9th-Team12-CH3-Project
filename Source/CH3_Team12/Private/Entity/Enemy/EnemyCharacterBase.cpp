@@ -54,8 +54,16 @@ void AEnemyCharacterBase::BeginPlay()
 	// // 	MovementComponent->RotationRate = FRotator(0.f, 720.f, 0.f);
 	// // }
 
-	AttributeComponent->OnEnemyDeath.AddDynamic(this, &AEnemyCharacterBase::OnDeath);
-	AttributeComponent->OnEnemyPostureBroken.AddDynamic(this, &AEnemyCharacterBase::HandlePostureBroken);
+	if (AttributeComponent)
+	{
+		AttributeComponent->OnEnemyDeath.AddDynamic(this, &AEnemyCharacterBase::OnDeath);
+		AttributeComponent->OnEnemyPostureBroken.AddDynamic(this, &AEnemyCharacterBase::HandlePostureBroken);
+	}
+	
+	if (EnemyTransitionComponent)
+	{
+		DestroyTime = EnemyTransitionComponent->GetDissolveDuration() + 15;
+	}
 }
 
 // Called every frame
@@ -167,8 +175,6 @@ void AEnemyCharacterBase::OnDeath()
 	bool Result = PlayDeathMontage();
 	
 	StartDeathTransition();
-	
-	StartDeathTransition();
 	SetEnemyDestroyTimer();
 }
 
@@ -219,6 +225,7 @@ void AEnemyCharacterBase::SetEnemyDestroyTimer()
 
 void AEnemyCharacterBase::DestroyEnemy()
 {
+	OnDestroyedDelegate.Broadcast();
 	Destroy();
 }
 

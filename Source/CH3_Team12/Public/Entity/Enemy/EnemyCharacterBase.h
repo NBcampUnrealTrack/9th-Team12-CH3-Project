@@ -18,6 +18,10 @@ class UEnemyAttributeComponent;
 class UEnemyDefenseComponent;
 class UEnemyTransitionComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(
+	FOnDestroyed
+);
+
 UCLASS()
 class CH3_TEAM12_API AEnemyCharacterBase : public ACharacter, public IAnimationAttackInterface
 {
@@ -46,6 +50,9 @@ public:
 	bool CanExecuted();
 	void StartExecuted();
 	
+public:
+	FOnDestroyed OnDestroyedDelegate;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
