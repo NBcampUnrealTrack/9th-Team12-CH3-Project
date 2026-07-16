@@ -127,28 +127,37 @@ struct FExecutionCameraSettings
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float TargetArmLength = 250.0f;
+	float RightOffset = 120.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FVector PivotOffset = FVector(0.0f, 0.0f, 80.0f);
+	float BackOffset = 220.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FVector SocketOffset = FVector(80.0f, 40.0f, 20.0f);
+	float UpOffset = 90.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float FocusBias = 0.65f;
+	float PlayerFocusHeight = 80.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float CameraInterpSpeed = 8.0f;
+	float TargetFocusHeight = 90.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float RotationInterpSpeed = 10.0f;
+	float FocusBias = 0.60f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float LocationInterpSpeed = 14.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float RotationInterpSpeed = 14.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float MinPitch = -35.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float MaxPitch = 10.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bSnapOnStart = true;
 };
 
 UCLASS(BlueprintType)

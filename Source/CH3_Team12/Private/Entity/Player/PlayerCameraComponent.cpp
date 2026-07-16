@@ -68,12 +68,6 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 
 	CameraMode = EPlayerCameraMode::LockOn;
 	
-	if (APlayerController* PlayerController =
-		Cast<APlayerController>(OwnerActor->GetController()))
-	{
-		PlayerController->SetIgnoreLookInput(true);
-	}
-
 	StateTagComponent->AddStateTag(
 		CombatTags::State_Movement_LockOn
 	);
@@ -114,42 +108,55 @@ bool UPlayerCameraComponent::IsLockOn() const
 
 void UPlayerCameraComponent::StartExecutionCamera(AActor* ExecutionTarget)
 {
-	if (!OwnerActor || !CameraBoom || !FollowCamera || !ExecutionTarget)
+	if (!OwnerActor || !CameraBoom || !FollowCamera || !CameraData || !ExecutionTarget)
 	{
 		return;
 	}
 
 	CurrentExecutionTarget = ExecutionTarget;
+
+	if (IsLockOn())
+	{
+		CurrentLockOnTarget = ExecutionTarget;
+	}
+	
 	CameraMode = EPlayerCameraMode::Execution;
 
-	if (APlayerController* PlayerController =
-		Cast<APlayerController>(OwnerActor->GetController()))
-	{
-		PlayerController->SetIgnoreLookInput(true);
-	}
+	CameraBoom->SetAbsolute(true, false, false);
 
 	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->bInheritPitch = true;
 	CameraBoom->bInheritYaw = true;
 	CameraBoom->bInheritRoll = false;
 
-	ApplyCameraCollisionSettings();
+	CameraBoom->TargetArmLength = 0.0f;
+	CameraBoom->SocketOffset = FVector::ZeroVector;
+	CameraBoom->TargetOffset = FVector::ZeroVector;
+
+	CameraBoom->bEnableCameraLag = false;
+	CameraBoom->bEnableCameraRotationLag = false;
+	CameraBoom->bDoCollisionTest = false;
 
 	FollowCamera->bUsePawnControlRotation = false;
+
+	if (CameraData->Execution.bSnapOnStart)
+	{
+		ApplyExecutionCamera(0.0f, true);
+	}
 }
 
 void UPlayerCameraComponent::EndExecutionCamera()
 {
+	if (CameraMode != EPlayerCameraMode::Execution)
+	{
+		return;
+	}
+
 	CurrentExecutionTarget = nullptr;
 
-	if (IsLockOn() && CurrentLockOnTarget)
-	{
-		CameraMode = EPlayerCameraMode::LockOn;
-	}
-	else
-	{
-		StartNormalCameraTransition();
-	}
+	PrepareNormalCameraTransitionFromExecution();
+
+	StartNormalCameraTransition();
 }
 
 // 락온 상태면 해제, 아니면 락온 시도
@@ -178,15 +185,6 @@ void UPlayerCameraComponent::TickComponent(
 )
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	// if (IsLockOn())
-	// {
-	// 	UpdateLockOnCamera(DeltaTime);
-	// }
-	// else
-	// {
-	// 	UpdateNormalCamera(DeltaTime);
-	// }
 	
 	switch (CameraMode)
 	{
@@ -251,17 +249,46 @@ void UPlayerCameraComponent::UpdateNormalCamera(float DeltaTime)
 		DeltaTime,
 		InterpSpeed
 	);
+	
+	const bool bAlmostNormal =
+	CameraBoom->GetRelativeLocation().Equals(
+		Normal.CameraBoomRelativeLocation,
+		3.0f
+	) &&
+	FMath::IsNearlyEqual(
+		CameraBoom->TargetArmLength,
+		Normal.TargetArmLength,
+		3.0f
+	);
+
+	if (bAlmostNormal)
+	{
+		CameraBoom->bEnableCameraLag = true;
+		CameraBoom->bEnableCameraRotationLag = true;
+	}
 }
 
 void UPlayerCameraComponent::UpdateExecutionCamera(float DeltaTime)
 {
-	if (!OwnerActor || !CurrentExecutionTarget || !CameraBoom || !CameraData)
+	ApplyExecutionCamera(DeltaTime, false);
+}
+
+void UPlayerCameraComponent::ApplyExecutionCamera(
+	float DeltaTime,
+	bool bInstant)
+{
+	if (!OwnerActor || !CameraBoom || !CameraData)
 	{
-		EndExecutionCamera();
 		return;
 	}
 
+	if (!IsValid(CurrentExecutionTarget))
+	{
+		return;
+	}
+	
 	AController* OwnerController = OwnerActor->GetController();
+
 	if (!OwnerController)
 	{
 		return;
@@ -269,45 +296,45 @@ void UPlayerCameraComponent::UpdateExecutionCamera(float DeltaTime)
 
 	const FExecutionCameraSettings& Execution = CameraData->Execution;
 
-	CameraBoom->TargetArmLength = FMath::FInterpTo(
-		CameraBoom->TargetArmLength,
-		Execution.TargetArmLength,
-		DeltaTime,
-		Execution.CameraInterpSpeed
-	);
+	const FVector PlayerLocation =
+		OwnerActor->GetActorLocation();
 
-	CameraBoom->TargetOffset = FMath::VInterpTo(
-		CameraBoom->TargetOffset,
-		Execution.PivotOffset,
-		DeltaTime,
-		Execution.CameraInterpSpeed
-	);
+	const FVector TargetLocation =
+		CurrentExecutionTarget->GetActorLocation();
 
-	CameraBoom->SocketOffset = FMath::VInterpTo(
-		CameraBoom->SocketOffset,
-		Execution.SocketOffset,
-		DeltaTime,
-		Execution.CameraInterpSpeed
-	);
+	FVector ToTarget = TargetLocation - PlayerLocation;
+	ToTarget.Z = 0.0f;
+
+	if (!ToTarget.Normalize())
+	{
+		ToTarget = OwnerActor->GetActorForwardVector();
+		ToTarget.Z = 0.0f;
+		ToTarget.Normalize();
+	}
+
+	// 플레이어-보스 라인을 기준으로 한 오른쪽 방향.
+	// 플레이어가 보스를 바라보게 정렬되어 있다면 ActorRightVector와 거의 같다.
+	const FVector RightDirection =
+		FVector::CrossProduct(FVector::UpVector, ToTarget).GetSafeNormal();
+
+	const FVector DesiredCameraLocation =
+		PlayerLocation
+		+ RightDirection * Execution.RightOffset
+		- ToTarget * Execution.BackOffset
+		+ FVector::UpVector * Execution.UpOffset;
 
 	const FVector PlayerFocus =
-		GetLockOnFocusLocation(OwnerActor, 0.35f);
+		PlayerLocation + FVector::UpVector * Execution.PlayerFocusHeight;
 
 	const FVector TargetFocus =
-		GetLockOnFocusLocation(CurrentExecutionTarget, 0.35f);
+		TargetLocation + FVector::UpVector * Execution.TargetFocusHeight;
 
-	const FVector FocusPoint = FMath::Lerp(
-		PlayerFocus,
-		TargetFocus,
-		Execution.FocusBias
-	);
-
-	const FVector CameraPivotLocation =
-		OwnerActor->GetActorLocation() + CameraBoom->TargetOffset;
+	const FVector FocusPoint =
+		FMath::Lerp(PlayerFocus, TargetFocus, Execution.FocusBias);
 
 	FRotator DesiredRotation =
 		UKismetMathLibrary::FindLookAtRotation(
-			CameraPivotLocation,
+			DesiredCameraLocation,
 			FocusPoint
 		);
 
@@ -319,13 +346,30 @@ void UPlayerCameraComponent::UpdateExecutionCamera(float DeltaTime)
 
 	DesiredRotation.Roll = 0.0f;
 
-	const FRotator SmoothRotation = FMath::RInterpTo(
-		OwnerController->GetControlRotation(),
-		DesiredRotation,
-		DeltaTime,
-		Execution.RotationInterpSpeed
-	);
+	if (bInstant)
+	{
+		CameraBoom->SetWorldLocation(DesiredCameraLocation);
+		OwnerController->SetControlRotation(DesiredRotation);
+		return;
+	}
 
+	const FVector SmoothCameraLocation =
+		FMath::VInterpTo(
+			CameraBoom->GetComponentLocation(),
+			DesiredCameraLocation,
+			DeltaTime,
+			Execution.LocationInterpSpeed
+		);
+
+	const FRotator SmoothRotation =
+		FMath::RInterpTo(
+			OwnerController->GetControlRotation(),
+			DesiredRotation,
+			DeltaTime,
+			Execution.RotationInterpSpeed
+		);
+
+	CameraBoom->SetWorldLocation(SmoothCameraLocation);
 	OwnerController->SetControlRotation(SmoothRotation);
 }
 
@@ -336,6 +380,7 @@ void UPlayerCameraComponent::ApplyNormalCameraInstant()
 		return;
 	}
 
+	
 	const FNormalCameraSettings& Normal = CameraData->Normal;
 
 	CameraBoom->TargetArmLength = Normal.TargetArmLength;
@@ -346,7 +391,8 @@ void UPlayerCameraComponent::ApplyNormalCameraInstant()
 	CameraBoom->CameraLagSpeed = 4.0f;
 	CameraBoom->CameraLagMaxDistance = 200.0f;
 	CameraBoom->CameraRotationLagSpeed = 12.0f;
-
+	CameraBoom->SetAbsolute(false, false, false);
+	
 	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->bInheritPitch = true;
@@ -365,14 +411,10 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 	{
 		return;
 	}
-	
+
 	CameraMode = EPlayerCameraMode::Normal;
 
-	if (APlayerController* PlayerController =
-		Cast<APlayerController>(OwnerActor->GetController()))
-	{
-		PlayerController->SetIgnoreLookInput(false);
-	}
+	CameraBoom->SetAbsolute(false, false, false);
 
 	if (StateTagComponent)
 	{
@@ -388,6 +430,9 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 	CameraBoom->bInheritYaw = true;
 	CameraBoom->bInheritRoll = false;
 
+	CameraBoom->bEnableCameraLag = false;
+	CameraBoom->bEnableCameraRotationLag = false;
+
 	ApplyCameraCollisionSettings();
 
 	FollowCamera->bUsePawnControlRotation = false;
@@ -400,8 +445,6 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 	}
 
 	OwnerActor->bUseControllerRotationYaw = false;
-
-	// OnLockOnStateChanged.Broadcast(false);
 
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerActor->GetLocomotionComponent())
@@ -687,4 +730,47 @@ void UPlayerCameraComponent::ApplyCameraCollisionSettings()
 
 	CameraBoom->ProbeChannel =
 		CameraData->Collision.ProbeChannel;
+}
+
+void UPlayerCameraComponent::PrepareNormalCameraTransitionFromExecution()
+{
+	if (!CameraBoom || !FollowCamera || !CameraData)
+	{
+		return;
+	}
+
+	const FVector CurrentWorldLocation =
+		CameraBoom->GetComponentLocation();
+
+	CameraBoom->SetAbsolute(false, false, false);
+
+	if (USceneComponent* Parent = CameraBoom->GetAttachParent())
+	{
+		const FVector RelativeLocation =
+			Parent->GetComponentTransform()
+			.InverseTransformPosition(CurrentWorldLocation);
+
+		CameraBoom->SetRelativeLocation(RelativeLocation);
+	}
+	else
+	{
+		CameraBoom->SetWorldLocation(CurrentWorldLocation);
+	}
+
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bInheritPitch = true;
+	CameraBoom->bInheritYaw = true;
+	CameraBoom->bInheritRoll = false;
+
+	CameraBoom->TargetArmLength = 0.0f;
+	CameraBoom->SocketOffset = FVector::ZeroVector;
+	CameraBoom->TargetOffset = FVector::ZeroVector;
+
+	// 전환 중 이중 보간/버벅임 방지
+	CameraBoom->bEnableCameraLag = false;
+	CameraBoom->bEnableCameraRotationLag = false;
+
+	ApplyCameraCollisionSettings();
+
+	FollowCamera->bUsePawnControlRotation = false;
 }

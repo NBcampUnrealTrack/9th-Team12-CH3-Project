@@ -5,6 +5,7 @@
 #include "Entity/Player/PlayerAttributeComponent.h"
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Player/PlayerWeaponComponent.h"
+#include "Entity/Player/PlayerCameraComponent.h"
 #include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "Entity/Enemy/Component/EnemyDefenseComponent.h"
@@ -233,6 +234,8 @@ void UPlayerAttackComponent::HeavyAttack(const FInputActionValue& Value)
 
 void UPlayerAttackComponent::CancelAttackInternal()
 {
+	StopAttackRotation();
+	
 	bDodgeCancelWindowOpen = false;
 	bMoveCancelWindowOpen = false;
 	bComboWindow = false;
@@ -309,7 +312,7 @@ void UPlayerAttackComponent::TickComponent(
 	if (NewRot.Equals(TargetAttackRotation, 0.1f))
 	{
 		OwnerCharacter->SetActorRotation(TargetAttackRotation);
-		SetComponentTickEnabled(false);
+		StopAttackRotation();
 	}
 }
 
@@ -391,7 +394,14 @@ void UPlayerAttackComponent::StartAttack(
 	ComboIndex = 0;
 	CurrentStep = &CurrentAttackData->Steps[ComboIndex];
 	
-	StartAttackRotation();
+	if (CurrentStep && CurrentStep->bRotateToInput)
+	{
+		StartAttackRotation();
+	}
+	else
+	{
+		StopAttackRotation();
+	}
 	
 	bComboWindow = false;
 	bComboBuffered = false;
@@ -429,6 +439,8 @@ void UPlayerAttackComponent::StartAttack(
 
 void UPlayerAttackComponent::EndAttack()
 {
+	StopAttackRotation();
+	
 	WeaponComponent->EndWeaponHitCheck();
 
 	CurrentAttackMontage = nullptr;
@@ -611,6 +623,8 @@ void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
 	StateComponent->AddStateTag(CombatTags::State_Action_Executing);
 	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
 	
+	StopAttackRotation();
+	
 	ExecutionTarget = Enemy;
 	
 	// 적 로컬 기준 오프셋 -> 월드 위치
@@ -637,9 +651,36 @@ void UPlayerAttackComponent::StartExecution(AEnemyCharacterBase* Enemy)
 		return;
 	}
 	
-	AnimInstance->Montage_Play(
+	if (UPlayerCameraComponent* CameraComponent =
+		OwnerCharacter->GetPlayerCameraComponent())
+	{
+		CameraComponent->StartExecutionCamera(ExecutionTarget.Get());
+	}
+	
+	float Duration = AnimInstance->Montage_Play(
 		AttackData->ExecutionData.PlayerMontage);
+	
+	if (Duration <= 0.0f)
+	{
+		if (UPlayerCameraComponent* CameraComponent =
+			OwnerCharacter->GetPlayerCameraComponent())
+		{
+			CameraComponent->EndExecutionCamera();
+		}
 
+		StateComponent->RemoveStateTag(
+			CombatTags::State_Action_Executing
+		);
+
+		StateComponent->RemoveStateTag(
+			CombatTags::State_Movement_Locked
+		);
+
+		ExecutionTarget = nullptr;
+
+		return;
+	}
+	
 	FOnMontageEnded Delegate;
 	Delegate.BindUObject(
 		this,
@@ -715,12 +756,33 @@ void UPlayerAttackComponent::OnExecutionMontageEnded(
 	UAnimMontage* Montage,
 	bool bInterrupted)
 {
+	if (UPlayerCameraComponent* CameraComponent =
+		OwnerCharacter->GetPlayerCameraComponent())
+	{
+		CameraComponent->EndExecutionCamera();
+	}
+	
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Action_Executing);
+
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Movement_Locked);
 	
 	ExecutionTarget = nullptr;
+
+	StopAttackRotation();
+	
+	if (UPlayerLocomotionComponent* LocomotionComponent =
+		OwnerCharacter->GetLocomotionComponent())
+	{
+		LocomotionComponent->RefreshMovementSettings();
+	}
+}
+
+void UPlayerAttackComponent::StopAttackRotation()
+{
+	SetComponentTickEnabled(false);
+	TargetAttackRotation = FRotator::ZeroRotator;
 }
 
 const FAttackHitData*
