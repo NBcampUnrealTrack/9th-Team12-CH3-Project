@@ -18,22 +18,23 @@ APlayerCharacterBase* AKatanaPlayerController::GetPlayerCharacter() const
 
 void AKatanaPlayerController::BeginPlay()
 {
-	// Super::BeginPlay();
+	Super::BeginPlay();
 
 	bShowMouseCursor = false;
 	const FInputModeGameOnly InputMode;
 	SetInputMode(InputMode);
 
-	const AEnemyCharacterBase* EnemyCharacterBase = FindEnemyCharacter();
+	AEnemyCharacterBase* EnemyCharacterBase = FindEnemyCharacter();
 	if (!EnemyCharacterBase)
 		return;
+
+	// TODO 죽었을 경우 패배 처리
 
 	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
 		return;
 
-	//TODO 제대로 된 이름을 받아오게 수정 필요
-	UIManager->ShowEnemyWidget(EnemyCharacterBase->GetName(), EnemyCharacterBase->GetEnemyAttributeComponent());
+	UIManager->ShowEnemyWidget(EnemyCharacterBase);
 }
 
 void AKatanaPlayerController::OnPossess(APawn* InPawn)
@@ -44,13 +45,13 @@ void AKatanaPlayerController::OnPossess(APawn* InPawn)
 	if (!PlayerCharacterBase.IsValid())
 		return;
 
-	UPlayerAttributeComponent* AttributeComponent = PlayerCharacterBase->GetAttributeComponent();
+	// TODO 죽었을 경우 패배 처리
 
 	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
 		return;
 
-	UIManager->ShowPlayerWidget(AttributeComponent);
+	UIManager->ShowPlayerWidget(PlayerCharacterBase.Get());
 }
 
 void AKatanaPlayerController::SetupInputComponent()
