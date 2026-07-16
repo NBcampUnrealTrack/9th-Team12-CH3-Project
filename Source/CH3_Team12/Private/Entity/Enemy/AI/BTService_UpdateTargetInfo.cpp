@@ -75,8 +75,8 @@ void UBTService_UpdateTargetInfo::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 
 	const bool bIsStrafing = BlackboardComponent->GetValueAsBool(TEXT("bIsStrafing"));
 
-	if (!bIsStrafing)
-	{
-		ControlledPawn->SetActorRotation(NewRotation);
-	}
+	// if (!bIsStrafing)
+	// {
+	// 	ControlledPawn->SetActorRotation(NewRotation);
+	// }
 }
