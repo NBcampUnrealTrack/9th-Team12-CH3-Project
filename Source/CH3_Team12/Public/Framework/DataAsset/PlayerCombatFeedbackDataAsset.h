@@ -8,6 +8,15 @@ class UNiagaraSystem;
 class USoundBase;
 
 UENUM(BlueprintType)
+enum class ECombatHitStopTargetPolicy : uint8
+{
+	None,
+	DefenderOnly,
+	AttackerOnly,
+	Both
+};
+
+UENUM(BlueprintType)
 enum class ECombatEffectLocationMode : uint8
 {
 	HitImpactPoint,
@@ -25,7 +34,8 @@ enum class ECombatEffectRotationMode : uint8
 	OppositeAttackDirection,
 	AttackerToDefender,
 	DefenderToAttacker,
-	DefenderForward
+	DefenderForward,
+	WorldUp
 };
 
 USTRUCT(BlueprintType)
@@ -48,10 +58,17 @@ struct FCombatFeedbackData
 		ECombatEffectRotationMode::None;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float HitStopDuration = 0.0f;
+	float HitStopDuration = 0.15f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float HitStopTimeDilation = 1.0f;
+	ECombatHitStopTargetPolicy HitStopTargetPolicy =
+		ECombatHitStopTargetPolicy::Both;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float AttackerTimeDilation = 0.08f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float DefenderTimeDilation = 0.08f;
 };
 
 UCLASS(BlueprintType)
