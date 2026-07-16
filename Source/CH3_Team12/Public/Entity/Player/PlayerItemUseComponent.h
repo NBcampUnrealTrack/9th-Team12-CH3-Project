@@ -18,50 +18,49 @@ class CH3_TEAM12_API UPlayerItemUseComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UPlayerItemUseComponent();
 
 	// R 입력 바인딩
 	void UseConsumableInput(const FInputActionValue& Value);
-	
+
 	// AnimNotify
 	void AnimNotify_UseConsumable();
-	
-	float GetCurrentMoveSpeedMultiplier() const;
-protected:
-	virtual void BeginPlay() override;
-	
-private:
 
 	void UseItem(UItemInstance* Item);
 
+	float GetCurrentMoveSpeedMultiplier() const;
+protected:
+	virtual void BeginPlay() override;
+
+private:
 	void UseConsumable(
 		UItemInstance* Item,
 		const UConsumableDataAsset* ConsumableData);
 
 	bool ApplyConsumableEffects(
 		const UConsumableDataAsset* ConsumableData);
-	
+
 	void OnItemUseMontageEnded(
 		UAnimMontage* Montage,
 		bool bInterrupted);
-	
+
 	bool canUseItem();
 private:
 
 	UPROPERTY()
 	TObjectPtr<UPlayerInventoryComponent> Inventory;
-	
+
 	UPROPERTY()
 	TObjectPtr<UPlayerLocomotionComponent> Locomotion;
-	
+
 	UPROPERTY()
 	TObjectPtr<UStateTagComponent> StateComp;
 
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
-	
-	
+
+
 	UPROPERTY()
 	TObjectPtr<UItemInstance> CurrentUsingItem;
 };

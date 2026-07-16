@@ -23,6 +23,8 @@ void UMainMenuSettingsPresenter::Initialize(UMainMenuSettingsWidget* InWidget)
 	}
 
 	UIManager->RegisterSoundSettingsWidget(MainMenuSettingsWidget->GetSoundSettings());
+	UIManager->RegisterGraphicSettingsWidget(MainMenuSettingsWidget->GetGraphicSettings());
+	UIManager->RegisterInputSettingsWidget(MainMenuSettingsWidget->GetInputSettings());
 }
 
 void UMainMenuSettingsPresenter::Dispose()
@@ -41,6 +43,8 @@ void UMainMenuSettingsPresenter::Dispose()
 	}
 
 	UIManager->UnregisterSoundSettingsWidget(MainMenuSettingsWidget->GetSoundSettings());
+	UIManager->UnregisterGraphicSettingsWidget(MainMenuSettingsWidget->GetGraphicSettings());
+	UIManager->UnregisterInputSettingsWidget(MainMenuSettingsWidget->GetInputSettings());
 }
 
 void UMainMenuSettingsPresenter::HandleBtnBackClicked()
