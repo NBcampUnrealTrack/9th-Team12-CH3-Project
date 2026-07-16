@@ -56,6 +56,7 @@ private:
 	
 	float GetActorHalfHeight(AActor* Actor) const;
 	void UpdateExecutionCamera(float DeltaTime);
+	void ApplyExecutionCamera(float DeltaTime, bool bInstant);
 	
 	void ApplyNormalCameraInstant();
 	void StartNormalCameraTransition();
@@ -67,6 +68,7 @@ private:
 		float HeightRatio
 	) const;
 	void ApplyCameraCollisionSettings();
+	void PrepareNormalCameraTransitionFromExecution();
 
 	UPROPERTY()
 	TObjectPtr<AActor> CurrentExecutionTarget;

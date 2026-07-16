@@ -24,6 +24,7 @@ class UPlayerWeaponComponent;
 class UPlayerDefenseComponent;
 class UPlayerDebugOverlayComponent;
 class UPlayerItemUseComponent;
+class UCombatFeedbackComponent;
 
 UCLASS()
 class CH3_TEAM12_API APlayerCharacterBase : public ACharacter, public IAnimationAttackInterface
@@ -44,6 +45,7 @@ public:
 	UPlayerAttackComponent* GetAttackComponent() const;
 	UPlayerItemUseComponent* GetItemUseComponent() const;
 	UPlayerDebugOverlayComponent* GetDebugOverlayComponent() const;
+	UCombatFeedbackComponent* GetCombatFeedbackComponent() const;
 
 	USpringArmComponent* GetCameraBoom() const;
 	UCameraComponent* GetFollowCamera() const;
@@ -83,6 +85,8 @@ protected:
 	TObjectPtr<UPlayerAttackComponent> AttackComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPlayerDebugOverlayComponent> DebugOverlayComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UCombatFeedbackComponent> CombatFeedbackComponent;
 
 public:
 	// Called every frame

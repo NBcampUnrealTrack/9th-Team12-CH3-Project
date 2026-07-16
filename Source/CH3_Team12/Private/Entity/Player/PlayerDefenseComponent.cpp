@@ -6,17 +6,14 @@
 #include "Entity/Player/PlayerEquipmentComponent.h"
 #include "Entity/Player/PlayerWeaponComponent.h"
 #include "Entity/Player/PlayerAttackComponent.h"
+#include "Entity/Player/CombatFeedbackComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Entity/Weapon/WeaponBase.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "NiagaraFunctionLibrary.h"
-#include "NiagaraSystem.h"
-#include "Sound/SoundBase.h"
 #include "Engine/Engine.h"
-#include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values for this component's properties
@@ -41,6 +38,7 @@ void UPlayerDefenseComponent::BeginPlay()
 	AttributeComponent = OwnerCharacter->GetAttributeComponent();
 	EquipmentComponent = OwnerCharacter->GetEquipmentComponent();
 	WeaponComponent = OwnerCharacter->GetWeaponComponent();
+	CombatFeedbackComponent = OwnerCharacter->GetCombatFeedbackComponent();
 
 	if (!StateComponent)
 	{
@@ -81,6 +79,11 @@ void UPlayerDefenseComponent::BeginPlay()
 			&UPlayerDefenseComponent::HandleOwnerPostureRecovered
 		);
 	}
+	
+	if (!CombatFeedbackComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerDefenseComponent : CombatFeedbackComponent is nullptr"));
+	}
 }
 
 void UPlayerDefenseComponent::EndPlay(
@@ -92,7 +95,7 @@ void UPlayerDefenseComponent::EndPlay(
 			this,
 			&UPlayerDefenseComponent::HandleOwnerDead
 		);
-		
+
 		AttributeComponent->OnPostureBroken.RemoveDynamic(
 			this,
 			&UPlayerDefenseComponent::HandleOwnerPostureBroken
@@ -514,10 +517,11 @@ void UPlayerDefenseComponent::HandleParrySuccess(
 {
 	PlayParryReaction(ReactionDirection);
 
-	if (FeedbackData)
+	if (CombatFeedbackComponent && FeedbackData)
 	{
-		PlayCombatFeedback(
+		CombatFeedbackComponent->PlayCombatFeedback(
 			Context,
+			FeedbackData,
 			FeedbackData->ParryFeedback
 		);
 	}
@@ -532,10 +536,12 @@ void UPlayerDefenseComponent::HandleGuardSuccess(
 	if (AttributeComponent)
 	{
 		const float ChipDamage =
-			Context.AttackInfo.Damage * DefenseData->GuardChipDamageRate;
+			Context.AttackInfo.Damage *
+			DefenseData->GuardChipDamageRate;
 
 		const float GuardPostureDamage =
-			Context.AttackInfo.PostureDamage * DefenseData->GuardPostureDamageRate;
+			Context.AttackInfo.PostureDamage *
+			DefenseData->GuardPostureDamageRate;
 
 		AttributeComponent->ApplyAttributeDamage(
 			ChipDamage,
@@ -543,10 +549,11 @@ void UPlayerDefenseComponent::HandleGuardSuccess(
 		);
 	}
 
-	if (FeedbackData)
+	if (CombatFeedbackComponent && FeedbackData)
 	{
-		PlayCombatFeedback(
+		CombatFeedbackComponent->PlayCombatFeedback(
 			Context,
+			FeedbackData,
 			FeedbackData->GuardFeedback
 		);
 	}
@@ -588,10 +595,11 @@ void UPlayerDefenseComponent::HandleDirectHit(
 		// 죽었으면 일반 HitReaction으로 가지 않는다.
 		if (AttributeComponent->IsDead())
 		{
-			if (FeedbackData)
+			if (CombatFeedbackComponent && FeedbackData)
 			{
-				PlayCombatFeedback(
+				CombatFeedbackComponent->PlayCombatFeedback(
 					Context,
+					FeedbackData,
 					FeedbackData->HitFeedback
 				);
 			}
@@ -602,10 +610,11 @@ void UPlayerDefenseComponent::HandleDirectHit(
 
 	PlayHitReaction(ReactionDirection);
 
-	if (FeedbackData)
+	if (CombatFeedbackComponent && FeedbackData)
 	{
-		PlayCombatFeedback(
+		CombatFeedbackComponent->PlayCombatFeedback(
 			Context,
+			FeedbackData,
 			FeedbackData->HitFeedback
 		);
 	}
@@ -637,282 +646,6 @@ void UPlayerDefenseComponent::DisableInvincible()
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Combat_Invincible
 	);
-}
-
-void UPlayerDefenseComponent::PlayCombatFeedback(
-	const FIncomingAttackContext& Context,
-	const FCombatFeedbackData& Feedback)
-{
-	const FVector Location =
-		MakeCombatEffectLocation(Context, Feedback.LocationMode);
-
-	const FRotator Rotation =
-		MakeCombatEffectRotation(Context, Feedback.RotationMode);
-
-	if (Feedback.Effect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			Feedback.Effect,
-			Location,
-			Rotation
-		);
-	}
-
-	if (Feedback.Sound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			Feedback.Sound,
-			Location
-		);
-	}
-
-	TriggerCombatHitStop(
-		Context,
-		Feedback.HitStopDuration,
-		Feedback.HitStopTimeDilation
-	);
-}
-
-
-void UPlayerDefenseComponent::TriggerCombatHitStop(
-	const FIncomingAttackContext& Context,
-	float Duration,
-	float TimeDilation)
-{
-	if (!GetWorld())
-	{
-		return;
-	}
-
-	if (Duration <= 0.0f)
-	{
-		return;
-	}
-
-	TimeDilation = FMath::Clamp(
-		TimeDilation,
-		0.01f,
-		1.0f
-	);
-
-	// 이전 HitStop이 남아 있으면 먼저 원복
-	ResetCombatHitStop();
-
-	HitStopActors.Reset();
-
-	if (OwnerCharacter)
-	{
-		HitStopActors.Add(OwnerCharacter);
-	}
-
-	if (Context.Attacker)
-	{
-		HitStopActors.Add(Context.Attacker);
-	}
-
-	for (TWeakObjectPtr<AActor> ActorPtr : HitStopActors)
-	{
-		if (AActor* Actor = ActorPtr.Get())
-		{
-			Actor->CustomTimeDilation = TimeDilation;
-		}
-	}
-
-	GetWorld()->GetTimerManager().SetTimer(
-		HitStopTimerHandle,
-		this,
-		&UPlayerDefenseComponent::ResetCombatHitStop,
-		Duration,
-		false
-	);
-}
-
-void UPlayerDefenseComponent::ResetCombatHitStop()
-{
-	if (GetWorld())
-	{
-		GetWorld()->GetTimerManager().ClearTimer(
-			HitStopTimerHandle
-		);
-	}
-
-	for (TWeakObjectPtr<AActor> ActorPtr : HitStopActors)
-	{
-		if (AActor* Actor = ActorPtr.Get())
-		{
-			Actor->CustomTimeDilation = 1.0f;
-		}
-	}
-
-	HitStopActors.Reset();
-}
-
-FVector UPlayerDefenseComponent::GetWeaponClashEffectLocation(
-	const FIncomingAttackContext& Context) const
-{
-	if (EquipmentComponent->GetEquippedWeapon())
-	{
-		if (UStaticMeshComponent* WeaponMesh =
-			EquipmentComponent->GetEquippedWeapon()->GetWeaponMesh())
-		{
-			if (WeaponMesh->DoesSocketExist(FeedbackData->WeaponClashEffectSocketName))
-			{
-				return WeaponMesh->GetSocketLocation(
-					FeedbackData->WeaponClashEffectSocketName
-				);
-			}
-		}
-
-		const FVector BladeStart =
-			EquipmentComponent->GetEquippedWeapon()->GetBladeStartLocation();
-
-		const FVector BladeEnd =
-			EquipmentComponent->GetEquippedWeapon()->GetBladeEndLocation();
-
-		if (!BladeStart.IsNearlyZero() && !BladeEnd.IsNearlyZero())
-		{
-			return (BladeStart + BladeEnd) * 0.5f;
-		}
-	}
-
-	return GetHitImpactEffectLocation(Context);
-}
-
-FVector UPlayerDefenseComponent::GetHitImpactEffectLocation(
-	const FIncomingAttackContext& Context) const
-{
-	if (!Context.Hit.ImpactPoint.IsNearlyZero())
-	{
-		if (!Context.Hit.ImpactNormal.IsNearlyZero())
-		{
-			return Context.Hit.ImpactPoint
-				+ Context.Hit.ImpactNormal.GetSafeNormal()
-				* FeedbackData->HitEffectSurfaceOffset;
-		}
-
-		return Context.Hit.ImpactPoint;
-	}
-
-	return GetFallbackEffectLocation();
-}
-
-FVector UPlayerDefenseComponent::GetFallbackEffectLocation() const
-{
-	if (!OwnerCharacter)
-	{
-		return FVector::ZeroVector;
-	}
-
-	return OwnerCharacter->GetActorLocation()
-		+ FVector(0.0f, 0.0f, FeedbackData->FallbackEffectHeightOffset);
-}
-
-FVector UPlayerDefenseComponent::MakeCombatEffectLocation(
-	const FIncomingAttackContext& Context,
-	ECombatEffectLocationMode LocationMode) const
-{
-	switch (LocationMode)
-	{
-	case ECombatEffectLocationMode::DefenderWeaponClashSocket:
-		return GetWeaponClashEffectLocation(Context);
-
-	case ECombatEffectLocationMode::DefenderWeaponBladeMiddle:
-		if (EquipmentComponent->GetEquippedWeapon())
-		{
-			const FVector BladeStart =
-				EquipmentComponent->GetEquippedWeapon()->GetBladeStartLocation();
-
-			const FVector BladeEnd =
-				EquipmentComponent->GetEquippedWeapon()->GetBladeEndLocation();
-
-			if (!BladeStart.IsNearlyZero() && !BladeEnd.IsNearlyZero())
-			{
-				return (BladeStart + BladeEnd) * 0.5f;
-			}
-		}
-
-		return GetWeaponClashEffectLocation(Context);
-
-	case ECombatEffectLocationMode::DefenderActorCenter:
-		return GetFallbackEffectLocation();
-
-	case ECombatEffectLocationMode::HitImpactPoint:
-	default:
-		return GetHitImpactEffectLocation(Context);
-	}
-}
-
-FRotator UPlayerDefenseComponent::MakeCombatEffectRotation(
-	const FIncomingAttackContext& Context,
-	ECombatEffectRotationMode RotationMode) const
-{
-	if (!OwnerCharacter)
-	{
-		return FRotator::ZeroRotator;
-	}
-
-	FVector Direction = OwnerCharacter->GetActorForwardVector();
-
-	switch (RotationMode)
-	{
-	case ECombatEffectRotationMode::ImpactNormal:
-		if (!Context.Hit.ImpactNormal.IsNearlyZero())
-		{
-			Direction = Context.Hit.ImpactNormal;
-		}
-		break;
-
-	case ECombatEffectRotationMode::AttackDirection:
-		if (!Context.AttackWorldDirection.IsNearlyZero())
-		{
-			Direction = Context.AttackWorldDirection;
-		}
-		break;
-
-	case ECombatEffectRotationMode::OppositeAttackDirection:
-		if (!Context.AttackWorldDirection.IsNearlyZero())
-		{
-			Direction = -Context.AttackWorldDirection;
-		}
-		break;
-
-	case ECombatEffectRotationMode::AttackerToDefender:
-		if (Context.Attacker)
-		{
-			Direction =
-				OwnerCharacter->GetActorLocation()
-				- Context.Attacker->GetActorLocation();
-		}
-		break;
-
-	case ECombatEffectRotationMode::DefenderToAttacker:
-		if (Context.Attacker)
-		{
-			Direction =
-				Context.Attacker->GetActorLocation()
-				- OwnerCharacter->GetActorLocation();
-		}
-		break;
-
-	case ECombatEffectRotationMode::DefenderForward:
-		Direction = OwnerCharacter->GetActorForwardVector();
-		break;
-
-	case ECombatEffectRotationMode::None:
-	default:
-		return FRotator::ZeroRotator;
-	}
-
-	if (Direction.IsNearlyZero())
-	{
-		return FRotator::ZeroRotator;
-	}
-
-	return FRotationMatrix::MakeFromX(
-		Direction.GetSafeNormal()
-	).Rotator();
 }
 
 void UPlayerDefenseComponent::Debug_ReceiveTestAttackFront()
@@ -1249,7 +982,6 @@ void UPlayerDefenseComponent::PlayPostureBrokenMontage()
 
 	if (Duration <= 0.0f)
 	{
-		return;
 	}
 }
 
