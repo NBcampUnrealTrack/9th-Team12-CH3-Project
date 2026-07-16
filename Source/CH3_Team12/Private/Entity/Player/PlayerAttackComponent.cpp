@@ -394,7 +394,9 @@ void UPlayerAttackComponent::StartAttack(
 	ComboIndex = 0;
 	CurrentStep = &CurrentAttackData->Steps[ComboIndex];
 	
-	if (CurrentStep && CurrentStep->bRotateToInput)
+	if (CurrentStep && 
+		CurrentStep->bRotateToInput &&
+		!StateComponent->HasStateTag(CombatTags::State_Movement_LockOn))
 	{
 		StartAttackRotation();
 	}
@@ -549,7 +551,9 @@ void UPlayerAttackComponent::ContinueCombo()
 	StateComponent->AddStateTag(
 		CombatTags::State_Movement_Locked);
 	
-	if (CurrentStep && CurrentStep->bRotateToInput)
+	if (CurrentStep && 
+		CurrentStep->bRotateToInput &&
+		!StateComponent->HasStateTag(CombatTags::State_Movement_LockOn))
 	{
 		StartAttackRotation();
 	}

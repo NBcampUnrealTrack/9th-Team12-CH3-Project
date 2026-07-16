@@ -121,11 +121,14 @@ Content/Assets/Sound/**
 Content/KiteDemo/
 Content/KiteDemo/**
 
-Content/ParagonProps/
-Content/ParagonProps/**
+Content/Assets/The_Forgotten_Shrine/
+Content/Assets/The_Forgotten_Shrine/**
 
-Content/Lighting/
-Content/Lighting/**
+Content/Assets/Mountain/
+Content/Assets/Mountain/**
 
-Content/SampleMap/
-Content/SampleMap/**
+Content/Assets/ParagonProps/
+Content/Assets/ParagonProps/**
+
+Content/Assets/Sky/
+Content/Assets/Sky/**
