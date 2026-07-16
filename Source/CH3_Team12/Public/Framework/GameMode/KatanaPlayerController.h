@@ -7,7 +7,6 @@
 class AEnemyCharacterBase;
 class APlayerCharacterBase;
 struct FInputActionValue;
-class UPlayerAttributeComponent;
 /**
  *
  */

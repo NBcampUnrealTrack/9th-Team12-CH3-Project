@@ -7,14 +7,14 @@
 #include "UObject/ScriptInterface.h"
 #include "KatanaUIManagerSubsystem.generated.h"
 
+class APlayerCharacterBase;
+class AEnemyCharacterBase;
 class UInputSettingsWidget;
 class UGraphicSettingsWidget;
-class UEnemyAttributeComponent;
 class UInventoryWidget;
 class USoundSettingsWidget;
 class UKatanaSoundManagerSubsystem;
 class UKatanaLevelSubsystem;
-class UPlayerAttributeComponent;
 class IPresenterInterface;
 class UUIDataAsset;
 class UUserWidget;
@@ -44,10 +44,10 @@ public:
 	void ShowLoadingWidget();
 	void HideLoadingWidget();
 
-	void ShowPlayerWidget(UPlayerAttributeComponent* InAttributeComponent);
+	void ShowPlayerWidget(APlayerCharacterBase* InPlayerCharacterBase);
 	void HidePlayerWidget();
 
-	void ShowEnemyWidget(const FString& InName, UEnemyAttributeComponent* InAttributeComponent);
+	void ShowEnemyWidget(AEnemyCharacterBase* InEnemyCharacterBase);
 	void HideEnemyWidget();
 
 	void RegisterInventoryWidget(UInventoryWidget* InWidget);
