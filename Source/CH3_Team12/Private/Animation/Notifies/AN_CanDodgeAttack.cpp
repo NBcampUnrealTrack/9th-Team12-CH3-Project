@@ -23,6 +23,6 @@ void UAN_CanDodgeAttack::Notify(
 	
 	if (UPlayerAttackComponent* AttackComponent = Character->GetAttackComponent())
 	{
-		AttackComponent->CanDodgeAttack();
+		AttackComponent->OpenDashAttackWindow();
 	}
 }

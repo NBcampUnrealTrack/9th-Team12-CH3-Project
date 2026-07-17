@@ -46,6 +46,7 @@ public:
 	void OnDodgeSprintPressed(const FInputActionValue& Value);
 	void OnDodgeSprintReleased(const FInputActionValue& Value);
 	void CancelDodgeForPostureBreak();
+	void CancelDodgeForAttack();
 	bool TryConsumeBufferedDodge();
 	FVector GetDodgeWorldDirectionFromLastInput() const;
 	
