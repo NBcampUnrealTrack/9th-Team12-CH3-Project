@@ -93,7 +93,7 @@ enum class EAttackType : uint8
 	Light,
 	Heavy,
 	Jump,
-	Dodge
+	Dash
 };
 
 USTRUCT(BlueprintType)
@@ -126,11 +126,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FAttackDefinition JumpAttack;
 	
-	// 회피공격
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FAttackDefinition DodgeAttack;
-	
 	// 처형
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FExecutionAttackData ExecutionData;
+	
+	// Dash 공격 -> Dodge, Sprint 이후 공격
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FAttackDefinition DashAttack;
 };

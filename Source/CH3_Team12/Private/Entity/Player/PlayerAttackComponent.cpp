@@ -66,8 +66,8 @@ void UPlayerAttackComponent::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : WeaponComponent is nullptr"));
 		return;
 	}
-	LocoMotionComponent = OwnerCharacter->GetLocomotionComponent();
-	if (!LocoMotionComponent)
+	LocomotionComponent = OwnerCharacter->GetLocomotionComponent();
+	if (!LocomotionComponent)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerCombatComponent : LocoMotionComponent is nullptr"));
 		return;
@@ -108,8 +108,7 @@ void UPlayerAttackComponent::OpenAttackRecovery()
 		CombatTags::State_Movement_Locked
 	);
 
-	if (UPlayerLocomotionComponent* LocomotionComponent =
-		OwnerCharacter->GetLocomotionComponent())
+	if (LocomotionComponent)
 	{
 		LocomotionComponent->RefreshMovementSettings();
 		
@@ -138,7 +137,8 @@ const UPlayerAttackDataAsset* UPlayerAttackComponent::GetAttackData() const
 	return WeaponData->AttackData;
 }
 
-const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType AttackType) const
+const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(
+	EAttackType AttackType) const
 {
 	const UPlayerAttackDataAsset* Data = GetAttackData();
 
@@ -151,12 +151,16 @@ const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType
 	{
 	case EAttackType::Light:
 		return &Data->LightAttack;
+
 	case EAttackType::Heavy:
 		return &Data->HeavyAttack;
+
 	case EAttackType::Jump:
 		return &Data->JumpAttack;
-	case EAttackType::Dodge:
-		return &Data->DodgeAttack;
+
+	case EAttackType::Dash:
+		return &Data->DashAttack;
+
 	default:
 		return nullptr;
 	}
@@ -164,16 +168,11 @@ const FAttackDefinition* UPlayerAttackComponent::GetAttackDataByType(EAttackType
 
 void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 {
-	if (!StateComponent->HasStateTag(CombatTags::State_Action_Executing))
+	if (!OwnerCharacter || !StateComponent)
 	{
-		if (AEnemyCharacterBase* Enemy = FindExecutionTarget())
-		{
-			StartExecution(Enemy);
-			return;
-		}
+		return;
 	}
-	
-	
+
 	if (IsAttacking())
 	{
 		if (!CanContinueCombo())
@@ -193,36 +192,84 @@ void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 		return;
 	}
 
+	const bool bIsJumpAttack =
+		OwnerCharacter->GetCharacterMovement() &&
+		(
+			OwnerCharacter->GetCharacterMovement()->IsFalling() ||
+			StateComponent->HasStateTagExact(
+				CombatTags::State_Movement_JumpStarting
+			)
+		);
+
+	if (!bIsJumpAttack && CanStartDashAttack())
+	{
+		const FAttackDefinition* DashAttackData =
+			GetAttackDataByType(EAttackType::Dash);
+
+		if (DashAttackData)
+		{
+			if (LocomotionComponent)
+			{
+				LocomotionComponent->CancelDodgeForAttack();
+				LocomotionComponent->DoStopSprint();
+			}
+
+			bDashAttackWindowOpen = false;
+
+			StateComponent->RemoveStateTag(
+				CombatTags::State_Combat_Dodging
+			);
+
+			StateComponent->RemoveStateTag(
+				CombatTags::State_Combat_Invincible
+			);
+
+			StateComponent->RemoveStateTag(
+				CombatTags::State_Movement_Sprinting
+			);
+
+			StateComponent->RemoveStateTag(
+				CombatTags::State_Movement_Locked
+			);
+
+			StartAttack(DashAttackData, false);
+		}
+
+		return;
+	}
+
+	if (!bIsJumpAttack)
+	{
+		if (!StateComponent->HasStateTag(
+			CombatTags::State_Action_Executing))
+		{
+			if (AEnemyCharacterBase* Enemy = FindExecutionTarget())
+			{
+				StartExecution(Enemy);
+				return;
+			}
+		}
+	}
+
 	if (!CanStartAttack())
 	{
 		return;
 	}
 
-	EAttackType SelectedAttackType = EAttackType::Light;
+	const FAttackDefinition* AttackData = nullptr;
 
-	if (OwnerCharacter->GetCharacterMovement()->IsFalling() ||
-		StateComponent->HasStateTagExact(CombatTags::State_Movement_JumpStarting))
+	if (bIsJumpAttack)
 	{
-		SelectedAttackType = EAttackType::Jump;
-	}
-	else if (bCanDodgeAttack)
-	{
-		SelectedAttackType = EAttackType::Dodge;
+		AttackData = GetAttackDataByType(EAttackType::Jump);
 	}
 	else
 	{
-		SelectedAttackType = EAttackType::Light;
+		AttackData = GetAttackDataByType(EAttackType::Light);
 	}
-
-	const FAttackDefinition* AttackData =
-		GetAttackDataByType(SelectedAttackType);
 
 	if (AttackData)
 	{
-		StartAttack(
-			AttackData,
-			SelectedAttackType == EAttackType::Jump
-		);
+		StartAttack(AttackData, bIsJumpAttack);
 	}
 }
 
@@ -245,6 +292,7 @@ void UPlayerAttackComponent::CancelAttackInternal()
 	StopAttackRotation();
 	
 	bDodgeCancelWindowOpen = false;
+	bDashAttackWindowOpen = false;
 	bMoveCancelWindowOpen = false;
 	bComboWindow = false;
 	bComboBuffered = false;
@@ -472,7 +520,7 @@ void UPlayerAttackComponent::EndAttack()
 	bComboBuffered = false;
 	bDodgeCancelWindowOpen = false;
 	bMoveCancelWindowOpen = false;
-	bCanDodgeAttack = false;
+	bDashAttackWindowOpen = false;
 	bCurrentAttackIsJumpAttack = false;
 	
 	if (StateComponent)
@@ -485,17 +533,21 @@ void UPlayerAttackComponent::EndAttack()
 
 	if (OwnerCharacter)
 	{
-		if (UPlayerLocomotionComponent* LocomotionComponent =
-			OwnerCharacter->GetLocomotionComponent())
+		if (LocomotionComponent)
 		{
 			LocomotionComponent->RefreshMovementSettings();
 		}
 	}
 }
 
-void UPlayerAttackComponent::CanDodgeAttack()
+void UPlayerAttackComponent::OpenDashAttackWindow()
 {
-	bCanDodgeAttack = true;
+	bDashAttackWindowOpen = true;
+}
+
+void UPlayerAttackComponent::CloseDashAttackWindow()
+{
+	bDashAttackWindowOpen = false;
 }
 
 void UPlayerAttackComponent::ExecutionHitNotify()
@@ -585,7 +637,7 @@ void UPlayerAttackComponent::ContinueCombo()
 
 void UPlayerAttackComponent::StartAttackRotation()
 {
-	FVector2D BufferedAttackInput = LocoMotionComponent->GetLastMovementInput();
+	FVector2D BufferedAttackInput = LocomotionComponent->GetLastMovementInput();
 	
 	if (BufferedAttackInput.IsNearlyZero())
 	{
@@ -792,8 +844,7 @@ void UPlayerAttackComponent::OnExecutionMontageEnded(
 
 	StopAttackRotation();
 	
-	if (UPlayerLocomotionComponent* LocomotionComponent =
-		OwnerCharacter->GetLocomotionComponent())
+	if (LocomotionComponent)
 	{
 		LocomotionComponent->RefreshMovementSettings();
 	}
@@ -826,8 +877,7 @@ void UPlayerAttackComponent::CancelJumpAttackForLanding()
 	CancelAttackInternal();
 }
 
-const FAttackHitData*
-UPlayerAttackComponent::GetCurrentHit(int32 HitIndex) const
+const FAttackHitData* UPlayerAttackComponent::GetCurrentHit(int32 HitIndex) const
 {
 	if (!CurrentStep)
 		return nullptr;
@@ -836,4 +886,54 @@ UPlayerAttackComponent::GetCurrentHit(int32 HitIndex) const
 		return nullptr;
 
 	return &CurrentStep->Hits[HitIndex];
+}
+
+bool UPlayerAttackComponent::ShouldUseDashAttack() const
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return false;
+	}
+
+	const bool bIsSprinting =
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Movement_Sprinting
+		);
+	
+	return bDashAttackWindowOpen || bIsSprinting;
+}
+
+bool UPlayerAttackComponent::CanStartDashAttack() const
+{
+	if (!OwnerCharacter || !StateComponent || !EquipmentComponent)
+	{
+		return false;
+	}
+
+	if (!ShouldUseDashAttack())
+	{
+		return false;
+	}
+
+	if (!EquipmentComponent->GetEquippedWeapon())
+	{
+		return false;
+	}
+
+	if (!StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Armed))
+	{
+		return false;
+	}
+
+	FGameplayTagContainer BlockTags;
+	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
+	BlockTags.AddTag(CombatTags::State_Combat_Parry);
+	BlockTags.AddTag(CombatTags::State_Hit_PostureBroken);
+	BlockTags.AddTag(CombatTags::State_Hit_Dead);
+	BlockTags.AddTag(CombatTags::State_Hit_Reacting);
+	BlockTags.AddTag(CombatTags::State_Action_UsingItem);
+	BlockTags.AddTag(CombatTags::State_Action_Executing);
+
+	return !StateComponent->HasAnyStateTags(BlockTags);
 }
