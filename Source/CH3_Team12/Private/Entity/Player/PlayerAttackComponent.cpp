@@ -198,25 +198,31 @@ void UPlayerAttackComponent::Attack(const FInputActionValue& Value)
 		return;
 	}
 
-	const FAttackDefinition* AttackData = nullptr;
-	
+	EAttackType SelectedAttackType = EAttackType::Light;
+
 	if (OwnerCharacter->GetCharacterMovement()->IsFalling() ||
 		StateComponent->HasStateTagExact(CombatTags::State_Movement_JumpStarting))
 	{
-		AttackData = GetAttackDataByType(EAttackType::Jump);
+		SelectedAttackType = EAttackType::Jump;
 	}
 	else if (bCanDodgeAttack)
 	{
-		AttackData = GetAttackDataByType(EAttackType::Dodge);
+		SelectedAttackType = EAttackType::Dodge;
 	}
 	else
 	{
-		AttackData = GetAttackDataByType(EAttackType::Light);
+		SelectedAttackType = EAttackType::Light;
 	}
-	
+
+	const FAttackDefinition* AttackData =
+		GetAttackDataByType(SelectedAttackType);
+
 	if (AttackData)
 	{
-		StartAttack(AttackData);
+		StartAttack(
+			AttackData,
+			SelectedAttackType == EAttackType::Jump
+		);
 	}
 }
 
@@ -228,7 +234,9 @@ void UPlayerAttackComponent::HeavyAttack(const FInputActionValue& Value)
 	}
 
 	StartAttack(
-		GetAttackDataByType(EAttackType::Heavy));
+		GetAttackDataByType(EAttackType::Heavy),
+		false
+	);
 }
 
 
@@ -241,6 +249,7 @@ void UPlayerAttackComponent::CancelAttackInternal()
 	bComboWindow = false;
 	bComboBuffered = false;
 	ComboIndex = 0;
+	bCurrentAttackIsJumpAttack = false;
 
 	if (WeaponComponent)
 	{
@@ -370,11 +379,12 @@ bool UPlayerAttackComponent::CanContinueCombo() const
 }
 
 void UPlayerAttackComponent::StartAttack(
-	const FAttackDefinition* AttackInfo)
+	const FAttackDefinition* AttackInfo,
+	bool bIsJumpAttack)
 {
 	if (!OwnerCharacter ||
 		!StateComponent ||
-		!AttackInfo		||
+		!AttackInfo ||
 		!AttackInfo->Montage ||
 		AttackInfo->Steps.IsEmpty())
 	{
@@ -388,12 +398,14 @@ void UPlayerAttackComponent::StartAttack(
 	{
 		return;
 	}
-	
+
+	bCurrentAttackIsJumpAttack = bIsJumpAttack;
+
 	CurrentAttackData = AttackInfo;
 	CurrentAttackMontage = AttackInfo->Montage;
 	ComboIndex = 0;
 	CurrentStep = &CurrentAttackData->Steps[ComboIndex];
-	
+
 	if (CurrentStep && CurrentStep->bRotateToInput)
 	{
 		StartAttackRotation();
@@ -402,39 +414,46 @@ void UPlayerAttackComponent::StartAttack(
 	{
 		StopAttackRotation();
 	}
-	
+
 	bComboWindow = false;
 	bComboBuffered = false;
 
 	StateComponent->AddStateTag(
-		CombatTags::State_Combat_Attacking);
+		CombatTags::State_Combat_Attacking
+	);
 
 	StateComponent->AddStateTag(
-		CombatTags::State_Movement_Locked);
-	
+		CombatTags::State_Movement_Locked
+	);
+
 	const float Duration =
 		AnimInstance->Montage_Play(
 			AttackInfo->Montage,
-			CurrentStep->PlayRate);
+			CurrentStep->PlayRate
+		);
 
 	if (Duration <= 0.f)
 	{
 		EndAttack();
 		return;
 	}
+
 	AnimInstance->Montage_JumpToSection(
-			CurrentStep->SectionName,
-			AttackInfo->Montage);
+		CurrentStep->SectionName,
+		AttackInfo->Montage
+	);
 
 	FOnMontageEnded Delegate;
 
 	Delegate.BindUObject(
 		this,
-		&UPlayerAttackComponent::OnAttackMontageEnded);
+		&UPlayerAttackComponent::OnAttackMontageEnded
+	);
 
 	AnimInstance->Montage_SetEndDelegate(
 		Delegate,
-		AttackInfo->Montage);
+		AttackInfo->Montage
+	);
 }
 
 void UPlayerAttackComponent::EndAttack()
@@ -454,6 +473,7 @@ void UPlayerAttackComponent::EndAttack()
 	bDodgeCancelWindowOpen = false;
 	bMoveCancelWindowOpen = false;
 	bCanDodgeAttack = false;
+	bCurrentAttackIsJumpAttack = false;
 	
 	if (StateComponent)
 	{
@@ -783,6 +803,27 @@ void UPlayerAttackComponent::StopAttackRotation()
 {
 	SetComponentTickEnabled(false);
 	TargetAttackRotation = FRotator::ZeroRotator;
+}
+
+void UPlayerAttackComponent::HandleOwnerLanded(
+	const FHitResult& Hit)
+{
+	if (!bCurrentAttackIsJumpAttack)
+	{
+		return;
+	}
+
+	if (!IsAttacking())
+	{
+		return;
+	}
+
+	CancelJumpAttackForLanding();
+}
+
+void UPlayerAttackComponent::CancelJumpAttackForLanding()
+{
+	CancelAttackInternal();
 }
 
 const FAttackHitData*

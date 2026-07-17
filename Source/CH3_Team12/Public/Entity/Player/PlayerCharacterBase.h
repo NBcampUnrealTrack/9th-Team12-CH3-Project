@@ -55,7 +55,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	virtual void Landed(const FHitResult& Hit) override;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
 

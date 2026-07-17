@@ -71,7 +71,10 @@ private:
 	bool CanStartAttack() const;
 	bool IsAttacking() const;
 	bool CanContinueCombo() const;
-	void StartAttack(const FAttackDefinition* AttackInfo);
+	void StartAttack(
+		const FAttackDefinition* AttackInfo,
+		bool bIsJumpAttack
+	);
 	void ContinueCombo();
 	void StartAttackRotation();
 	/** 현재 장착한 무기의 AttackDataAsset */
@@ -136,4 +139,12 @@ private:
 	FRotator TargetAttackRotation;
 	
 	void StopAttackRotation();
+
+public:
+	void HandleOwnerLanded(const FHitResult& Hit);
+
+private:
+	bool bCurrentAttackIsJumpAttack = false;
+
+	void CancelJumpAttackForLanding();
 };
