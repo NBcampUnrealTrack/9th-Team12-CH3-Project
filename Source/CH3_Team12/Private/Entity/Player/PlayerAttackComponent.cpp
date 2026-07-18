@@ -637,8 +637,46 @@ void UPlayerAttackComponent::ContinueCombo()
 
 void UPlayerAttackComponent::StartAttackRotation()
 {
-	FVector2D BufferedAttackInput = LocomotionComponent->GetLastMovementInput();
-	
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+
+	// LockOn 상태에서는 이동 입력을 무시하고 락온 대상을 바라본다.
+	if (UPlayerCameraComponent* CameraComponent =
+		OwnerCharacter->GetPlayerCameraComponent())
+	{
+		AActor* LockOnTarget =
+			CameraComponent->GetCurrentLockOnTarget();
+
+		if (CameraComponent->IsLockOn() && IsValid(LockOnTarget))
+		{
+			FVector Direction =
+				LockOnTarget->GetActorLocation()
+				- OwnerCharacter->GetActorLocation();
+
+			Direction.Z = 0.0f;
+
+			if (!Direction.IsNearlyZero())
+			{
+				TargetAttackRotation =
+					Direction.GetSafeNormal().Rotation();
+
+				SetComponentTickEnabled(true);
+				return;
+			}
+		}
+	}
+
+	// LockOn이 아닐 때만 기존처럼 이동 입력 방향으로 공격한다.
+	if (!LocomotionComponent)
+	{
+		return;
+	}
+
+	FVector2D BufferedAttackInput =
+		LocomotionComponent->GetLastMovementInput();
+
 	if (BufferedAttackInput.IsNearlyZero())
 	{
 		return;
@@ -648,21 +686,28 @@ void UPlayerAttackComponent::StartAttackRotation()
 		OwnerCharacter->GetControlRotation();
 
 	const FRotator YawRot(
-		0.f,
+		0.0f,
 		ControlRot.Yaw,
-		0.f);
+		0.0f
+	);
 
-	FVector Dir =
+	FVector Direction =
 		FRotationMatrix(YawRot).GetUnitAxis(EAxis::X)
 		* BufferedAttackInput.X;
 
-	Dir +=
+	Direction +=
 		FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y)
 		* BufferedAttackInput.Y;
 
-	Dir.Normalize();
+	Direction.Z = 0.0f;
 
-	TargetAttackRotation = Dir.Rotation();
+	if (!Direction.Normalize())
+	{
+		return;
+	}
+
+	TargetAttackRotation =
+		Direction.Rotation();
 
 	SetComponentTickEnabled(true);
 }
