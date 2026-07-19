@@ -143,6 +143,16 @@ void APlayerCharacterBase::BeginPlay()
 
 }
 
+void APlayerCharacterBase::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	if (AttackComponent)
+	{
+		AttackComponent->HandleOwnerLanded(Hit);
+	}
+}
+
 // Called every frame
 void APlayerCharacterBase::Tick(float DeltaTime)
 {

@@ -974,3 +974,39 @@ void UPlayerLocomotionComponent::CancelDodgeForPostureBreak()
 
 	RefreshMovementSettings();
 }
+
+void UPlayerLocomotionComponent::CancelDodgeForAttack()
+{
+	if (!OwnerCharacter || !StateComponent)
+	{
+		return;
+	}
+
+	if (USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh())
+	{
+		if (UAnimInstance* AnimInstance = Mesh->GetAnimInstance())
+		{
+			if (CurrentDodgeMontage)
+			{
+				AnimInstance->Montage_Stop(
+					0.05f,
+					CurrentDodgeMontage
+				);
+			}
+		}
+	}
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Dodging
+	);
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Combat_Invincible
+	);
+
+	StateComponent->RemoveStateTag(
+		CombatTags::State_Movement_Locked
+	);
+
+	RefreshMovementSettings();
+}

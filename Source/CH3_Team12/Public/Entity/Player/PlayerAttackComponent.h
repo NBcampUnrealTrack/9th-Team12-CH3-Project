@@ -39,11 +39,12 @@ public:
 	void OpenComboWindow();
 	void OpenAttackRecovery();
 	void EndAttack();
-	void CanDodgeAttack();
+	void OpenDashAttackWindow();
+	void CloseDashAttackWindow();
 	void ExecutionHitNotify();
 	
 	const FAttackHitData* GetCurrentHit(int32 HitIndex) const;
-		
+
 	bool CanDodgeCancel() const { return bDodgeCancelWindowOpen; }
 	bool CanMoveCancel() const { return bMoveCancelWindowOpen; }
 	
@@ -60,6 +61,8 @@ public:
 		ELevelTick TickType,
 		FActorComponentTickFunction* ThisTickFunction) override;
 	
+	void HandleOwnerLanded(const FHitResult& Hit);
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Execution")
 	float ExecutionTraceDistance = 180.f;
@@ -71,7 +74,10 @@ private:
 	bool CanStartAttack() const;
 	bool IsAttacking() const;
 	bool CanContinueCombo() const;
-	void StartAttack(const FAttackDefinition* AttackInfo);
+	void StartAttack(
+		const FAttackDefinition* AttackInfo,
+		bool bIsJumpAttack
+	);
 	void ContinueCombo();
 	void StartAttackRotation();
 	/** 현재 장착한 무기의 AttackDataAsset */
@@ -96,7 +102,7 @@ private:
 	void OnExecutionMontageEnded(
 		UAnimMontage* Montage,
 		bool bInterrupted);
-private:
+
 	// Components
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
@@ -109,7 +115,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
 	UPROPERTY()
-	TObjectPtr<UPlayerLocomotionComponent> LocoMotionComponent;
+	TObjectPtr<UPlayerLocomotionComponent> LocomotionComponent;
 	// Runtime
 	/** 현재 실행중인 공격 데이터 */
 	const FAttackDefinition* CurrentAttackData = nullptr;
@@ -130,10 +136,17 @@ private:
 	bool bComboBuffered = false;
 	
 	bool bDodgeCancelWindowOpen = false;
-	bool bCanDodgeAttack = false;
+	bool bDashAttackWindowOpen = false;
 	bool bMoveCancelWindowOpen = false;
 
 	FRotator TargetAttackRotation;
 	
 	void StopAttackRotation();
+
+	bool bCurrentAttackIsJumpAttack = false;
+
+	void CancelJumpAttackForLanding();
+
+	bool ShouldUseDashAttack() const;
+	bool CanStartDashAttack() const;
 };

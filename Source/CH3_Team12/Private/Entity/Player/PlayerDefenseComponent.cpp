@@ -139,7 +139,10 @@ void UPlayerDefenseComponent::StartGuard(const FInputActionValue& Value)
 
 	if (DefenseData && DefenseData->GuardStartMontage)
 	{
-		OwnerCharacter->PlayAnimMontage(DefenseData->GuardStartMontage);
+		PlayMontageSafe(
+			DefenseData->GuardStartMontage,
+			DefenseData->GuardStartMontagePlayRate
+		);
 	}
 }
 
@@ -340,24 +343,54 @@ bool UPlayerDefenseComponent::IsParrying() const
 void UPlayerDefenseComponent::PlayParryReaction(
 	EHitReactionDirection AttackDirection)
 {
+	if (!DefenseData)
+	{
+		return;
+	}
+
 	PlayMontageSafe(
-		DefenseData->GetParryReactionMontage(AttackDirection)
+		DefenseData->GetParryReactionMontage(AttackDirection),
+		DefenseData->ParryReactionMontagePlayRate
 	);
 }
 
 void UPlayerDefenseComponent::PlayGuardHitReaction(
 	EHitReactionDirection AttackDirection)
 {
+	if (!DefenseData)
+	{
+		return;
+	}
+
 	PlayMontageSafe(
-		DefenseData->GetGuardHitMontage(AttackDirection)
+		DefenseData->GetGuardHitMontage(AttackDirection),
+		DefenseData->GuardHitReactionMontagePlayRate
 	);
 }
 
 void UPlayerDefenseComponent::PlayHitReaction(
 	EHitReactionDirection ReactionDirection)
 {
-	UAnimMontage* MontageToPlay = DefenseData->GetHitReactionMontage(ReactionDirection);
-	PlayMontageSafe(MontageToPlay);
+	if (!OwnerCharacter || !DefenseData)
+	{
+		EndHitReaction();
+		return;
+	}
+
+	UAnimMontage* MontageToPlay =
+		DefenseData->GetHitReactionMontage(ReactionDirection);
+
+	const bool bPlayed =
+		PlayMontageSafe(
+			MontageToPlay,
+			DefenseData->HitReactionMontagePlayRate
+		);
+
+	if (!bPlayed)
+	{
+		EndHitReaction();
+		return;
+	}
 
 	UAnimInstance* AnimInstance =
 		OwnerCharacter->GetMesh()
@@ -366,6 +399,7 @@ void UPlayerDefenseComponent::PlayHitReaction(
 
 	if (!AnimInstance)
 	{
+		EndHitReaction();
 		return;
 	}
 
@@ -505,9 +539,12 @@ bool UPlayerDefenseComponent::PlayMontageSafe(
 		return false;
 	}
 
+	const float SafePlayRate =
+		FMath::Max(PlayRate, 0.01f);
+
 	return OwnerCharacter->PlayAnimMontage(
 		Montage,
-		PlayRate
+		SafePlayRate
 	) > 0.0f;
 }
 

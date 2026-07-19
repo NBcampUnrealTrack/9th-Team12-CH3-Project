@@ -19,17 +19,26 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Guard")
 	TObjectPtr<UAnimMontage> GuardStartMontage;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Guard")
+	float GuardStartMontagePlayRate = 1.0f;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Parry")
 	TObjectPtr<UAnimMontage> ParryLeftMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Parry")
 	TObjectPtr<UAnimMontage> ParryRightMontage;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Parry")
+	float ParryReactionMontagePlayRate = 1.0f;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Guard")
 	TObjectPtr<UAnimMontage> GuardHitLeftMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Guard")
 	TObjectPtr<UAnimMontage> GuardHitRightMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Guard")
+	float GuardHitReactionMontagePlayRate = 1.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
 	TObjectPtr<UAnimMontage> HitFrontMontage;
@@ -42,6 +51,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
 	TObjectPtr<UAnimMontage> HitRightMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hit")
+	float HitReactionMontagePlayRate = 1.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Dead")
 	TObjectPtr<UAnimMontage> DeadMontage;
