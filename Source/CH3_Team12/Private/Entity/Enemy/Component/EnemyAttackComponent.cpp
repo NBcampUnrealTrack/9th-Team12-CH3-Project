@@ -28,7 +28,8 @@ UEnemyAttackComponent::UEnemyAttackComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	CurrentPlayingPattern = EEnemyAttackPattern::End;
+	//CurrentPlayingPattern = EEnemyAttackPattern::End;
+	CurrentAttackData = nullptr;	
 }
 
 
@@ -70,8 +71,8 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		UE_LOG(LogTemp, Warning, TEXT("ExecuteAttack Failed: OwnerCharacter is null"));
 		return false;
 	}
-
-	if (!bCanAttack)
+	
+	if (!CanAttack())
 	{
 		return false;
 	}
@@ -90,18 +91,18 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 		return false;
 	}
 	
-	if (IsValid(AttackData) == false)
+	if (AttackDatas.IsEmpty())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Katana_UEnemyAttackComponent : AttackData is invalid."));
 		return false;
 	}
 	
-	const FAttackAnimationData* AttackAnimationData = GetSelectedPatternData(SelectedAction, SelectedPattern);
-	if (AttackAnimationData == nullptr)
+	if (CurrentAttackData == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Katana_UEnemyAttackComponent : AttackData is invalid."));
 		return false;
 	}
+	const FAttackAnimationData AttackAnimationData = CurrentAttackData->AttackAnimationData;
 	
 	// if (SelectedAction == 1)
 	// {
@@ -116,10 +117,10 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 	// 	UE_LOG(LogTemp, Log, TEXT("Execute Strong Attack Pattern: %d"), SelectedPattern);
 	// }
 	
-	UAnimMontage* SelectedMontage = AttackAnimationData->AttackMontageSet.AttackMontage;
+	UAnimMontage* SelectedMontage = AttackAnimationData.AttackMontageSet.AttackMontage;
 
-	float AttackRange = AttackAnimationData->AttackRange;
-	float AttackCooldown = AttackAnimationData->AttackCooldown;
+	float AttackRange = CurrentAttackData->AttackRange;
+	float AttackCooldown = CurrentAttackData->AttackCooldown;
 
 	const float DistanceToTarget = FVector::Dist(
 		OwnerActor->GetActorLocation(),
@@ -138,13 +139,6 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 	}
 
 	StateComponent->AddStateTag(CombatTags::State_Combat_Attacking);
-	GetWorld()->GetTimerManager().SetTimer(
-		AttackCooldownTimerHandle,
-		this,
-		&UEnemyAttackComponent::ResetAttackCooldown,
-		AttackCooldown,
-		false
-	);
 	
 	const float MontageLength = AnimInstance->Montage_Play(SelectedMontage);
 	
@@ -164,29 +158,16 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 	{
 		return false;
 	}
-	
-	bCanAttack = false;
+
 	return true;
-}
-
-void UEnemyAttackComponent::ResetAttackCooldown()
-{
-	bCanAttack = true;
-}
-
-void UEnemyAttackComponent::OnAttackAnimationEnd()
-{
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Combat_Attacking);
-	// AActor* Owner = GetOwner();
-	// if (Owner)
 }
 
 void UEnemyAttackComponent::FinishAttack()
 {
-	bCanAttack = true;
 	OnAttackFinished.Broadcast();
 	
-	CurrentPlayingPattern = EEnemyAttackPattern::End;
+	//CurrentPlayingPattern = EEnemyAttackPattern::End;
+	CurrentAttackData = nullptr;
 	StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
 }
 
@@ -196,51 +177,49 @@ void UEnemyAttackComponent::CancelAttack()
 	if (OwnerMesh)
 	{
 		UAnimInstance* AnimInstance = OwnerMesh->GetAnimInstance();
-		if (AnimInstance)
+		if (AnimInstance
+			&& CurrentAttackData)
 		{
-			const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
-			if (AttackAnimationData)
+			const FAttackAnimationData AttackAnimationData = CurrentAttackData->AttackAnimationData;
+
+			UAnimMontage* CurrentAttackMontage = AttackAnimationData.AttackMontageSet.AttackMontage;
+			if (CurrentAttackMontage
+				&& AnimInstance->Montage_IsPlaying(CurrentAttackMontage)
+			)
 			{
-				UAnimMontage* CurrentAttackMontage = AttackAnimationData->AttackMontageSet.AttackMontage;
-				if (CurrentAttackMontage
-					&& AnimInstance->Montage_IsPlaying(CurrentAttackMontage)
-					)
-				{
-					AnimInstance->Montage_Stop(0.2f, CurrentAttackMontage);
-				}
+				AnimInstance->Montage_Stop(0.2f, CurrentAttackMontage);
 			}
 		}
 	}
 	
-	bCanAttack = true;
 	OnAttackCanceled.Broadcast();
-	CurrentPlayingPattern = EEnemyAttackPattern::End;
+	//CurrentPlayingPattern = EEnemyAttackPattern::End;
+	CurrentAttackData = nullptr;
 	
 	FinishAttack();
 }
 
 void UEnemyAttackComponent::StartHitCheck()
 {
-	if (bUseDebugColliderDraw)
+	if (bUseDebugColliderDraw
+		&& CurrentAttackData
+		)
 	{
-		const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
-	
-		if (AttackAnimationData)
+		const FAttackAnimationData AttackAnimationData = CurrentAttackData->AttackAnimationData;
+
+		TArray<FHitBoxData> HitBoxDatas = AttackAnimationData.HitBoxes;
+
+		for (FHitBoxData HitBoxData : HitBoxDatas)
 		{
-			TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
-	
-			for (FHitBoxData HitBoxData : HitBoxDatas)
-			{
-				USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
-				if (SkeletalMeshComponent == nullptr)
-					return;
-		
-				FName SocketName = HitBoxData.ActiveHitSocket;
-				FVector SocketLocation{};
-				FRotator SocketRotation{};
-				SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
-				DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
-			}
+			USkeletalMeshComponent* SkeletalMeshComponent = GetOwnerSkeletalMeshComponent();
+			if (SkeletalMeshComponent == nullptr)
+				return;
+
+			FName SocketName = HitBoxData.ActiveHitSocket;
+			FVector SocketLocation{};
+			FRotator SocketRotation{};
+			SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
+			DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
 		}
 	}
 	
@@ -262,14 +241,15 @@ void UEnemyAttackComponent::AttackTrace()
 		return;
 	}
 
-	const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
-	if (AttackAnimationData == nullptr)
+	if (CurrentAttackData == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Katana_EnemyAttackComponent_AttackTrace : AttackAnimationData is invalid."));
 		return;
 	}
 	
-	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
+	const FAttackAnimationData AttackAnimationData = CurrentAttackData->AttackAnimationData;
+	
+	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData.HitBoxes;
 	
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(Owner);
@@ -334,7 +314,11 @@ void UEnemyAttackComponent::AttackTrace()
 
 				HitActors.Add(HitActor);
 				
-				FAttackInfo AttackInfo = AttackAnimationData->AttackInfo;
+				FAttackInfo AttackInfo;
+				if (CurrentAttackData)
+				{
+					AttackInfo = CurrentAttackData->AttackInfo;
+				}
 				ProcessHit(Hit, AttackInfo);
 			}
 		}
@@ -347,9 +331,12 @@ void UEnemyAttackComponent::EndHitCheck()
 {
 	if (bUseDebugColliderDraw)
 	{
-		const FAttackAnimationData* AttackAnimationData = AttackData->GetAttackAnimationData(0);
+		if (CurrentAttackData == nullptr)
+			return;
+		
+		const FAttackAnimationData AttackAnimationData = CurrentAttackData->AttackAnimationData;
 	
-		TArray<FHitBoxData> HitBoxDatas = AttackAnimationData->HitBoxes;
+		TArray<FHitBoxData> HitBoxDatas = AttackAnimationData.HitBoxes;
 	
 		for (FHitBoxData HitBoxData : HitBoxDatas)
 		{
@@ -367,6 +354,24 @@ void UEnemyAttackComponent::EndHitCheck()
 	
 	HitActors.Reset();
 	PreviousHitBoxCenters.Reset();
+}
+
+bool UEnemyAttackComponent::CanAttack()
+{
+	if (StateComponent)
+	{
+		FGameplayTagContainer DisableState;
+		DisableState.AddTag(CombatTags::State_Combat_Attacking);
+		DisableState.AddTag(CombatTags::State_Combat_Dodging);
+		DisableState.AddTag(CombatTags::State_Combat_FallDown);
+		DisableState.AddTag(CombatTags::State_Hit_Dead);
+		DisableState.AddTag(CombatTags::State_Hit_PostureBroken);
+		DisableState.AddTag(CombatTags::State_Movement_Locked);
+		
+		return !(StateComponent->HasAnyStateTags(DisableState));
+	}
+	
+	return false;
 }
 
 // Player에게 데미지 주기 위해 수정 필요
@@ -426,11 +431,12 @@ void UEnemyAttackComponent::ProcessDefenseResult(EDefenseResult InDefenseResult)
 
 void UEnemyAttackComponent::OnAttackParried()
 {	
-	const FAttackAnimationData* AttackAnimationData = GetCurrentPatternData();
+	if (CurrentAttackData == nullptr)
+		return;
 	
-	if (AttackAnimationData == nullptr
-		|| AttackAnimationData->AttackInfo.bCanBeParried == false
-		)
+	const FAttackAnimationData AttackAnimationData = CurrentAttackData->AttackAnimationData;
+	
+	if (CurrentAttackData->AttackInfo.bCanBeParried == false)
 	{
 		return;
 	}
@@ -441,7 +447,7 @@ void UEnemyAttackComponent::OnAttackParried()
 	if (OwnerMesh)
 	{
 		UAnimInstance* AnimInstance = OwnerMesh->GetAnimInstance();
-		UAnimMontage* ParriedMontage = AttackAnimationData->AttackMontageSet.ParriedMontage;
+		UAnimMontage* ParriedMontage = AttackAnimationData.AttackMontageSet.ParriedMontage;
 		if (AnimInstance
 			&& ParriedMontage
 			)
@@ -452,7 +458,7 @@ void UEnemyAttackComponent::OnAttackParried()
 	
 	if (AttributeComponent)
 	{
-		AttributeComponent->ApplyPostureDamage(AttackAnimationData->AttackInfo.Damage);
+		AttributeComponent->ApplyPostureDamage(CurrentAttackData->AttackInfo.Damage);
 	}
 }
 
@@ -474,56 +480,56 @@ void UEnemyAttackComponent::StopAttackMontage()
 	FinishAttack();
 }
 
-const FAttackAnimationData* UEnemyAttackComponent::GetCurrentPatternData()
-{
-	if (AttackData == nullptr
-		|| CurrentPlayingPattern == EEnemyAttackPattern::End)
-		return nullptr;
-	
-	return AttackData->GetAttackAnimationData(static_cast<uint8>(CurrentPlayingPattern));
-}
+// const FAttackAnimationData* UEnemyAttackComponent::GetCurrentPatternData()
+// {
+// 	if (AttackData == nullptr
+// 		|| CurrentPlayingPattern == EEnemyAttackPattern::End)
+// 		return nullptr;
+// 	
+// 	return AttackData->GetAttackAnimationData(static_cast<uint8>(CurrentPlayingPattern));
+// }
+//
+// const FAttackAnimationData* UEnemyAttackComponent::GetSelectedPatternData(int32 InSelectedAction, int32 InSelectedPattern)
+// {
+// 	if (AttackData == nullptr)
+// 		return nullptr;
+// 	
+// 	if (InSelectedAction == 1 && InSelectedPattern == 0)
+// 	{
+// 		// NormalAttackMontage0 
+// 		//SelectedMontage = NormalAttack0;
+// 		CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_1;
+// 	}
+// 	else if (InSelectedAction == 1 && InSelectedPattern == 1)
+// 	{
+// 		// NormalAttackMontage1 
+// 		//SelectedMontage = NormalAttack0;
+// 		if (FMath::RandBool())
+// 		{
+// 			CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_2;
+// 		}
+// 		else
+// 		{
+// 			CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_3;
+// 		}
+// 	}
+// 	else if (InSelectedAction == 2 && InSelectedPattern == 0)
+// 	{
+// 		// StrongAttackMontage0 
+// 		//SelectedMontage = NormalAttack0;
+// 		CurrentPlayingPattern = EEnemyAttackPattern::FarStrongAttack;
+// 	}
+// 	else if (InSelectedAction == 2 && InSelectedPattern == 1)
+// 	{
+// 		// FarStrongAttackMontage 재생
+// 		//SelectedMontage = FarStrongAttack;
+// 		CurrentPlayingPattern = EEnemyAttackPattern::StrongAttack_1;
+// 	}
+// 	
+// 	return AttackData->GetAttackAnimationData(static_cast<int8>(CurrentPlayingPattern));
+// }
 
-const FAttackAnimationData* UEnemyAttackComponent::GetSelectedPatternData(int32 InSelectedAction, int32 InSelectedPattern)
-{
-	if (AttackData == nullptr)
-		return nullptr;
-	
-	if (InSelectedAction == 1 && InSelectedPattern == 0)
-	{
-		// NormalAttackMontage0 
-		//SelectedMontage = NormalAttack0;
-		CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_1;
-	}
-	else if (InSelectedAction == 1 && InSelectedPattern == 1)
-	{
-		// NormalAttackMontage1 
-		//SelectedMontage = NormalAttack0;
-		if (FMath::RandBool())
-		{
-			CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_2;
-		}
-		else
-		{
-			CurrentPlayingPattern = EEnemyAttackPattern::NormalAttack_3;
-		}
-	}
-	else if (InSelectedAction == 2 && InSelectedPattern == 0)
-	{
-		// StrongAttackMontage0 
-		//SelectedMontage = NormalAttack0;
-		CurrentPlayingPattern = EEnemyAttackPattern::FarStrongAttack;
-	}
-	else if (InSelectedAction == 2 && InSelectedPattern == 1)
-	{
-		// FarStrongAttackMontage 재생
-		//SelectedMontage = FarStrongAttack;
-		CurrentPlayingPattern = EEnemyAttackPattern::StrongAttack_1;
-	}
-	
-	return AttackData->GetAttackAnimationData(static_cast<int8>(CurrentPlayingPattern));
-}
-
-USkeletalMeshComponent* UEnemyAttackComponent::GetOwnerSkeletalMeshComponent()
+USkeletalMeshComponent* UEnemyAttackComponent::GetOwnerSkeletalMeshComponent() const 
 {
 	const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 	if (!OwnerCharacter)
@@ -540,9 +546,4 @@ USkeletalMeshComponent* UEnemyAttackComponent::GetOwnerSkeletalMeshComponent()
 	}
 	
 	return SkeletalMeshComponent;
-}
-
-void UEnemyAttackComponent::ResetComboCount()
-{
-	ComboCount = 0; 
 }
