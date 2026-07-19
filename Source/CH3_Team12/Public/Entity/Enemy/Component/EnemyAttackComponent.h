@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Combat/CombatTypes.h"
+#include "GameplayTagContainer.h"
 #include "EnemyAttackComponent.generated.h"
 
 struct FHitResult;
@@ -38,7 +39,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category= "Attack")
 	void CancelAttack();
 	
-	void StartHitCheck();
+	void StartHitCheck(const TArray<FHitBoxData>& HitBoxes);
 	void AttackTrace();
 	void EndHitCheck();
 	
@@ -59,6 +60,9 @@ protected:
 	UFUNCTION()
 	void StopAttackMontage();
 
+	UFUNCTION(BlueprintCallable, Category = "Attack | Data")
+	void SetCurrentAttackData(int32 InAttackDataIndex);
+	
 public:
 	UPROPERTY(BlueprintAssignable, Category="Attack")
 	FOnAttackFinished OnAttackFinished;
@@ -67,14 +71,13 @@ public:
 	FOnAttackCanceled OnAttackCanceled;
 	
 protected:
-	// UPROPERTY()
-	// EEnemyAttackPattern CurrentPlayingPattern;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data | Attack")
 	TArray<TObjectPtr<UEnemyAttackDataAsset>> AttackDatas;
 	
 	UPROPERTY(BlueprintReadWrite, Category = "Data | Attack")
 	TObjectPtr<UEnemyAttackDataAsset> CurrentAttackData;
+	
+	TArray<FHitBoxData> CurrentHitBoxDatas;
 	
 	UPROPERTY(EditAnywhere,	BlueprintReadOnly, Category = "Attack|Debug")
 	bool bUseDebugColliderDraw = true;

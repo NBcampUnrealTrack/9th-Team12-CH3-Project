@@ -102,7 +102,7 @@ public:
 
 	// Attack Animation Interface's Section
 	virtual void AttackAnimationEnd() override;
-	virtual void AttackHitCheckStart(int32 HitIndex) override;
+	virtual void AttackHitCheckStart(int32 HitIndex, const TArray<FHitBoxData>& HitBoxes) override;
 	virtual void AttackHitCheckTick() override;
 	virtual void AttackHitCheckEnd() override;
 };

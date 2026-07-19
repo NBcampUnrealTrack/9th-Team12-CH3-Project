@@ -1,7 +1,7 @@
 #include "Animation/NotifyStates/ANS_AttackTrace.h"
-
 #include "Components/SkeletalMeshComponent.h"
 #include "Interface/AnimationAttackInterface.h"
+#include "Framework/HitBoxData.h"
 
 void UANS_AttackTrace::NotifyBegin(
 	USkeletalMeshComponent* MeshComp,
@@ -19,7 +19,7 @@ void UANS_AttackTrace::NotifyBegin(
 	
 	if (IAnimationAttackInterface* AttackPawn = Cast<IAnimationAttackInterface>(MeshComp->GetOwner()))
 	{
-		AttackPawn->AttackHitCheckStart(HitIndex);
+		AttackPawn->AttackHitCheckStart(HitIndex, HitBoxDatas);
 	}
 }
 

@@ -20,6 +20,7 @@
 #include "Entity/Player/StateTagComponent.h"
 #include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
+#include "Framework/HitBoxData.h"
 
 // Sets default values for this component's properties
 UEnemyAttackComponent::UEnemyAttackComponent()
@@ -199,15 +200,13 @@ void UEnemyAttackComponent::CancelAttack()
 	FinishAttack();
 }
 
-void UEnemyAttackComponent::StartHitCheck()
-{
+void UEnemyAttackComponent::StartHitCheck(const TArray<FHitBoxData>& HitBoxes)
+{	
 	if (bUseDebugColliderDraw
 		&& CurrentAttackData
 		)
 	{
-		const FAttackAnimationData AttackAnimationData = CurrentAttackData->AttackAnimationData;
-
-		TArray<FHitBoxData> HitBoxDatas = AttackAnimationData.HitBoxes;
+		TArray<FHitBoxData> HitBoxDatas = HitBoxes;
 
 		for (FHitBoxData HitBoxData : HitBoxDatas)
 		{
@@ -223,6 +222,7 @@ void UEnemyAttackComponent::StartHitCheck()
 		}
 	}
 	
+	CurrentHitBoxDatas = HitBoxes;
 	HitActors.Reset();
 	PreviousHitBoxCenters.Reset();
 }
@@ -247,9 +247,12 @@ void UEnemyAttackComponent::AttackTrace()
 		return;
 	}
 	
-	const FAttackAnimationData AttackAnimationData = CurrentAttackData->AttackAnimationData;
-	
-	TArray<FHitBoxData> HitBoxDatas = AttackAnimationData.HitBoxes;
+	TArray<FHitBoxData> HitBoxDatas = CurrentHitBoxDatas;
+	if (HitBoxDatas.IsEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Katana_EnemyAttackComponent : HitBoxData is Empty."));
+		return;
+	}
 	
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(Owner);
@@ -334,9 +337,7 @@ void UEnemyAttackComponent::EndHitCheck()
 		if (CurrentAttackData == nullptr)
 			return;
 		
-		const FAttackAnimationData AttackAnimationData = CurrentAttackData->AttackAnimationData;
-	
-		TArray<FHitBoxData> HitBoxDatas = AttackAnimationData.HitBoxes;
+		TArray<FHitBoxData> HitBoxDatas = CurrentHitBoxDatas;
 	
 		for (FHitBoxData HitBoxData : HitBoxDatas)
 		{
@@ -354,6 +355,7 @@ void UEnemyAttackComponent::EndHitCheck()
 	
 	HitActors.Reset();
 	PreviousHitBoxCenters.Reset();
+	CurrentHitBoxDatas.Reset();
 }
 
 bool UEnemyAttackComponent::CanAttack()
@@ -441,6 +443,11 @@ void UEnemyAttackComponent::OnAttackParried()
 		return;
 	}
 	
+	if (AttributeComponent)
+	{
+		AttributeComponent->ApplyPostureDamage(CurrentAttackData->AttackInfo.Damage);
+	}
+	
 	CancelAttack();
 	
 	USkeletalMeshComponent* OwnerMesh = GetOwnerSkeletalMeshComponent();
@@ -454,11 +461,6 @@ void UEnemyAttackComponent::OnAttackParried()
 		{
 			AnimInstance->Montage_Play(ParriedMontage);
 		}
-	}
-	
-	if (AttributeComponent)
-	{
-		AttributeComponent->ApplyPostureDamage(CurrentAttackData->AttackInfo.Damage);
 	}
 }
 
@@ -478,6 +480,14 @@ void UEnemyAttackComponent::StopAttackMontage()
 
 	AnimInstance->Montage_Stop(0.15f);
 	FinishAttack();
+}
+
+void UEnemyAttackComponent::SetCurrentAttackData(int32 InAttackDataIndex)
+{
+	if (AttackDatas.Num() > InAttackDataIndex)
+	{
+		CurrentAttackData = AttackDatas[InAttackDataIndex];
+	}
 }
 
 // const FAttackAnimationData* UEnemyAttackComponent::GetCurrentPatternData()

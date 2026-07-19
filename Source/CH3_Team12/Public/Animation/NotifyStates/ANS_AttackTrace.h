@@ -6,6 +6,8 @@
 #include "Animation/AnimNotifies/AnimNotifyState.h"
 #include "ANS_AttackTrace.generated.h"
 
+struct FHitBoxData;
+
 /**
  * 
  */
@@ -38,4 +40,8 @@ public:
 public:
 	UPROPERTY(EditAnywhere)
 	int32 HitIndex = 0;
+	
+	UPROPERTY(EditAnywhere, Category = "Animation | HitBox")
+	TArray<FHitBoxData> HitBoxDatas;
+	
 };
