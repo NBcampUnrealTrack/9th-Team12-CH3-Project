@@ -28,4 +28,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Posture")
 	float PostureBreakDuration = 1.5f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Posture")
+	float MaxInnerPosture = 50.0f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Posture")
+	float InnerPostureRecoveryRate = 5.0f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Posture")
+	float InnerPostureRecoveryDelay = 2.0f;
 };

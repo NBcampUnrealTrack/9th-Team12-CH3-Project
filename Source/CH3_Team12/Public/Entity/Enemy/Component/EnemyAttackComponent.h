@@ -17,6 +17,7 @@ class UEnemyAttackDataAsset;
 class UAnimMontage;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackFinished);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackCanceled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInnerPostureProcess);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UEnemyAttackComponent : public UActorComponent
@@ -44,6 +45,7 @@ public:
 	void EndHitCheck();
 	
 	bool CanAttack();
+	bool CanParried();
 	
 private:
 	void ProcessHit(const FHitResult& InHitResult, const FAttackInfo& InAttackInfo);
@@ -63,12 +65,20 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Attack | Data")
 	void SetCurrentAttackData(int32 InAttackDataIndex);
 	
+	UFUNCTION()
+	void OnMontageLastAttack(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
+	
+	UFUNCTION()
+	void OnInnerPostureProcess();
 public:
 	UPROPERTY(BlueprintAssignable, Category="Attack")
 	FOnAttackFinished OnAttackFinished;
 	
 	UPROPERTY(BlueprintAssignable, Category="Attack")
 	FOnAttackCanceled OnAttackCanceled;
+	
+	UPROPERTY(BlueprintAssignable, Category="Attack")
+	FOnInnerPostureProcess OnInnerPostureProcessDelegate;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data | Attack")
@@ -80,7 +90,11 @@ protected:
 	TArray<FHitBoxData> CurrentHitBoxDatas;
 	
 	UPROPERTY(EditAnywhere,	BlueprintReadOnly, Category = "Attack|Debug")
-	bool bUseDebugColliderDraw = true;
+	uint8 bUseDebugColliderDraw:1 = true;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat | Parry")
+	uint8 bLastAttack:1 = false;
+	
 private:
 	UPROPERTY()
 	TObjectPtr<UEnemyAttributeComponent> AttributeComponent;
@@ -95,4 +109,5 @@ private:
 	TMap<FName, FVector> PreviousHitBoxCenters;
 	
 	TSet<TWeakObjectPtr<AActor>> HitActors;
+	FName LastAttackNotifyKey = TEXT("LastAttack");
 };

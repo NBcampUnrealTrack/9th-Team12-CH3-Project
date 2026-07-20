@@ -21,6 +21,7 @@
 #include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "Framework/HitBoxData.h"
+#include "Framework/GameMode/KatanaGameMode.h"
 
 // Sets default values for this component's properties
 UEnemyAttackComponent::UEnemyAttackComponent()
@@ -54,6 +55,17 @@ void UEnemyAttackComponent::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("EnemyAttributeComponent could not find StateTagComponent."));
 	}
+	
+	USkeletalMeshComponent* OwnerSkeletalMesh = GetOwnerSkeletalMeshComponent();
+	if (OwnerSkeletalMesh)
+	{
+		if (UAnimInstance* OwnerAnimInstance = OwnerSkeletalMesh->GetAnimInstance())
+		{
+			OwnerAnimInstance->OnPlayMontageNotifyBegin.AddDynamic(this, &UEnemyAttackComponent::OnMontageLastAttack);
+		}
+	}
+	
+	OnInnerPostureProcessDelegate.AddDynamic(this, &UEnemyAttackComponent::OnInnerPostureProcess);
 }
 
 bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAction, int32 SelectedPattern)
@@ -170,6 +182,7 @@ void UEnemyAttackComponent::FinishAttack()
 	//CurrentPlayingPattern = EEnemyAttackPattern::End;
 	CurrentAttackData = nullptr;
 	StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
+	bLastAttack = false;
 }
 
 void UEnemyAttackComponent::CancelAttack()
@@ -376,6 +389,24 @@ bool UEnemyAttackComponent::CanAttack()
 	return false;
 }
 
+bool UEnemyAttackComponent::CanParried()
+{
+	bool Result = false;
+	Result = bLastAttack;
+	if (AttributeComponent)
+	{
+		if (AttributeComponent->IsInnerPostureDirty()
+			)
+		{
+			Result = true;
+			
+			OnInnerPostureProcessDelegate.Broadcast();
+		}
+	}
+	
+	return Result;	
+}
+
 // Player에게 데미지 주기 위해 수정 필요
 void UEnemyAttackComponent::ProcessHit(const FHitResult& InHitResult, const FAttackInfo& InAttackInfo)
 {
@@ -448,6 +479,9 @@ void UEnemyAttackComponent::OnAttackParried()
 		AttributeComponent->ApplyPostureDamage(CurrentAttackData->AttackInfo.Damage);
 	}
 	
+	if (CanParried() == false)
+		return;
+	
 	CancelAttack();
 	
 	USkeletalMeshComponent* OwnerMesh = GetOwnerSkeletalMeshComponent();
@@ -487,6 +521,23 @@ void UEnemyAttackComponent::SetCurrentAttackData(int32 InAttackDataIndex)
 	if (AttackDatas.Num() > InAttackDataIndex)
 	{
 		CurrentAttackData = AttackDatas[InAttackDataIndex];
+	}
+}
+
+void UEnemyAttackComponent::OnMontageLastAttack(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload)
+{
+	if (NotifyName == LastAttackNotifyKey)
+	{
+		bLastAttack = true;
+	}
+}
+
+void UEnemyAttackComponent::OnInnerPostureProcess()
+{
+	AKatanaGameMode* GM = Cast<AKatanaGameMode>(UGameplayStatics::GetGameMode(this));
+	if (GM)
+	{
+		GM->SlowMotion(GetWorld(), 0.2f, 0.1f);
 	}
 }
 
