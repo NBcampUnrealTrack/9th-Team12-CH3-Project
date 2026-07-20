@@ -739,29 +739,29 @@ void UPlayerLocomotionComponent::DoMove(
 
 	LastMovementInput = MovementVector;
 
-	const bool bCanMoveCancelAttack =
+	const bool bCanCancelAttackWithMovement =
 		AttackComponent &&
 		AttackComponent->CanMoveCancel();
 
-	// Dodge 입력이 버퍼에 있으면 Move가 Attack을 먼저 끊지 못하게 한다.
-	if (bCanMoveCancelAttack && HasValidBufferedDodgeInput())
+	if (bCanCancelAttackWithMovement &&
+		HasValidBufferedDodgeInput())
 	{
 		return;
-	}
-
-	if (!CanMove() && !bCanMoveCancelAttack)
-	{
-		return;
-	}
-
-	if (bCanMoveCancelAttack)
-	{
-		AttackComponent->CancelAttackForMovement();
 	}
 
 	if (!CanMove())
 	{
-		return;
+		if (!bCanCancelAttackWithMovement)
+		{
+			return;
+		}
+
+		AttackComponent->CancelAttackForMovement();
+
+		if (!CanMove())
+		{
+			return;
+		}
 	}
 
 	const FRotator Rotation = OwnerCharacter->GetControlRotation();
