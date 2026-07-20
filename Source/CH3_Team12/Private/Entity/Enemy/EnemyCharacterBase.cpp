@@ -175,7 +175,13 @@ void AEnemyCharacterBase::OnDeath()
 	EnemyAttackComponent->CancelAttack();
 	GetWorldTimerManager().ClearAllTimersForObject(this);
 	bool Result = PlayDeathMontage();
-	
+	if (Result == false)
+	{
+		if (USkeletalMeshComponent* SkeletalMesh = GetMesh())
+		{
+			SkeletalMesh->SetHiddenInGame(true);
+		}
+	}	
 	StartDeathTransition();
 	SetEnemyDestroyTimer();
 }

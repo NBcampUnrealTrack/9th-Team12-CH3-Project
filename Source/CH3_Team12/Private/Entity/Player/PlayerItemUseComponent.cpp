@@ -13,11 +13,13 @@
 #include "Entity/Player/StateTagComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/StaticMeshComponent.h"
 
 UPlayerItemUseComponent::UPlayerItemUseComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
+	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMesh"));
 }
 
 void UPlayerItemUseComponent::BeginPlay()
@@ -231,6 +233,8 @@ void UPlayerItemUseComponent::OnItemUseMontageEnded(
 {
 	StateComp->RemoveStateTag(CombatTags::State_Action_UsingItem);
 	Locomotion->RefreshMovementSettings();
+	
+	HideItemMesh();
 }
 
 bool UPlayerItemUseComponent::canUseItem()
@@ -271,4 +275,56 @@ bool UPlayerItemUseComponent::canUseItem()
 	}
 	
 	return true;
+}
+
+void UPlayerItemUseComponent::AnimNotify_ShowItem(bool InShowItem, FName SocketName)
+{
+	if (!ItemMesh)
+	{
+		return;
+	}
+	
+	if (!CurrentUsingItem)
+	{
+		return;
+	}
+	
+	if (InShowItem)
+	{
+		ShowItemMesh(SocketName);
+	}
+	else
+	{
+		HideItemMesh();
+	}
+}
+
+void UPlayerItemUseComponent::ShowItemMesh(FName InSocketName) const
+{
+	const UItemDataAsset* ItemData = CurrentUsingItem->GetItemData();
+	if (!ItemData)
+	{
+		return;
+	}
+	
+	UStaticMesh* ItemStaticMesh = ItemData->StaticMesh;
+	if (ItemStaticMesh
+		&& ItemMesh
+		)
+	{	
+		ItemMesh->SetStaticMesh(ItemStaticMesh);
+		ItemMesh->SetHiddenInGame(false);
+		ItemMesh->AttachToComponent(OwnerCharacter->GetMesh(),
+			FAttachmentTransformRules::SnapToTargetIncludingScale,
+			InSocketName);
+	}
+}
+
+void UPlayerItemUseComponent::HideItemMesh() const
+{
+	if (ItemMesh)
+	{	
+		ItemMesh->SetStaticMesh(nullptr);
+		ItemMesh->SetHiddenInGame(true);
+	}
 }
