@@ -4,6 +4,8 @@
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Framework/DataAsset/PlayerCameraDataAsset.h"
+#include "Entity/Enemy/EnemyCharacterBase.h"
+#include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -123,11 +125,21 @@ void UPlayerCameraComponent::StartExecutionCamera(AActor* ExecutionTarget)
 		return;
 	}
 
+	bWasLockOnBeforeExecution = IsLockOn();
+	LockOnTargetBeforeExecution =
+		bWasLockOnBeforeExecution
+			? CurrentLockOnTarget
+			: nullptr;
+
 	CurrentExecutionTarget = ExecutionTarget;
 
-	if (IsLockOn())
+	if (bWasLockOnBeforeExecution)
 	{
 		CurrentLockOnTarget = ExecutionTarget;
+	}
+	else
+	{
+		CurrentLockOnTarget = nullptr;
 	}
 	
 	CameraMode = EPlayerCameraMode::Execution;
@@ -162,13 +174,31 @@ void UPlayerCameraComponent::EndExecutionCamera()
 		return;
 	}
 
+	AActor* FinishedExecutionTarget =
+		CurrentExecutionTarget;
+
 	CurrentExecutionTarget = nullptr;
 
-	SetupLockOnCamera();
-	
-	// PrepareNormalCameraTransitionFromExecution();
+	const bool bShouldRestoreLockOn =
+		CanRestoreLockOnAfterExecution(
+			FinishedExecutionTarget
+		);
 
-	// StartNormalCameraTransition();
+	PrepareNormalCameraTransitionFromExecution();
+
+	if (bShouldRestoreLockOn)
+	{
+		CurrentLockOnTarget = FinishedExecutionTarget;
+
+		SetupLockOnCamera();
+	}
+	else
+	{
+		StartNormalCameraTransition();
+	}
+
+	bWasLockOnBeforeExecution = false;
+	LockOnTargetBeforeExecution = nullptr;
 }
 
 // 락온 상태면 해제, 아니면 락온 시도
@@ -856,4 +886,28 @@ void UPlayerCameraComponent::PrepareNormalCameraTransitionFromExecution()
 	ApplyCameraCollisionSettings();
 
 	FollowCamera->bUsePawnControlRotation = false;
+}
+
+bool UPlayerCameraComponent::CanRestoreLockOnAfterExecution(
+	AActor* Target) const
+{
+	if (!bWasLockOnBeforeExecution)
+	{
+		return false;
+	}
+
+	AEnemyCharacterBase* Enemy =
+		Cast<AEnemyCharacterBase>(Target);
+
+	if (!IsValid(Enemy))
+	{
+		return false;
+	}
+
+	if (Enemy->GetEnemyAttributeComponent()->IsDead())
+	{
+		return false;
+	}
+
+	return true;
 }

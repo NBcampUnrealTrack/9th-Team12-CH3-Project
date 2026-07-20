@@ -12,6 +12,7 @@ class UCameraComponent;
 class UStateTagComponent;
 class UPlayerCameraDataAsset;
 class AActor;
+class AEnemyCharacterBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 	FOnLockOnStateChanged,
@@ -81,7 +82,15 @@ private:
 	) const;
 	void ApplyCameraCollisionSettings();
 	void PrepareNormalCameraTransitionFromExecution();
+	
+	bool bWasLockOnBeforeExecution = false;
 
+	UPROPERTY()
+	TObjectPtr<AActor> LockOnTargetBeforeExecution;
+
+	bool CanRestoreLockOnAfterExecution(AActor* Target) const;
+	
+private:
 	UPROPERTY()
 	TObjectPtr<AActor> CurrentExecutionTarget;
 	
