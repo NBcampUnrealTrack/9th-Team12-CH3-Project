@@ -94,6 +94,7 @@ void AEnemyAIController::UpdateTargetActor()
 	}
 
 	BlackboardComponent->SetValueAsObject(TargetActorKeyName, PlayerPawn);
+	SetFocus(PlayerPawn);
 
 	GetWorldTimerManager().ClearTimer(TargetActorTimerHandle);
 }
