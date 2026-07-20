@@ -164,9 +164,11 @@ void UPlayerCameraComponent::EndExecutionCamera()
 
 	CurrentExecutionTarget = nullptr;
 
-	PrepareNormalCameraTransitionFromExecution();
+	SetupLockOnCamera();
+	
+	// PrepareNormalCameraTransitionFromExecution();
 
-	StartNormalCameraTransition();
+	// StartNormalCameraTransition();
 }
 
 // 락온 상태면 해제, 아니면 락온 시도
