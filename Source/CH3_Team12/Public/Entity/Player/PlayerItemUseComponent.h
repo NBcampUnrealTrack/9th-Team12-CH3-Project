@@ -12,6 +12,7 @@ class APlayerCharacterBase;
 class UPlayerInventoryComponent;
 class UConsumableDataAsset;
 class UItemInstance;
+class UStaticMeshComponent;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CH3_TEAM12_API UPlayerItemUseComponent : public UActorComponent
@@ -26,6 +27,7 @@ public:
 
 	// AnimNotify
 	void AnimNotify_UseConsumable();
+	void AnimNotify_ShowItem(bool InShowItem, FName SocketName);
 
 	void UseItem(UItemInstance* Item);
 
@@ -46,6 +48,9 @@ private:
 		bool bInterrupted);
 
 	bool canUseItem();
+
+	void ShowItemMesh(FName InSocketName) const;
+	void HideItemMesh() const;
 private:
 
 	UPROPERTY()
@@ -63,4 +68,7 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UItemInstance> CurrentUsingItem;
+	
+	UPROPERTY()
+	TObjectPtr<UStaticMeshComponent> ItemMesh;
 };
