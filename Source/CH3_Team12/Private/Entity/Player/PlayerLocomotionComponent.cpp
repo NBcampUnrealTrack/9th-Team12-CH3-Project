@@ -194,17 +194,20 @@ void UPlayerLocomotionComponent::RefreshMovementSettings()
 		MovementComponent->MaxWalkSpeed = NormalWalkSpeed;
 	}
 
-	// =========================
-	// Rotation
-	// =========================
-	// 락온/가드 중에는 기본적으로 컨트롤러 방향 기준 스트레이프.
-	// 단, Dodge 중에는 Root Motion 방향을 살려야 하므로 ControllerDesiredRotation 끔.
+	const bool bShouldFreeMoveBySprint =
+	bIsSprinting &&
+	!bIsMovementLocked;
+
 	const bool bShouldStrafe =
 		(bIsLockedOn || bIsGuarding) &&
+		!bShouldFreeMoveBySprint &&
 		!bIsMovementLocked;
-	
-	MovementComponent->bOrientRotationToMovement = !bShouldStrafe;
-	MovementComponent->bUseControllerDesiredRotation = bShouldStrafe;
+
+	MovementComponent->bOrientRotationToMovement =
+		!bShouldStrafe;
+
+	MovementComponent->bUseControllerDesiredRotation =
+		bShouldStrafe;
 }
 
 bool UPlayerLocomotionComponent::CanMove() const
@@ -235,13 +238,6 @@ bool UPlayerLocomotionComponent::CanSprint() const
 	}
 
 	if (LastMovementInput.IsNearlyZero())
-	{
-		return false;
-	}
-
-	// LockOn 중 Sprint를 막고 싶으면 유지.
-	if (StateComponent->HasStateTagExact(
-		CombatTags::State_Movement_LockOn))
 	{
 		return false;
 	}
@@ -743,29 +739,29 @@ void UPlayerLocomotionComponent::DoMove(
 
 	LastMovementInput = MovementVector;
 
-	const bool bCanMoveCancelAttack =
+	const bool bCanCancelAttackWithMovement =
 		AttackComponent &&
 		AttackComponent->CanMoveCancel();
 
-	// Dodge 입력이 버퍼에 있으면 Move가 Attack을 먼저 끊지 못하게 한다.
-	if (bCanMoveCancelAttack && HasValidBufferedDodgeInput())
+	if (bCanCancelAttackWithMovement &&
+		HasValidBufferedDodgeInput())
 	{
 		return;
-	}
-
-	if (!CanMove() && !bCanMoveCancelAttack)
-	{
-		return;
-	}
-
-	if (bCanMoveCancelAttack)
-	{
-		AttackComponent->CancelAttackForMovement();
 	}
 
 	if (!CanMove())
 	{
-		return;
+		if (!bCanCancelAttackWithMovement)
+		{
+			return;
+		}
+
+		AttackComponent->CancelAttackForMovement();
+
+		if (!CanMove())
+		{
+			return;
+		}
 	}
 
 	const FRotator Rotation = OwnerCharacter->GetControlRotation();

@@ -23,6 +23,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	TObjectPtr<USoundBase> UseSound;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	TObjectPtr<UStaticMesh> StaticMesh;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	float MoveSpeedMultiplier = 1.0f;
 	

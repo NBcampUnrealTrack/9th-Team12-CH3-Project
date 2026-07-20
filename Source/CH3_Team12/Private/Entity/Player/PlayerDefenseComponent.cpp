@@ -111,16 +111,24 @@ void UPlayerDefenseComponent::EndPlay(
 
 void UPlayerDefenseComponent::StartGuard(const FInputActionValue& Value)
 {
-	if (!CanGuard())
-	{
-		return;
-	}
-
 	if (!OwnerCharacter || !StateComponent)
 	{
 		return;
 	}
+	
+	if (UPlayerAttackComponent* AttackComponent = OwnerCharacter->GetAttackComponent())
+	{
+		if (AttackComponent->CanGuardCancel())
+		{
+			AttackComponent->CancelAttackForGuard();
+		}
+	}
 
+	if (!CanGuard())
+	{
+		return;
+	}
+	
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerCharacter->GetLocomotionComponent())
 	{
