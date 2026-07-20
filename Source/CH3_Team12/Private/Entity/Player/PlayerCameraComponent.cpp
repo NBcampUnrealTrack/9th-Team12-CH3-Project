@@ -4,6 +4,8 @@
 #include "Entity/Player/PlayerLocomotionComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 #include "Framework/DataAsset/PlayerCameraDataAsset.h"
+#include "Entity/Enemy/EnemyCharacterBase.h"
+#include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -90,7 +92,17 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 
 	OwnerActor->bUseControllerRotationYaw = false;
 
-	// OnLockOnStateChanged.Broadcast(true);
+	OnLockOnStateChanged.Broadcast(
+		true,
+		CurrentLockOnTarget
+	);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("LockOn ON: %s"),
+		*GetNameSafe(CurrentLockOnTarget)
+	);
 
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerActor->GetLocomotionComponent())
@@ -113,11 +125,21 @@ void UPlayerCameraComponent::StartExecutionCamera(AActor* ExecutionTarget)
 		return;
 	}
 
+	bWasLockOnBeforeExecution = IsLockOn();
+	LockOnTargetBeforeExecution =
+		bWasLockOnBeforeExecution
+			? CurrentLockOnTarget
+			: nullptr;
+
 	CurrentExecutionTarget = ExecutionTarget;
 
-	if (IsLockOn())
+	if (bWasLockOnBeforeExecution)
 	{
 		CurrentLockOnTarget = ExecutionTarget;
+	}
+	else
+	{
+		CurrentLockOnTarget = nullptr;
 	}
 	
 	CameraMode = EPlayerCameraMode::Execution;
@@ -152,11 +174,31 @@ void UPlayerCameraComponent::EndExecutionCamera()
 		return;
 	}
 
+	AActor* FinishedExecutionTarget =
+		CurrentExecutionTarget;
+
 	CurrentExecutionTarget = nullptr;
+
+	const bool bShouldRestoreLockOn =
+		CanRestoreLockOnAfterExecution(
+			FinishedExecutionTarget
+		);
 
 	PrepareNormalCameraTransitionFromExecution();
 
-	StartNormalCameraTransition();
+	if (bShouldRestoreLockOn)
+	{
+		CurrentLockOnTarget = FinishedExecutionTarget;
+
+		SetupLockOnCamera();
+	}
+	else
+	{
+		StartNormalCameraTransition();
+	}
+
+	bWasLockOnBeforeExecution = false;
+	LockOnTargetBeforeExecution = nullptr;
 }
 
 // 락온 상태면 해제, 아니면 락온 시도
@@ -174,7 +216,6 @@ void UPlayerCameraComponent::LockOn()
 // 락온 대상을 비우고 노말 카메라로 복귀
 void UPlayerCameraComponent::ClearLockOn()
 {
-	CurrentLockOnTarget = nullptr;
 	StartNormalCameraTransition();
 }
 
@@ -412,6 +453,11 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 		return;
 	}
 
+	const bool bWasLockOn =
+		IsLockOn() || IsValid(CurrentLockOnTarget);
+
+	AActor* PreviousLockOnTarget = CurrentLockOnTarget;
+
 	CameraMode = EPlayerCameraMode::Normal;
 
 	CameraBoom->SetAbsolute(false, false, false);
@@ -424,6 +470,21 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 	}
 
 	CurrentLockOnTarget = nullptr;
+
+	if (bWasLockOn)
+	{
+		OnLockOnStateChanged.Broadcast(
+			false,
+			PreviousLockOnTarget
+		);
+
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("LockOn OFF: %s"),
+			*GetNameSafe(PreviousLockOnTarget)
+		);
+	}
 
 	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->bInheritPitch = true;
@@ -455,7 +516,7 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 
 void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 {
-	if (!OwnerActor || !CurrentLockOnTarget || !CameraBoom || !CameraData)
+	if (!OwnerActor || !IsValid(CurrentLockOnTarget) || !CameraBoom || !CameraData)
 	{
 		ClearLockOn();
 		return;
@@ -825,4 +886,28 @@ void UPlayerCameraComponent::PrepareNormalCameraTransitionFromExecution()
 	ApplyCameraCollisionSettings();
 
 	FollowCamera->bUsePawnControlRotation = false;
+}
+
+bool UPlayerCameraComponent::CanRestoreLockOnAfterExecution(
+	AActor* Target) const
+{
+	if (!bWasLockOnBeforeExecution)
+	{
+		return false;
+	}
+
+	AEnemyCharacterBase* Enemy =
+		Cast<AEnemyCharacterBase>(Target);
+
+	if (!IsValid(Enemy))
+	{
+		return false;
+	}
+
+	if (Enemy->GetEnemyAttributeComponent()->IsDead())
+	{
+		return false;
+	}
+
+	return true;
 }

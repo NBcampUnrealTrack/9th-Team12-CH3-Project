@@ -10,6 +10,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
 #include "InputActionValue.h"
+#include "Entity/Player/PlayerCameraComponent.h"
 
 UPlayerEquipmentComponent::UPlayerEquipmentComponent()
 {
@@ -32,6 +33,8 @@ void UPlayerEquipmentComponent::BeginPlay()
 	
 	StateComp = OwnerCharacter->FindComponentByClass<UStateTagComponent>();
 	
+	CameraComponent = OwnerCharacter->GetPlayerCameraComponent();
+	
 	if (!Inventory)
 	{
 		return;
@@ -40,6 +43,11 @@ void UPlayerEquipmentComponent::BeginPlay()
 	if (Inventory->GetEquippedWeaponInstance())
 	{
 		SpawnWeaponToSheath();
+	}
+	
+	if (!CameraComponent)
+	{
+		return;
 	}
 	
 	SpawnAndAttachScabbard();
@@ -250,6 +258,11 @@ void UPlayerEquipmentComponent::Unequip()
 	if (!CurrentWeaponData || !CurrentWeaponData->UnequipMontage)
 	{
 		return;
+	}
+	
+	if (StateComp->HasStateTag(CombatTags::State_Movement_LockOn))
+	{
+		CameraComponent->LockOn();
 	}
 
 	StateComp->AddStateTag(CombatTags::State_Action_Equipping);

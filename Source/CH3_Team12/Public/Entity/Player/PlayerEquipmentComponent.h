@@ -12,6 +12,7 @@ class UWeaponDataAsset;
 class APlayerCharacterBase;
 class UItemInstance;
 class AWeaponBase;
+class UPlayerCameraComponent;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CH3_TEAM12_API UPlayerEquipmentComponent : public UActorComponent
@@ -78,6 +79,9 @@ private:
 	
 	UPROPERTY()
 	TObjectPtr<UStateTagComponent> StateComp;
+	
+	UPROPERTY()
+	TObjectPtr<UPlayerCameraComponent> CameraComponent;
 	
 	/** 현재 장착중인 ItemInstance */
 	UPROPERTY()
