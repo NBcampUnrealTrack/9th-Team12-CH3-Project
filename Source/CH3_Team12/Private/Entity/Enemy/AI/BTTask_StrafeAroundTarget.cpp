@@ -14,6 +14,7 @@ UBTTask_StrafeAroundTarget::UBTTask_StrafeAroundTarget()
 	NodeName = TEXT("Strafe Around Target");
 	bCreateNodeInstance = true;
 	bNotifyTick = true;
+	bNotifyTaskFinished = true;
 }
 
 EBTNodeResult::Type UBTTask_StrafeAroundTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -113,10 +114,16 @@ void UBTTask_StrafeAroundTarget::OnTaskFinished(UBehaviorTreeComponent& OwnerCom
 {
 	RestoreMoveSpeed();
 
+	if (CachedMovementComponent)
+	{
+		CachedMovementComponent->bOrientRotationToMovement = false;
+		CachedMovementComponent->bUseControllerDesiredRotation = true;
+		CachedMovementComponent = nullptr;
+	}
+	
 	CachedAIController = nullptr;
 	CachedControlledPawn = nullptr;
-	CachedMovementComponent = nullptr;
-
+	
 	UBlackboardComponent* BlackboardComponent = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComponent)
 	{
@@ -124,10 +131,6 @@ void UBTTask_StrafeAroundTarget::OnTaskFinished(UBehaviorTreeComponent& OwnerCom
 	}
 
 	BlackboardComponent->SetValueAsBool(TEXT("bIsStrafing"), false);
-
-	CachedMovementComponent->bOrientRotationToMovement = true;
-	CachedMovementComponent->bUseControllerDesiredRotation = false;
-
 	Super::OnTaskFinished(OwnerComp, NodeMemory, TaskResult);
 }
 
