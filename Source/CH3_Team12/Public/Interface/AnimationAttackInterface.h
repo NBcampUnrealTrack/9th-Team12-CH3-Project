@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "AnimationAttackInterface.generated.h"
 
+struct FHitBoxData;
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UAnimationAttackInterface : public UInterface
@@ -23,7 +25,7 @@ class IAnimationAttackInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	virtual void AttackAnimationEnd() = 0;
-	virtual void AttackHitCheckStart(int32 HitIndex) = 0;
+	virtual void AttackHitCheckStart(int32 HitIndex, const TArray<FHitBoxData>& HitBoxes) = 0;
 	virtual void AttackHitCheckTick() = 0;
 	virtual void AttackHitCheckEnd() = 0;
 };

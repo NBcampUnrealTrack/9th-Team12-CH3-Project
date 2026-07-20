@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Combat/CombatTypes.h"
+#include "GameplayTagContainer.h"
 #include "EnemyAttackComponent.generated.h"
 
 struct FHitResult;
@@ -16,17 +17,7 @@ class UEnemyAttackDataAsset;
 class UAnimMontage;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackFinished);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackCanceled);
-
-UENUM()
-enum class EEnemyAttackPattern : uint8
-{
-	NormalAttack_1,
-	NormalAttack_2,
-	NormalAttack_3,
-	FarStrongAttack,
-	StrongAttack_1,
-	End,
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInnerPostureProcess);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UEnemyAttackComponent : public UActorComponent
@@ -49,9 +40,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category= "Attack")
 	void CancelAttack();
 	
-	void StartHitCheck();
+	void StartHitCheck(const TArray<FHitBoxData>& HitBoxes);
 	void AttackTrace();
 	void EndHitCheck();
+	
+	bool CanAttack();
+	bool CanParried();
 	
 private:
 	void ProcessHit(const FHitResult& InHitResult, const FAttackInfo& InAttackInfo);
@@ -59,23 +53,23 @@ private:
 	
 	void OnAttackParried();
 	
-	const FAttackAnimationData* GetCurrentPatternData();
-	const FAttackAnimationData* GetSelectedPatternData(int32 InSelectedAction, int32 InSelectedPattern);
+	// const FAttackAnimationData* GetCurrentPatternData();
+	// const FAttackAnimationData* GetSelectedPatternData(int32 InSelectedAction, int32 InSelectedPattern);
 	
-	USkeletalMeshComponent* GetOwnerSkeletalMeshComponent();
-	
-	void ResetComboCount();
+	USkeletalMeshComponent* GetOwnerSkeletalMeshComponent() const;
 	
 protected:
 	UFUNCTION()
 	void StopAttackMontage();
 
-private:
-	FTimerHandle AttackCooldownTimerHandle;
-	void ResetAttackCooldown();
+	UFUNCTION(BlueprintCallable, Category = "Attack | Data")
+	void SetCurrentAttackData(int32 InAttackDataIndex);
 	
-	void OnAttackAnimationEnd();
+	UFUNCTION()
+	void OnMontageLastAttack(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
 	
+	UFUNCTION()
+	void OnInnerPostureProcess();
 public:
 	UPROPERTY(BlueprintAssignable, Category="Attack")
 	FOnAttackFinished OnAttackFinished;
@@ -83,18 +77,24 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Attack")
 	FOnAttackCanceled OnAttackCanceled;
 	
+	UPROPERTY(BlueprintAssignable, Category="Attack")
+	FOnInnerPostureProcess OnInnerPostureProcessDelegate;
+	
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animation|Data")
-	TObjectPtr<UEnemyAttackDataAsset> AttackData;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data | Attack")
+	TArray<TObjectPtr<UEnemyAttackDataAsset>> AttackDatas;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
-	bool bCanAttack = true;
+	UPROPERTY(BlueprintReadWrite, Category = "Data | Attack")
+	TObjectPtr<UEnemyAttackDataAsset> CurrentAttackData;
 	
-	UPROPERTY()
-	EEnemyAttackPattern CurrentPlayingPattern;
+	TArray<FHitBoxData> CurrentHitBoxDatas;
 	
 	UPROPERTY(EditAnywhere,	BlueprintReadOnly, Category = "Attack|Debug")
-	bool bUseDebugColliderDraw = true;
+	uint8 bUseDebugColliderDraw:1 = true;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Combat | Parry")
+	uint8 bLastAttack:1 = false;
+	
 private:
 	UPROPERTY()
 	TObjectPtr<UEnemyAttributeComponent> AttributeComponent;
@@ -109,6 +109,5 @@ private:
 	TMap<FName, FVector> PreviousHitBoxCenters;
 	
 	TSet<TWeakObjectPtr<AActor>> HitActors;
-	
-	int8 ComboCount;
+	FName LastAttackNotifyKey = TEXT("LastAttack");
 };

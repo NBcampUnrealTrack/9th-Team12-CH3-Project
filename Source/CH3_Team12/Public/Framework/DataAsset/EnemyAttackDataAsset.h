@@ -8,22 +8,6 @@
 #include "EnemyAttackDataAsset.generated.h"
 
 USTRUCT(BlueprintType)
-struct FHitBoxData
-{
-	GENERATED_BODY()
-	
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="HitBox")
-	FName ActiveHitSocket;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="HitBox", meta = (ClampMin = 0, UIMin = 0))
-	float TraceRadius = 150.0f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="HitBox", meta = (ClampMax = 50, UIMax = 50))
-	int32 TraceSampleCount = 5;
-};
-
-USTRUCT(BlueprintType)
 struct FEnemyAttackMontageSet
 {
 	GENERATED_BODY()
@@ -39,7 +23,20 @@ USTRUCT(BlueprintType)
 struct FAttackAnimationData
 {
 	GENERATED_BODY()
+public:	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack|Animation")
+	FEnemyAttackMontageSet AttackMontageSet;
+};
+
+UCLASS()
+class CH3_TEAM12_API UEnemyAttackDataAsset : public UPrimaryDataAsset
+{
+	GENERATED_BODY()
+	
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")
+	FAttackAnimationData AttackAnimationData;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack", meta = (ClampMin = 1.0f, UIMin = 1.0f))
 	float AttackRange = 500.0f;
 
@@ -54,31 +51,4 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack")
 	FAttackInfo AttackInfo;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack|Animation")
-	FEnemyAttackMontageSet AttackMontageSet;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack|Hitbox")
-	TArray<FHitBoxData> HitBoxes;
-};
-
-UCLASS()
-class CH3_TEAM12_API UEnemyAttackDataAsset : public UPrimaryDataAsset
-{
-	GENERATED_BODY()
-	
-public:
-	FORCEINLINE const FAttackAnimationData* GetAttackAnimationData(int32 InIndex) const
-	{
-		if (AttackAnimationDatas.IsValidIndex(InIndex))
-		{
-			return &AttackAnimationDatas[InIndex];
-		}
-		
-		UE_LOG(LogTemp, Error, TEXT("Katana_UEnemyAttackDataAsset : Invalid index."));
-		return nullptr;
-	}
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")
-	TArray<FAttackAnimationData> AttackAnimationDatas;
 };

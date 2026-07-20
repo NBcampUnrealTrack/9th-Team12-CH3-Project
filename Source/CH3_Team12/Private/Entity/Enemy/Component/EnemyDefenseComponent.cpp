@@ -251,7 +251,6 @@ void UEnemyDefenseComponent::HandleDirectHit(
 	}
 
 	StateComponent->AddStateTag(CombatTags::State_Hit_Reacting);
-	StateComponent->AddStateTag(CombatTags::State_Movement_Locked);
 
 	//StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
 	//StateComponent->RemoveStateTag(CombatTags::State_Combat_Guarding);
@@ -320,5 +319,4 @@ void UEnemyDefenseComponent::EndHitReaction()
 	}
 
 	StateComponent->RemoveStateTag(CombatTags::State_Hit_Reacting);
-	StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
 }

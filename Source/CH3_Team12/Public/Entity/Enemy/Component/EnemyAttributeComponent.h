@@ -7,6 +7,7 @@
 #include "Framework/DataAsset/EnemyAttributeDataAsset.h"
 #include "EnemyAttributeComponent.generated.h"
 
+class UEnemyAttackComponent;
 class AEnemyCharacterBase;
 class UStateTagComponent;
 
@@ -103,18 +104,29 @@ public:
 	UFUNCTION(BlueprintPure, Category="Enemy|Attribute")
 	bool IsPostureBroken() const { return bIsPostureBroken; }
 
+	UFUNCTION(BlueprintPure, Category = "Enemy|Attribute")
+	bool IsInnerPostureDirty() const {return bInnerPostureDirty;}
+	
 private:
 	void UpdatePostureRecovery(float DeltaTime);
 	void BreakPosture();
 	void RecoverFromPostureBreak();
 	void Die();
-
+	
+	void RecoveryInnerPosture(float RecoveryAmount);
+	void BreakInnerPosture();
+	
+	UFUNCTION()
+	void ClearInnerPostureAttribute();
 private:
 	UPROPERTY()
 	TObjectPtr<AEnemyCharacterBase> OwnerCharacter;
 
 	UPROPERTY()
 	TObjectPtr<UStateTagComponent> StateComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UEnemyAttackComponent> AttackComponent;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Enemy|Attribute|Data")
 	TObjectPtr<UEnemyAttributeDataAsset> AttributeData;
@@ -128,6 +140,12 @@ private:
 
 	float CurrentHealth = 0.0f;
 	float CurrentPosture = 0.0f;
+	
+	float MaxInnerPosture = 50.0f;
+	float CurrentInnerPosture = 0.0f;
+	float InnerPostureRecoveryRate = 5.0f;
+	float InnerPostureRecoveryDelay = 2.0f;
+	uint8 bInnerPostureDirty:1 = false;
 private:
 	float LastPostureDamageTime = -999.0f;
 

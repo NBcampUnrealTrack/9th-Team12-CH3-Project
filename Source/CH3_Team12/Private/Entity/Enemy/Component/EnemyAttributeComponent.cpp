@@ -6,6 +6,7 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "Entity/Enemy/EnemyCharacterBase.h"
+#include "Entity/Enemy/Component/EnemyAttackComponent.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
 
@@ -33,6 +34,17 @@ void UEnemyAttributeComponent::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("EnemyAttributeComponent could not find StateTagComponent."));
 	}
 	
+	AttackComponent = OwnerCharacter->GetEnemyAttackComponent();
+	if (!AttackComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("EnemyAttributeComponent could not find StateTagComponent."));
+	}
+	else
+	{
+		AttackComponent->OnInnerPostureProcessDelegate.AddDynamic(this, &UEnemyAttributeComponent::ClearInnerPostureAttribute);
+	}
+	
+	
 	if (AttributeData)
 	{
 		MaxHealth = AttributeData->MaxHealth;
@@ -40,6 +52,10 @@ void UEnemyAttributeComponent::BeginPlay()
 		PostureRecoveryRate = AttributeData->PostureRecoveryRate;
 		PostureRecoveryDelay = AttributeData->PostureRecoveryDelay;
 		PostureBreakDuration = AttributeData->PostureBreakDuration;
+		
+		MaxInnerPosture = AttributeData->MaxInnerPosture;
+		InnerPostureRecoveryRate = AttributeData->InnerPostureRecoveryRate;
+		InnerPostureRecoveryDelay = AttributeData->InnerPostureRecoveryDelay;
 	}
 
 	ResetAttributes();
@@ -67,6 +83,8 @@ void UEnemyAttributeComponent::ResetAttributes()
 
 	CurrentHealth = MaxHealth;
 	CurrentPosture = 0.0f;
+	
+	ClearInnerPostureAttribute();
 
 	if (StateComponent)
 	{
@@ -175,6 +193,20 @@ void UEnemyAttributeComponent::ApplyPostureDamage(float PostureDamage)
 	{
 		BreakPosture();
 	}
+	
+	if (bInnerPostureDirty == false)
+	{
+		CurrentInnerPosture = FMath::Clamp(
+		CurrentInnerPosture + PostureDamage,
+		0.0f,
+		MaxInnerPosture
+		);
+	}
+	
+	if (CurrentInnerPosture >= MaxInnerPosture)
+	{
+		BreakInnerPosture();
+	}
 }
 
 void UEnemyAttributeComponent::Heal(float HealAmount)
@@ -246,15 +278,22 @@ void UEnemyAttributeComponent::UpdatePostureRecovery(float DeltaTime)
 	const float TimeSinceLastPostureDamage =
 		CurrentTime - LastPostureDamageTime;
 
-	if (TimeSinceLastPostureDamage < PostureRecoveryDelay)
+	if (TimeSinceLastPostureDamage > PostureRecoveryDelay)
 	{
-		return;
+		const float RecoveryAmount =
+			PostureRecoveryRate * DeltaTime;
+
+		RecoverPosture(RecoveryAmount);
 	}
 
-	const float RecoveryAmount =
-		PostureRecoveryRate * DeltaTime;
+	if (TimeSinceLastPostureDamage > InnerPostureRecoveryDelay)
+	{
+		const float RecoveryAmount =
+			InnerPostureRecoveryRate * DeltaTime;
 
-	RecoverPosture(RecoveryAmount);
+		RecoverPosture(RecoveryAmount);
+	}
+
 }
 
 void UEnemyAttributeComponent::BreakPosture()
@@ -360,4 +399,40 @@ void UEnemyAttributeComponent::Die()
 	);
 
 	OnEnemyDeath.Broadcast();
+}
+
+void UEnemyAttributeComponent::RecoveryInnerPosture(float RecoveryAmount)
+{
+	if (bIsDead || bIsPostureBroken)
+	{
+		return;
+	}
+
+	if (RecoveryAmount <= 0.0f)
+	{
+		return;
+	}
+
+	CurrentInnerPosture = FMath::Clamp(
+		CurrentInnerPosture - RecoveryAmount,
+		0.0f,
+		MaxInnerPosture
+	);
+	
+	if (CurrentInnerPosture <= 0.0f)
+	{
+		ClearInnerPostureAttribute();
+	}
+}
+
+void UEnemyAttributeComponent::BreakInnerPosture()
+{
+	CurrentInnerPosture = 0.0f;
+	bInnerPostureDirty = true;
+}
+
+void UEnemyAttributeComponent::ClearInnerPostureAttribute()
+{
+	CurrentInnerPosture = 0.0f;
+	bInnerPostureDirty = false;
 }

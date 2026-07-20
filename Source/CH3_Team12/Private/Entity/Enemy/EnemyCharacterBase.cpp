@@ -326,13 +326,13 @@ void AEnemyCharacterBase::AttackAnimationEnd()
 	}
 }
 
-void AEnemyCharacterBase::AttackHitCheckStart(int32 HitIndex)
+void AEnemyCharacterBase::AttackHitCheckStart(int32 HitIndex, const TArray<FHitBoxData>& HitBoxes)
 {
 	ensureMsgf(EnemyAttackComponent, TEXT("Katana_EnemyCharacterBase. AttackComponent is invalid."));
 
 	if (EnemyAttackComponent)
 	{
-		EnemyAttackComponent->StartHitCheck();
+		EnemyAttackComponent->StartHitCheck(HitBoxes);
 	}
 }
 
