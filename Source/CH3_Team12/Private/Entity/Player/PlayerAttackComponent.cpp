@@ -93,16 +93,14 @@ void UPlayerAttackComponent::OpenAttackRecovery()
 		return;
 	}
 
-	if (!StateComponent->HasStateTagExact(
-		CombatTags::State_Combat_Attacking))
+	if (!IsAttacking())
 	{
 		return;
 	}
 
-	// 공격 상태는 유지.
-	// 단, 이 시점부터 Dodge Cancel 가능.
 	bDodgeCancelWindowOpen = true;
 	bMoveCancelWindowOpen = true;
+	bGuardCancelWindowOpen = true;
 
 	StateComponent->RemoveStateTag(
 		CombatTags::State_Movement_Locked
@@ -290,14 +288,14 @@ void UPlayerAttackComponent::HeavyAttack(const FInputActionValue& Value)
 void UPlayerAttackComponent::CancelAttackInternal()
 {
 	StopAttackRotation();
-	
-	bDodgeCancelWindowOpen = false;
+
+	ClearAttackCancelWindows();
+
 	bDashAttackWindowOpen = false;
-	bMoveCancelWindowOpen = false;
 	bComboWindow = false;
 	bComboBuffered = false;
-	ComboIndex = 0;
 	bCurrentAttackIsJumpAttack = false;
+	ComboIndex = 0;
 
 	if (WeaponComponent)
 	{
@@ -305,20 +303,39 @@ void UPlayerAttackComponent::CancelAttackInternal()
 	}
 
 	UAnimMontage* MontageToStop = CurrentAttackMontage;
+
 	CurrentAttackMontage = nullptr;
+	CurrentAttackData = nullptr;
+	CurrentStep = nullptr;
 
-	StateComponent->RemoveStateTag(CombatTags::State_Combat_Attacking);
-	StateComponent->RemoveStateTag(CombatTags::State_Movement_Locked);
+	if (StateComponent)
+	{
+		StateComponent->RemoveStateTag(
+			CombatTags::State_Combat_Attacking
+		);
 
-	if (MontageToStop)
+		StateComponent->RemoveStateTag(
+			CombatTags::State_Movement_Locked
+		);
+	}
+
+	if (MontageToStop && OwnerCharacter)
 	{
 		if (USkeletalMeshComponent* Mesh = OwnerCharacter->GetMesh())
 		{
 			if (UAnimInstance* AnimInstance = Mesh->GetAnimInstance())
 			{
-				AnimInstance->Montage_Stop(0.08f, MontageToStop);
+				AnimInstance->Montage_Stop(
+					0.08f,
+					MontageToStop
+				);
 			}
 		}
+	}
+
+	if (LocomotionComponent)
+	{
+		LocomotionComponent->RefreshMovementSettings();
 	}
 }
 
@@ -330,6 +347,12 @@ void UPlayerAttackComponent::CancelAttackForDodge()
 void UPlayerAttackComponent::CancelAttackForMovement()
 {
 	CancelAttackInternal();
+
+	if (GetWorld())
+	{
+		NextAttackAllowedTime =
+			GetWorld()->GetTimeSeconds() + MovementCancelAttackLockout;
+	}
 }
 
 void UPlayerAttackComponent::CancelAttackForHit()
@@ -343,6 +366,11 @@ void UPlayerAttackComponent::CancelAttackForDeath()
 }
 
 void UPlayerAttackComponent::CancelAttackForPostureBreak()
+{
+	CancelAttackInternal();
+}
+
+void UPlayerAttackComponent::CancelAttackForGuard()
 {
 	CancelAttackInternal();
 }
@@ -380,6 +408,11 @@ bool UPlayerAttackComponent::CanStartAttack() const
 		return false;
 	}
 
+	if (GetWorld() && GetWorld()->GetTimeSeconds() < NextAttackAllowedTime)
+	{
+		return false;
+	}
+	
 	if (!EquipmentComponent->GetEquippedWeapon())
 	{
 		return false;
@@ -466,7 +499,8 @@ void UPlayerAttackComponent::StartAttack(
 
 	bComboWindow = false;
 	bComboBuffered = false;
-
+	ClearAttackCancelWindows();
+	
 	StateComponent->AddStateTag(
 		CombatTags::State_Combat_Attacking
 	);
@@ -519,8 +553,7 @@ void UPlayerAttackComponent::EndAttack()
 	
 	bComboWindow = false;
 	bComboBuffered = false;
-	bDodgeCancelWindowOpen = false;
-	bMoveCancelWindowOpen = false;
+	ClearAttackCancelWindows();
 	bDashAttackWindowOpen = false;
 	bCurrentAttackIsJumpAttack = false;
 	
@@ -602,6 +635,8 @@ void UPlayerAttackComponent::ContinueCombo()
 		return;
 	}
 
+	ClearAttackCancelWindows();
+
 	++ComboIndex;
 
 	CurrentStep = &CurrentAttackData->Steps[ComboIndex];
@@ -620,21 +655,27 @@ void UPlayerAttackComponent::ContinueCombo()
 	}
 
 	StateComponent->AddStateTag(
-		CombatTags::State_Movement_Locked);
+		CombatTags::State_Movement_Locked
+	);
 	
-	if (CurrentStep && 
-		CurrentStep->bRotateToInput)
+	if (CurrentStep && CurrentStep->bRotateToInput)
 	{
 		StartAttackRotation();
+	}
+	else
+	{
+		StopAttackRotation();
 	}
 	
 	AnimInstance->Montage_SetPlayRate(
 		CurrentAttackMontage,
-		CurrentStep->PlayRate);
+		CurrentStep->PlayRate
+	);
 
 	AnimInstance->Montage_JumpToSection(
 		CurrentStep->SectionName,
-		CurrentAttackMontage);
+		CurrentAttackMontage
+	);
 }
 
 void UPlayerAttackComponent::StartAttackRotation()
@@ -935,6 +976,21 @@ const FAttackHitData* UPlayerAttackComponent::GetCurrentHit(int32 HitIndex) cons
 	return &CurrentStep->Hits[HitIndex];
 }
 
+bool UPlayerAttackComponent::CanDodgeCancel() const
+{
+	return IsAttacking() && bDodgeCancelWindowOpen;
+}
+
+bool UPlayerAttackComponent::CanMoveCancel() const
+{
+	return IsAttacking() && bMoveCancelWindowOpen;
+}
+
+bool UPlayerAttackComponent::CanGuardCancel() const
+{
+	return IsAttacking() && bGuardCancelWindowOpen;
+}
+
 bool UPlayerAttackComponent::ShouldUseDashAttack() const
 {
 	if (!OwnerCharacter || !StateComponent)
@@ -984,3 +1040,11 @@ bool UPlayerAttackComponent::CanStartDashAttack() const
 
 	return !StateComponent->HasAnyStateTags(BlockTags);
 }
+
+void UPlayerAttackComponent::ClearAttackCancelWindows()
+{
+	bDodgeCancelWindowOpen = false;
+	bMoveCancelWindowOpen = false;
+	bGuardCancelWindowOpen = false;
+}
+

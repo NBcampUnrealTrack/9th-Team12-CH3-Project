@@ -44,9 +44,10 @@ public:
 	void ExecutionHitNotify();
 	
 	const FAttackHitData* GetCurrentHit(int32 HitIndex) const;
-
-	bool CanDodgeCancel() const { return bDodgeCancelWindowOpen; }
-	bool CanMoveCancel() const { return bMoveCancelWindowOpen; }
+	
+	bool CanDodgeCancel() const;
+	bool CanMoveCancel() const;
+	bool CanGuardCancel() const;
 	
 	void CancelAttackInternal();
 
@@ -55,7 +56,8 @@ public:
 	void CancelAttackForHit();
 	void CancelAttackForDeath();
 	void CancelAttackForPostureBreak();
-
+	void CancelAttackForGuard();
+	
 	virtual void TickComponent(
 		float DeltaTime,
 		ELevelTick TickType,
@@ -138,6 +140,7 @@ private:
 	bool bDodgeCancelWindowOpen = false;
 	bool bDashAttackWindowOpen = false;
 	bool bMoveCancelWindowOpen = false;
+	bool bGuardCancelWindowOpen = false;
 
 	FRotator TargetAttackRotation;
 	
@@ -149,4 +152,11 @@ private:
 
 	bool ShouldUseDashAttack() const;
 	bool CanStartDashAttack() const;
+	
+	void ClearAttackCancelWindows();
+
+	UPROPERTY(EditDefaultsOnly, Category="Attack|Cancel")
+	float MovementCancelAttackLockout = 0.15f;
+
+	float NextAttackAllowedTime = 0.0f;
 };
