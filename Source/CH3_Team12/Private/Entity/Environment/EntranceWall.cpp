@@ -3,6 +3,8 @@
 #include "Components/BoxComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Entity/Player/PlayerCharacterBase.h"
+#include "Entity/Player/PlayerEquipmentComponent.h"
+#include "InputActionValue.h"
 
 AEntranceWall::AEntranceWall()
 {
@@ -95,6 +97,9 @@ void AEntranceWall::OnExitTriggerBegin(
 	}
 	
 	ActivateFogWall();
+	
+	const FInputActionValue Value;
+	Player->GetEquipmentComponent()->ToggleWeaponInput(Value);
 }
 
 void AEntranceWall::ActivateFogWall()
@@ -120,4 +125,6 @@ void AEntranceWall::ActivateFogWall()
 
 	ExitTrigger->SetCollisionEnabled(
 		ECollisionEnabled::NoCollision);
+	
+	
 }
