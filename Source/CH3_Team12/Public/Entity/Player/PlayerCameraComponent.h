@@ -11,6 +11,15 @@ class USpringArmComponent;
 class UCameraComponent;
 class UStateTagComponent;
 class UPlayerCameraDataAsset;
+class AActor;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnLockOnStateChanged,
+	bool,
+	bIsLockOn,
+	AActor*,
+	LockOnTarget
+);
 
 UENUM(BlueprintType)
 enum class EPlayerCameraMode : uint8
@@ -38,7 +47,10 @@ public:
 	
 	void StartExecutionCamera(AActor* ExecutionTarget);
 	void EndExecutionCamera();
-
+	
+	UPROPERTY(BlueprintAssignable, Category="Camera|LockOn")
+	FOnLockOnStateChanged OnLockOnStateChanged;
+	
 protected:
 	virtual void TickComponent(
 		float DeltaTime,

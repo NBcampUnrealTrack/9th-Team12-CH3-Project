@@ -90,7 +90,17 @@ void UPlayerCameraComponent::SetupLockOnCamera()
 
 	OwnerActor->bUseControllerRotationYaw = false;
 
-	// OnLockOnStateChanged.Broadcast(true);
+	OnLockOnStateChanged.Broadcast(
+		true,
+		CurrentLockOnTarget
+	);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("LockOn ON: %s"),
+		*GetNameSafe(CurrentLockOnTarget)
+	);
 
 	if (UPlayerLocomotionComponent* LocomotionComponent =
 		OwnerActor->GetLocomotionComponent())
@@ -174,7 +184,6 @@ void UPlayerCameraComponent::LockOn()
 // 락온 대상을 비우고 노말 카메라로 복귀
 void UPlayerCameraComponent::ClearLockOn()
 {
-	CurrentLockOnTarget = nullptr;
 	StartNormalCameraTransition();
 }
 
@@ -412,6 +421,11 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 		return;
 	}
 
+	const bool bWasLockOn =
+		IsLockOn() || IsValid(CurrentLockOnTarget);
+
+	AActor* PreviousLockOnTarget = CurrentLockOnTarget;
+
 	CameraMode = EPlayerCameraMode::Normal;
 
 	CameraBoom->SetAbsolute(false, false, false);
@@ -424,6 +438,21 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 	}
 
 	CurrentLockOnTarget = nullptr;
+
+	if (bWasLockOn)
+	{
+		OnLockOnStateChanged.Broadcast(
+			false,
+			PreviousLockOnTarget
+		);
+
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("LockOn OFF: %s"),
+			*GetNameSafe(PreviousLockOnTarget)
+		);
+	}
 
 	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->bInheritPitch = true;
@@ -455,7 +484,7 @@ void UPlayerCameraComponent::StartNormalCameraTransition()
 
 void UPlayerCameraComponent::UpdateLockOnCamera(float DeltaTime)
 {
-	if (!OwnerActor || !CurrentLockOnTarget || !CameraBoom || !CameraData)
+	if (!OwnerActor || !IsValid(CurrentLockOnTarget) || !CameraBoom || !CameraData)
 	{
 		ClearLockOn();
 		return;
