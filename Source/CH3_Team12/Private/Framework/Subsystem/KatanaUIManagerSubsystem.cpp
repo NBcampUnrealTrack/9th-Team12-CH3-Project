@@ -10,6 +10,8 @@
 #include "UI/LoadingWidget.h"
 #include "UI/MainMenuPresenter.h"
 #include "UI/MainMenuWidget.h"
+#include "UI/StageResultPresenter.h"
+#include "UI/StageResultWidget.h"
 #include "UI/HUD/EnemyPresenter.h"
 #include "UI/HUD/EnemyWidget.h"
 #include "UI/HUD/PlayerPresenter.h"
@@ -212,6 +214,28 @@ void UKatanaUIManagerSubsystem::ShowEnemyWidget(AEnemyCharacterBase* InEnemyChar
 void UKatanaUIManagerSubsystem::HideEnemyWidget()
 {
 	OpHideUI(EnemyWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::ShowStageResultWidget()
+{
+	const FName WidgetName = StageResultWidgetName;
+	UStageResultWidget* ActiveView = OpShowUI<UStageResultWidget>(WidgetName);
+	if (!ActiveView) return;
+
+	UStageResultPresenter* NewPresenter = NewObject<UStageResultPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(ActiveView);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::HideStageResultWidget()
+{
+	OpHideUI(StageResultWidgetName);
 }
 
 void UKatanaUIManagerSubsystem::RegisterInventoryWidget(UInventoryWidget* InWidget)

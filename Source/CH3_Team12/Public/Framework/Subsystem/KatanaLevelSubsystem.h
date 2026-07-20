@@ -7,6 +7,7 @@
 #include "KatanaLevelSubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoadingProgress, float, Progress);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCompletedProgress);
 
 /**
  *
@@ -18,17 +19,23 @@ class CH3_TEAM12_API UKatanaLevelSubsystem : public UGameInstanceSubsystem
 
 public:
 	static UKatanaLevelSubsystem* Get(const UObject* WorldContextObject);
+	static FName GetTargetMapName(const UObject* WorldContextObject);
 
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY()
 	FOnLoadingProgress OnLoadingProgressUpdated;
 
-	UFUNCTION(BlueprintCallable)
+	UPROPERTY()
+	FOnCompletedProgress OnLoadingCompleted;
+
+	UFUNCTION()
 	void LoadLevel(FName TargetLevelName);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void StartLoadingTargetMapAsync();
 
 private:
+	FName TargetMapName;
+
 	const float LoopRate = 0.05f;
 
 	FTimerHandle LoopTimerHandle;

@@ -9,43 +9,24 @@
 void UPlayerWidget::UpdateHealthBar(const float Percent)
 {
 	HealthBar->SetPercent(Percent);
-
-	if (HealthPercent > Percent)
-	{
-		PostureBar->SetColorAndOpacity(DamagePostureColor);
-		bTakeDamageHealth = true;
-	}
-	else if (HealthPercent < Percent)
-	{
-		PostureBar->SetColorAndOpacity(NormalPostureColor);
-		bTakeDamageHealth = false;
-	}
-
+	bTakeDamageHealth = HealthPercent > Percent;
 	HealthPercent = Percent;
 }
 
 void UPlayerWidget::UpdatePostureBar(const float Percent)
 {
-	FLinearColor PostureColor = NormalPostureColor;
-	if (bTakeDamageHealth)
-		PostureColor = DamagePostureColor;
-
-	PostureBar->SetColorAndOpacity(PostureColor);
-	PostureCenterImage->SetColorAndOpacity(OriginPostureCenterColor);
-
 	PostureBar->SetPercent(Percent);
-
 	PosturePercent = Percent;
 }
 
 void UPlayerWidget::BreakPostureBar()
 {
-	PostureBar->SetColorAndOpacity(BreakPostureColor);
+	bBreakPosture = true;
 }
 
 void UPlayerWidget::RecoverPostureBar()
 {
-	PostureBar->SetColorAndOpacity(NormalPostureColor);
+	bBreakPosture = false;
 }
 
 void UPlayerWidget::UpdateConsumable(UTexture2D* Texture, const FText& Text)
@@ -69,7 +50,18 @@ void UPlayerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	if (PosturePercent <= 0.0f)
+	if (PosturePercent > 0.0f)
+	{
+		FLinearColor PostureColor = NormalPostureColor;
+		if (bTakeDamageHealth)
+			PostureColor = DamagePostureColor;
+		else if (bBreakPosture)
+			PostureColor = BreakPostureColor;
+
+		PostureBar->SetColorAndOpacity(PostureColor);
+		PostureCenterImage->SetColorAndOpacity(OriginPostureCenterColor);
+	}
+	else
 	{
 		PostureBar->SetColorAndOpacity(FLinearColor::Transparent);
 		PostureCenterImage->SetColorAndOpacity(FLinearColor::Transparent);

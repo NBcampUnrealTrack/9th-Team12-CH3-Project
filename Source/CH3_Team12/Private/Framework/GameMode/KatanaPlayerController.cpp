@@ -1,11 +1,17 @@
+// ReSharper disable CppMemberFunctionMayBeConst
 #include "Framework/GameMode/KatanaPlayerController.h"
 
 #include "EngineUtils.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Entity/Enemy/EnemyCharacterBase.h"
+#include "Entity/Enemy/Component/EnemyAttributeComponent.h"
+#include "Entity/Enemy/Component/EnemyTransitionComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
+#include "Framework/Subsystem/KatanaLevelSubsystem.h"
+#include "Framework/Subsystem/KatanaStageRecordManagerSubsystem.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
 
 APlayerCharacterBase* AKatanaPlayerController::GetPlayerCharacter() const
@@ -28,13 +34,16 @@ void AKatanaPlayerController::BeginPlay()
 	if (!EnemyCharacterBase)
 		return;
 
-	// TODO 죽었을 경우 패배 처리
-
 	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
 		return;
 
 	UIManager->ShowEnemyWidget(EnemyCharacterBase);
+
+	EnemyCharacterBase->GetEnemyAttributeComponent()->OnEnemyDeath.AddDynamic(
+		this, &AKatanaPlayerController::OnEnemyDeath);
+	EnemyCharacterBase->GetEnemyTransitionComponent()->OnTransitionFinishedDelegate.AddDynamic(
+		this, &AKatanaPlayerController::OnEnemyTransitionFinished);
 }
 
 void AKatanaPlayerController::OnPossess(APawn* InPawn)
@@ -45,13 +54,17 @@ void AKatanaPlayerController::OnPossess(APawn* InPawn)
 	if (!PlayerCharacterBase.IsValid())
 		return;
 
-	// TODO 죽었을 경우 패배 처리
-
 	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
 		return;
 
 	UIManager->ShowPlayerWidget(PlayerCharacterBase.Get());
+
+	UKatanaStageRecordManagerSubsystem* RecordManager = UKatanaStageRecordManagerSubsystem::Get(this);
+	if (!RecordManager)
+		return;
+
+	RecordManager->StartStageRecord(UKatanaLevelSubsystem::GetTargetMapName(this));
 }
 
 void AKatanaPlayerController::SetupInputComponent()
@@ -64,10 +77,23 @@ void AKatanaPlayerController::SetupInputComponent()
 
 	EnhancedInputComponent->BindAction(InGameMenuActon, ETriggerEvent::Started, this,
 	                                   &AKatanaPlayerController::ToggleInGameMenu);
-
-	UE_LOG(LogTemp, Warning, TEXT("UI 단축키 등록 완료!"));
 }
 
+void AKatanaPlayerController::OnUnPossess()
+{
+	Super::OnUnPossess();
+
+	if (UKatanaStageRecordManagerSubsystem* RecordManager = UKatanaStageRecordManagerSubsystem::Get(this))
+	{
+		RecordManager->CancelStageRecord();
+	}
+
+	if (UKatanaUIManagerSubsystem* UIManagerSubsystem = UKatanaUIManagerSubsystem::Get(this))
+	{
+		UIManagerSubsystem->HidePlayerWidget();
+		UIManagerSubsystem->HideEnemyWidget();
+	}
+}
 
 AEnemyCharacterBase* AKatanaPlayerController::FindEnemyCharacter() const
 {
@@ -85,7 +111,6 @@ AEnemyCharacterBase* AKatanaPlayerController::FindEnemyCharacter() const
 	return nullptr;
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void AKatanaPlayerController::ToggleInGameMenu(const FInputActionValue& Value)
 {
 	UE_LOG(LogTemp, Warning, TEXT("메뉴 단축키 눌림!"));
@@ -115,4 +140,27 @@ void AKatanaPlayerController::ToggleInGameMenu(const FInputActionValue& Value)
 		const FInputModeGameOnly InputMode;
 		SetInputMode(InputMode);
 	}
+}
+
+void AKatanaPlayerController::OnEnemyDeath()
+{
+	UKatanaStageRecordManagerSubsystem* RecordManager = UKatanaStageRecordManagerSubsystem::Get(this);
+	if (!RecordManager)
+		return;
+
+	RecordManager->FinishStageRecord(UKatanaLevelSubsystem::GetTargetMapName(this));
+}
+
+void AKatanaPlayerController::OnEnemyTransitionFinished()
+{
+	bShowMouseCursor = true;
+	FInputModeGameAndUI InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+
+	UKatanaUIManagerSubsystem* UIManager = GetLocalPlayer()->GetSubsystem<UKatanaUIManagerSubsystem>();
+	if (!UIManager)
+		return;
+
+	UIManager->ShowStageResultWidget();
 }

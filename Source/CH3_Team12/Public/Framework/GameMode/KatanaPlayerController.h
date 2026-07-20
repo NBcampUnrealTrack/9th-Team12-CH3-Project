@@ -27,6 +27,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void SetupInputComponent() override;
+	virtual void OnUnPossess() override;
 
 private:
 	UPROPERTY()
@@ -34,4 +35,10 @@ private:
 
 	AEnemyCharacterBase* FindEnemyCharacter() const;
 	void ToggleInGameMenu(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnEnemyDeath();
+
+	UFUNCTION()
+	void OnEnemyTransitionFinished();
 };

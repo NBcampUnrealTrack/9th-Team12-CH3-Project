@@ -1,5 +1,6 @@
 #include "UI/Settings/InputSettingsPresenter.h"
 
+#include "Framework/InputActionNames.h"
 #include "Framework/Subsystem/KatanaInputManagerSubsystem.h"
 #include "UI/Settings/InputSettingsWidget.h"
 
@@ -60,6 +61,13 @@ void UInputSettingsPresenter::HandleBtnDoneClicked()
 	for (const auto& Elem : PendingKeyBindings)
 	{
 		InputManagerSubsystem->SetKeyBinding(Elem.Key, Elem.Value);
+	}
+
+	// Attack 키랑 HeavyAttack 키를 똑같이 바꾸기
+	if (PendingKeyBindings.Contains(InputActionNames::Attack))
+	{
+		const FKey& HeavyAttackKey = PendingKeyBindings[InputActionNames::Attack];
+		InputManagerSubsystem->SetKeyBinding(InputActionNames::HeavyAttack, HeavyAttackKey);
 	}
 
 	InputManagerSubsystem->ApplyAndSaveInputSettings();

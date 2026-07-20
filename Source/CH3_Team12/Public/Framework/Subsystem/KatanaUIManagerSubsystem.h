@@ -50,6 +50,9 @@ public:
 	void ShowEnemyWidget(AEnemyCharacterBase* InEnemyCharacterBase);
 	void HideEnemyWidget();
 
+	void ShowStageResultWidget();
+	void HideStageResultWidget();
+
 	void RegisterInventoryWidget(UInventoryWidget* InWidget);
 	void UnregisterInventoryWidget(UInventoryWidget* InWidget);
 
@@ -72,6 +75,8 @@ private:
 	const FName PlayerWidgetName = FName("PlayerWidget");
 	const FName EnemyWidgetName = FName("EnemyWidget");
 
+	const FName StageResultWidgetName = FName("StageResultWidget");
+
 	const FName InventoryWidgetName = FName("InventoryWidget");
 	const FName SoundSettingsWidgetName = FName("SoundSettingsWidget");
 	const FName GraphicSettingsWidgetName = FName("GraphicSettingsWidget");
@@ -90,7 +95,10 @@ private:
 	T* OpShowUI(const FName UIName)
 	{
 		if (ActiveViews.Contains(UIName))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UKatanaUIManagerSubsystem: UI %s is already active"), *UIName.ToString());
 			return Cast<T>(ActiveViews[UIName]);
+		}
 
 		if (UIDataAsset.IsNull())
 		{

@@ -15,43 +15,24 @@ void UEnemyWidget::UpdateName(const FString& InName)
 void UEnemyWidget::UpdateHealthBar(const float Percent)
 {
 	HealthBar->SetPercent(Percent);
-
-	if (HealthPercent > Percent)
-	{
-		PostureBar->SetColorAndOpacity(DamagePostureColor);
-		bTakeDamageHealth = true;
-	}
-	else if (HealthPercent < Percent)
-	{
-		PostureBar->SetColorAndOpacity(NormalPostureColor);
-		bTakeDamageHealth = false;
-	}
-
+	bTakeDamageHealth = HealthPercent > Percent;
 	HealthPercent = Percent;
 }
 
 void UEnemyWidget::UpdatePostureBar(const float Percent)
 {
-	FLinearColor PostureColor = NormalPostureColor;
-	if (bTakeDamageHealth)
-		PostureColor = DamagePostureColor;
-
-	PostureBar->SetColorAndOpacity(PostureColor);
-	PostureCenterImage->SetColorAndOpacity(OriginPostureCenterColor);
-
 	PostureBar->SetPercent(Percent);
-
 	PosturePercent = Percent;
 }
 
 void UEnemyWidget::BreakPostureBar()
 {
-	PostureBar->SetColorAndOpacity(BreakPostureColor);
+	bBreakPosture = true;
 }
 
 void UEnemyWidget::RecoverPostureBar()
 {
-	PostureBar->SetColorAndOpacity(NormalPostureColor);
+	bBreakPosture = false;
 }
 
 void UEnemyWidget::NativeConstruct()
@@ -64,7 +45,18 @@ void UEnemyWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	if (PosturePercent <= 0.0f)
+	if (PosturePercent > 0.0f)
+	{
+		FLinearColor PostureColor = NormalPostureColor;
+		if (bTakeDamageHealth)
+			PostureColor = DamagePostureColor;
+		else if (bBreakPosture)
+			PostureColor = BreakPostureColor;
+
+		PostureBar->SetColorAndOpacity(PostureColor);
+		PostureCenterImage->SetColorAndOpacity(OriginPostureCenterColor);
+	}
+	else
 	{
 		PostureBar->SetColorAndOpacity(FLinearColor::Transparent);
 		PostureCenterImage->SetColorAndOpacity(FLinearColor::Transparent);

@@ -14,5 +14,6 @@ namespace InputActionNames
 	const FName UseItem(TEXT("UseItem"));
 	const FName Equip(TEXT("Equip"));
 	const FName Special(TEXT("Special"));
+	const FName HeavyAttack(TEXT("HeavyAttack"));
 	const FName InGameMenu(TEXT("InGameMenu"));
 }

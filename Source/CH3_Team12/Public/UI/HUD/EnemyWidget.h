@@ -52,6 +52,7 @@ protected:
 private:
 	float HealthPercent;
 	bool bTakeDamageHealth = false;
+	bool bBreakPosture = false;
 
 	float PosturePercent;
 

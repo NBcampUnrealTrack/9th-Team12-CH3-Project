@@ -27,5 +27,8 @@ private:
 	TWeakObjectPtr<ULoadingWidget> LoadingWidget;
 
 	UFUNCTION()
-	void OnModelProgressUpdated(float Percent) const;
+	void HandleModelProgressUpdated(float Percent) const;
+
+	UFUNCTION()
+	void HandleLoadingCompleted() const;
 };
