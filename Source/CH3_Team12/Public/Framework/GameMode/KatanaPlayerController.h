@@ -41,4 +41,7 @@ private:
 
 	UFUNCTION()
 	void OnEnemyTransitionFinished();
+
+	UFUNCTION()
+	void OnPlayerDead();
 };

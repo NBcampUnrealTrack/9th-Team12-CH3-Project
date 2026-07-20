@@ -7,6 +7,7 @@
 #include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "Entity/Enemy/Component/EnemyTransitionComponent.h"
+#include "Entity/Player/PlayerAttributeComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "Framework/Subsystem/KatanaStageRecordManagerSubsystem.h"
@@ -65,6 +66,8 @@ void AKatanaPlayerController::OnPossess(APawn* InPawn)
 		return;
 
 	RecordManager->StartStageRecord(UKatanaLevelSubsystem::GetTargetMapName(this));
+
+	PlayerCharacterBase->GetAttributeComponent()->OnDead.AddDynamic(this, &AKatanaPlayerController::OnPlayerDead);
 }
 
 void AKatanaPlayerController::SetupInputComponent()
@@ -158,9 +161,23 @@ void AKatanaPlayerController::OnEnemyTransitionFinished()
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 	SetInputMode(InputMode);
 
-	UKatanaUIManagerSubsystem* UIManager = GetLocalPlayer()->GetSubsystem<UKatanaUIManagerSubsystem>();
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
 	if (!UIManager)
 		return;
 
 	UIManager->ShowStageResultWidget();
+}
+
+void AKatanaPlayerController::OnPlayerDead()
+{
+	bShowMouseCursor = true;
+	FInputModeGameAndUI InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
+	if (!UIManager)
+		return;
+
+	UIManager->ShowPlayerDeathWidget();
 }

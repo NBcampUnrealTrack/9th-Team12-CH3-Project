@@ -37,18 +37,15 @@ void UStageResultPresenter::Dispose()
 // ReSharper disable once CppMemberFunctionMayBeConst
 void UStageResultPresenter::HandleBtnDoneClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("HandleBtnDoneClicked"));
 	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(GetWorld());
 	if (!UIManager)
 		return;
 
-	UE_LOG(LogTemp, Warning, TEXT("HideStageResultWidget"));
 	UIManager->HideStageResultWidget();
 
 	UKatanaLevelSubsystem* LevelManager = UKatanaLevelSubsystem::Get(GetWorld());
 	if (!LevelManager)
 		return;
 
-	UE_LOG(LogTemp, Warning, TEXT("LoadMainMenuLevel"));
 	LevelManager->LoadLevel("MainMenuLevel"); // 타이틀 화면으로 이동
 }

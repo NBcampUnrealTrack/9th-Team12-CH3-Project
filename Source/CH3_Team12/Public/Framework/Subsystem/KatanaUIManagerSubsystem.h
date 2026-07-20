@@ -53,6 +53,9 @@ public:
 	void ShowStageResultWidget();
 	void HideStageResultWidget();
 
+	void ShowPlayerDeathWidget();
+	void HidePlayerDeathWidget();
+
 	void RegisterInventoryWidget(UInventoryWidget* InWidget);
 	void UnregisterInventoryWidget(UInventoryWidget* InWidget);
 
@@ -76,6 +79,7 @@ private:
 	const FName EnemyWidgetName = FName("EnemyWidget");
 
 	const FName StageResultWidgetName = FName("StageResultWidget");
+	const FName PlayerDeathWidgetName = FName("PlayerDeathWidget");
 
 	const FName InventoryWidgetName = FName("InventoryWidget");
 	const FName SoundSettingsWidgetName = FName("SoundSettingsWidget");
