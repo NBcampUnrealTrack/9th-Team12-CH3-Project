@@ -16,6 +16,12 @@ void ULoadingPresenter::Initialize(ULoadingWidget* InWidget)
 	if (!LoadingWidget.IsValid())
 		return;
 
+	UTexture2D* ImgFrontTexture = LevelSubsystem->GetTargetMapTexture2D();
+	TArray<FText> LoadingTipTexts = LevelSubsystem->GetLoadingTipTexts();
+	const FText LoadingTipText = LoadingTipTexts[FMath::RandRange(0, LoadingTipTexts.Num() - 1)];
+
+	LoadingWidget->UpdateWidget(ImgFrontTexture, LoadingTipText);
+
 	LevelSubsystem->OnLoadingProgressUpdated.AddDynamic(this, &ULoadingPresenter::HandleModelProgressUpdated);
 	LevelSubsystem->OnLoadingCompleted.AddDynamic(this, &ULoadingPresenter::HandleLoadingCompleted);
 }
