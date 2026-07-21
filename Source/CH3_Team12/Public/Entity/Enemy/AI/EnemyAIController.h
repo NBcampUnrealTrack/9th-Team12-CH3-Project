@@ -18,6 +18,8 @@ class CH3_TEAM12_API AEnemyAIController : public AAIController
 public:
 	AEnemyAIController();
 
+	virtual void BeginPlay() override;
+	
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 
@@ -36,4 +38,9 @@ protected:
 
 	FTimerHandle TargetActorTimerHandle;
 	void UpdateTargetActor();
+	
+private:
+	UFUNCTION()
+	void OnPlayerEvadeSuccess(const FIncomingAttackContext& InAttackContext);
+	
 };
