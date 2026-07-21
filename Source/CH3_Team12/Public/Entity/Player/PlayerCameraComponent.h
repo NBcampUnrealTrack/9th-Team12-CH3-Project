@@ -61,6 +61,13 @@ public:
 
 	void EndTimeWarpPostProcess();
 	
+	void UpdateTimeWarpPostProcess(
+		const FVector& PlayerOriginWS,
+		const FVector& SweepDirectionWS,
+		float ProgressDistance,
+		float EffectAlpha
+	);
+	
 protected:
 	virtual void TickComponent(
 		float DeltaTime,
