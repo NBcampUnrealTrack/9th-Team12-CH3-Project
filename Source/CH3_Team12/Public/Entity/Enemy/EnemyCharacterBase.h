@@ -42,14 +42,14 @@ public:
 
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-	
+
 	const UEnemyExecutionDataAsset* GetExecutionData() const { return ExecutionData; }
-	
+
 	UFUNCTION(BlueprintCallable)
 	FString GetEnemyName() const { return EnemyName; }
 	bool CanExecuted();
 	void StartExecuted();
-	
+
 public:
 	FOnDestroyed OnDestroyedDelegate;
 
@@ -80,31 +80,31 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
 	float DestroyTime = 30.0f;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
     FString EnemyName = TEXT("None");
 
 	UPROPERTY(EditDefaultsOnly, Category="Enemy | VFX")
 	TObjectPtr<UNiagaraSystem> DeathDisintegrationVFX;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
 	TObjectPtr<UEnemyExecutionDataAsset> ExecutionData;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation | Dead")
 	FName ExecutionMontageIsDeadNotifyKey = TEXT("IsDead");
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Animation | Dead")
 	FName ExecutionMontageLoopEndSectionKey = TEXT("LoopEnd");
-	
-protected:	
+
+protected:
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	void StopAILogic();
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	void ResumeAILogic();
-	
+
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	virtual void DestroyEnemy();
-	
+
 private:
 	UFUNCTION()
 	void HandlePostureBroken();
@@ -113,19 +113,19 @@ private:
 
 	UFUNCTION()
 	void OnDeath();
-	
+
 	void ProcessDeath();
 	bool PlayDeathMontage();
 	void StartDeathTransition();
 	void SetEnemyDestroyTimer();
-	
+
 	void StartExecuted_Implement();
 	bool PlayExecutedMontage();
 	void OnExecutedMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	
+
 	UFUNCTION()
 	void OnExecutedMontageDeadCheck(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
-	
+
 public:
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 
@@ -135,6 +135,7 @@ public:
 	UStateTagComponent* GetStateTagComponent() const { return StateTagComponent; }
 	UEnemyAttributeComponent* GetEnemyAttributeComponent() const { return AttributeComponent; }
 	UEnemyDefenseComponent* GetEnemyDefenseComponent() const { return EnemyDefenseComponent; }
+	UEnemyTransitionComponent* GetEnemyTransitionComponent() const { return EnemyTransitionComponent; }
 
 	// Attack Animation Interface's Section
 	virtual void AttackAnimationEnd() override;
