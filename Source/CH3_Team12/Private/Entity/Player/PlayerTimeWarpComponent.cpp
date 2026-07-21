@@ -68,6 +68,8 @@ void UPlayerTimeWarpComponent::TickComponent(
 		return;
 	}
 
+	UpdateVisualEffects();
+
 	const double Now = FPlatformTime::Seconds();
 
 	if (Now >= EndRealTime)
@@ -161,6 +163,7 @@ void UPlayerTimeWarpComponent::ActivateTimeWarp(
 	}
 
 	const double Now = FPlatformTime::Seconds();
+	VisualStartRealTime = Now;
 
 	if (bActive)
 	{
@@ -414,4 +417,80 @@ bool UPlayerTimeWarpComponent::IsActorAlreadyCached(
 	}
 
 	return false;
+}
+
+void UPlayerTimeWarpComponent::UpdateVisualEffects()
+{
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+
+	UPlayerCameraComponent* CameraComponent =
+		OwnerCharacter->GetPlayerCameraComponent();
+
+	if (!CameraComponent)
+	{
+		return;
+	}
+
+	const double Now =
+		FPlatformTime::Seconds();
+
+	const float Elapsed =
+		static_cast<float>(Now - VisualStartRealTime);
+
+	const float Alpha =
+		FMath::Clamp(
+			Elapsed / FMath::Max(SurfaceSweepDuration, 0.001f),
+			0.0f,
+			1.0f
+		);
+
+	const float SweepAlpha =
+		FMath::InterpEaseOut(
+			0.0f,
+			1.0f,
+			Alpha,
+			1.4f
+		);
+
+	const float ProgressDistance =
+		FMath::Lerp(
+			SweepStartDistance,
+			SweepEndDistance,
+			SweepAlpha
+		);
+
+	const float FadeOutAlpha =
+		FMath::Clamp(
+			(Alpha - SweepFadeOutStartAlpha) /
+			FMath::Max(1.0f - SweepFadeOutStartAlpha, 0.001f),
+			0.0f,
+			1.0f
+		);
+
+	const float EffectAlpha =
+		1.0f - FadeOutAlpha;
+
+	FVector SweepDirection =
+		OwnerCharacter->GetControlRotation().Vector();
+
+	SweepDirection.Z = 0.0f;
+
+	if (!SweepDirection.Normalize())
+	{
+		SweepDirection =
+			OwnerCharacter->GetActorForwardVector();
+	}
+
+	SweepDirection.Z = 0.0f;
+	SweepDirection.Normalize();
+
+	CameraComponent->UpdateTimeWarpPostProcess(
+		OwnerCharacter->GetActorLocation(),
+		SweepDirection,
+		ProgressDistance,
+		EffectAlpha
+	);
 }
