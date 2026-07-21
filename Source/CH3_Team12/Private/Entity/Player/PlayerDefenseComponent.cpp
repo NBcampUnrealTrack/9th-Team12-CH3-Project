@@ -285,8 +285,25 @@ EDefenseResult UPlayerDefenseComponent::ResolveIncomingAttack(
 		return EDefenseResult::None;
 	}
 
-	if (StateComponent->HasStateTagExact(
-		CombatTags::State_Combat_Invincible))
+	const bool bIsDodging =
+	StateComponent->HasStateTagExact(
+		CombatTags::State_Combat_Dodging
+	);
+
+	const bool bIsInvincible =
+		StateComponent->HasStateTagExact(
+			CombatTags::State_Combat_Invincible
+		);
+
+	if (bIsDodging && bIsInvincible)
+	{
+		OnEvadeSuccess.Broadcast(Context);
+		UE_LOG(LogTemp, Warning, TEXT("ResolveIncomingAttack: Evade"));
+
+		return EDefenseResult::Evade;
+	}
+	
+	if (bIsInvincible)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ResolveIncomingAttack: Invincible"));
 		return EDefenseResult::Invincible;

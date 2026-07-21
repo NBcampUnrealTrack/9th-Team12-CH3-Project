@@ -10,10 +10,32 @@
 #include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "Entity/Player/PlayerCharacterBase.h"
+#include "Entity/Player/PlayerDefenseComponent.h"
+
 AEnemyAIController::AEnemyAIController()
 {
 	BehaviorTreeComponent = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("BehaviorTreeComponent"));
 	BlackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackBoardComponent"));
+}
+
+void AEnemyAIController::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (PlayerPawn)
+	{
+		APlayerCharacterBase* PlayerCharacter = Cast<APlayerCharacterBase>(PlayerPawn);
+		if (PlayerCharacter)
+		{
+			UPlayerDefenseComponent* PlayerDefenseComponent = PlayerCharacter->GetDefenseComponent();
+			if (PlayerDefenseComponent)
+			{
+				PlayerDefenseComponent->OnEvadeSuccess.AddUObject(this, &AEnemyAIController::OnPlayerEvadeSuccess);	
+			}
+		}
+	}	
 }
 
 
@@ -97,4 +119,9 @@ void AEnemyAIController::UpdateTargetActor()
 	SetFocus(PlayerPawn);
 
 	GetWorldTimerManager().ClearTimer(TargetActorTimerHandle);
+}
+
+void AEnemyAIController::OnPlayerEvadeSuccess(const FIncomingAttackContext& InAttackContext)
+{
+	ClearFocus(EAIFocusPriority::Gameplay);
 }

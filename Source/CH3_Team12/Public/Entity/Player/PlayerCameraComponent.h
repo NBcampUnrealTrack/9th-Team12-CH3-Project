@@ -13,6 +13,8 @@ class UStateTagComponent;
 class UPlayerCameraDataAsset;
 class AActor;
 class AEnemyCharacterBase;
+class UMaterialInterface;
+class UMaterialInstanceDynamic;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 	FOnLockOnStateChanged,
@@ -51,6 +53,13 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category="Camera|LockOn")
 	FOnLockOnStateChanged OnLockOnStateChanged;
+	
+	void BeginTimeWarpPostProcess(
+		UMaterialInterface* PostProcessMaterial,
+		float BlendWeight
+	);
+
+	void EndTimeWarpPostProcess();
 	
 protected:
 	virtual void TickComponent(
@@ -113,4 +122,13 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category="Camera|Data")
 	TObjectPtr<UPlayerCameraDataAsset> CameraData;
+	
+private:
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> TimeWarpPostProcessMID;
+
+	float TimeWarpPostProcessBlendWeight = 1.0f;
+
+	void AddTimeWarpPostProcessBlendable();
+	void RemoveTimeWarpPostProcessBlendable();
 };
