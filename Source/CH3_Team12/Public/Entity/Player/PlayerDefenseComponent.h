@@ -24,6 +24,11 @@ class USoundBase;
 struct FInputActionValue;
 struct FHitResult;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(
+	FOnPlayerEvadeSuccess,
+	const FIncomingAttackContext&
+);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UPlayerDefenseComponent : public UActorComponent
 {
@@ -39,6 +44,8 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
+	FOnPlayerEvadeSuccess OnEvadeSuccess;
+	
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> OwnerCharacter;
 	UPROPERTY()
@@ -70,7 +77,6 @@ public:
 	void EnableInvincible();
 	void DisableInvincible();
 	
-	// Debug
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackFront();
 

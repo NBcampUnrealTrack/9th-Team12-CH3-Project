@@ -15,6 +15,9 @@
 #include "Components/CapsuleComponent.h"
 #include "InputActionValue.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
+#include "Engine/Scene.h"
 
 UPlayerCameraComponent::UPlayerCameraComponent()
 {
@@ -199,6 +202,64 @@ void UPlayerCameraComponent::EndExecutionCamera()
 
 	bWasLockOnBeforeExecution = false;
 	LockOnTargetBeforeExecution = nullptr;
+}
+
+void UPlayerCameraComponent::BeginTimeWarpPostProcess(
+	UMaterialInterface* PostProcessMaterial,
+	float BlendWeight
+)
+{
+	if (!PostProcessMaterial)
+	{
+		return;
+	}
+
+	if (!FollowCamera)
+	{
+		return;
+	}
+
+	TimeWarpPostProcessBlendWeight =
+		FMath::Clamp(BlendWeight, 0.0f, 1.0f);
+
+	if (!TimeWarpPostProcessMID)
+	{
+		TimeWarpPostProcessMID =
+			UMaterialInstanceDynamic::Create(
+				PostProcessMaterial,
+				this
+			);
+	}
+
+	if (!TimeWarpPostProcessMID)
+	{
+		return;
+	}
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("EffectAmount"),
+		TimeWarpPostProcessBlendWeight
+	);
+
+	AddTimeWarpPostProcessBlendable();
+}
+
+void UPlayerCameraComponent::EndTimeWarpPostProcess()
+{
+	if (!FollowCamera)
+	{
+		return;
+	}
+
+	if (TimeWarpPostProcessMID)
+	{
+		TimeWarpPostProcessMID->SetScalarParameterValue(
+			TEXT("EffectAmount"),
+			0.0f
+		);
+	}
+
+	RemoveTimeWarpPostProcessBlendable();
 }
 
 // 락온 상태면 해제, 아니면 락온 시도
@@ -910,4 +971,48 @@ bool UPlayerCameraComponent::CanRestoreLockOnAfterExecution(
 	}
 
 	return true;
+}
+
+void UPlayerCameraComponent::AddTimeWarpPostProcessBlendable()
+{
+	if (!FollowCamera || !TimeWarpPostProcessMID)
+	{
+		return;
+	}
+
+	for (FWeightedBlendable& Blendable :
+		FollowCamera->PostProcessSettings.WeightedBlendables.Array)
+	{
+		if (Blendable.Object == TimeWarpPostProcessMID)
+		{
+			Blendable.Weight = TimeWarpPostProcessBlendWeight;
+			return;
+		}
+	}
+
+	FollowCamera->PostProcessSettings.WeightedBlendables.Array.Add(
+		FWeightedBlendable(
+			TimeWarpPostProcessBlendWeight,
+			TimeWarpPostProcessMID
+		)
+	);
+}
+
+void UPlayerCameraComponent::RemoveTimeWarpPostProcessBlendable()
+{
+	if (!FollowCamera || !TimeWarpPostProcessMID)
+	{
+		return;
+	}
+
+	TArray<FWeightedBlendable>& Blendables =
+		FollowCamera->PostProcessSettings.WeightedBlendables.Array;
+
+	for (int32 Index = Blendables.Num() - 1; Index >= 0; --Index)
+	{
+		if (Blendables[Index].Object == TimeWarpPostProcessMID)
+		{
+			Blendables.RemoveAt(Index);
+		}
+	}
 }

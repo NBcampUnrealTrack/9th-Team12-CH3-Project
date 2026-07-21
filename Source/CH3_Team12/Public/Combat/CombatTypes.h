@@ -69,8 +69,10 @@ UENUM(BlueprintType)
 enum class EDefenseResult : uint8
 {
 	None,
-	Parry,
-	Guard,
 	Hit,
-	Invincible
+	Guard,
+	Parry,
+	GuardBroken,
+	Invincible,
+	Evade
 };
