@@ -5,6 +5,7 @@
 #include "Entity/Player/StateTagComponent.h"
 #include "Framework/DataAsset/PlayerTimeWarpDataAsset.h"
 #include "GameplayTags/CombatGameplayTags.h"
+#include "Entity/Player/PlayerCameraComponent.h"
 
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
@@ -272,8 +273,14 @@ void UPlayerTimeWarpComponent::StartVisualEffects()
 		}
 	}
 
-	// PostProcess는 1차에서는 비워둔다.
-	// 나중에 CameraComponent에 BeginTimeWarpPostProcess / EndTimeWarpPostProcess를 만들어 연결.
+	if (UPlayerCameraComponent* CameraComponent =
+		OwnerCharacter->GetPlayerCameraComponent())
+	{
+		CameraComponent->BeginTimeWarpPostProcess(
+			TimeWarpData->PostProcessMaterial,
+			TimeWarpData->PostProcessBlendWeight
+		);
+	}
 }
 
 void UPlayerTimeWarpComponent::StopVisualEffects()
@@ -296,6 +303,12 @@ void UPlayerTimeWarpComponent::StopVisualEffects()
 	{
 		ActiveTrailComponent->Deactivate();
 		ActiveTrailComponent = nullptr;
+	}
+
+	if (UPlayerCameraComponent* CameraComponent =
+		OwnerCharacter->GetPlayerCameraComponent())
+	{
+		CameraComponent->EndTimeWarpPostProcess();
 	}
 }
 
