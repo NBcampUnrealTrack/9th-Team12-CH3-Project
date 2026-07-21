@@ -52,5 +52,5 @@ void UPlayerDeathPresenter::HandleMainMenuButtonClicked()
 	if (!LevelManager)
 		return;
 
-	LevelManager->LoadLevel("MainMenuLevel"); // 타이틀 화면으로 이동
+	LevelManager->LoadLevel("MainMenuLevel", 0.0f); // 타이틀 화면으로 이동
 }
