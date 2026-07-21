@@ -37,11 +37,14 @@ private:
 	void ToggleInGameMenu(const FInputActionValue& Value);
 
 	UFUNCTION()
-	void OnEnemyDeath();
+	void HandleEnemyDeath();
 
 	UFUNCTION()
-	void OnEnemyTransitionFinished();
+	void HandleEnemyTransitionFinished();
 
 	UFUNCTION()
-	void OnPlayerDead();
+	void HandlePlayerDead();
+
+	UFUNCTION()
+	void HandlePlayerLockOnStateChanged(bool bIsLockOn, AActor* LockOnTarget);
 };

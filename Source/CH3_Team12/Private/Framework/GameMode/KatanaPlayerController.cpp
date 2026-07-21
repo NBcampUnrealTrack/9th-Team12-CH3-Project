@@ -8,6 +8,7 @@
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "Entity/Enemy/Component/EnemyTransitionComponent.h"
 #include "Entity/Player/PlayerAttributeComponent.h"
+#include "Entity/Player/PlayerCameraComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "Framework/Subsystem/KatanaStageRecordManagerSubsystem.h"
@@ -42,9 +43,9 @@ void AKatanaPlayerController::BeginPlay()
 	UIManager->ShowEnemyWidget(EnemyCharacterBase);
 
 	EnemyCharacterBase->GetEnemyAttributeComponent()->OnEnemyDeath.AddDynamic(
-		this, &AKatanaPlayerController::OnEnemyDeath);
+		this, &AKatanaPlayerController::HandleEnemyDeath);
 	EnemyCharacterBase->GetEnemyTransitionComponent()->OnTransitionFinishedDelegate.AddDynamic(
-		this, &AKatanaPlayerController::OnEnemyTransitionFinished);
+		this, &AKatanaPlayerController::HandleEnemyTransitionFinished);
 }
 
 void AKatanaPlayerController::OnPossess(APawn* InPawn)
@@ -67,7 +68,9 @@ void AKatanaPlayerController::OnPossess(APawn* InPawn)
 
 	RecordManager->StartStageRecord(UKatanaLevelSubsystem::GetTargetMapName(this));
 
-	PlayerCharacterBase->GetAttributeComponent()->OnDead.AddDynamic(this, &AKatanaPlayerController::OnPlayerDead);
+	PlayerCharacterBase->GetAttributeComponent()->OnDead.AddDynamic(this, &AKatanaPlayerController::HandlePlayerDead);
+	PlayerCharacterBase->GetPlayerCameraComponent()->OnLockOnStateChanged.AddDynamic(
+		this, &AKatanaPlayerController::HandlePlayerLockOnStateChanged);
 }
 
 void AKatanaPlayerController::SetupInputComponent()
@@ -93,6 +96,8 @@ void AKatanaPlayerController::OnUnPossess()
 
 	if (UKatanaUIManagerSubsystem* UIManagerSubsystem = UKatanaUIManagerSubsystem::Get(this))
 	{
+		UIManagerSubsystem->HideLockOnWidget();
+
 		UIManagerSubsystem->HidePlayerWidget();
 		UIManagerSubsystem->HideEnemyWidget();
 	}
@@ -145,7 +150,7 @@ void AKatanaPlayerController::ToggleInGameMenu(const FInputActionValue& Value)
 	}
 }
 
-void AKatanaPlayerController::OnEnemyDeath()
+void AKatanaPlayerController::HandleEnemyDeath()
 {
 	UKatanaStageRecordManagerSubsystem* RecordManager = UKatanaStageRecordManagerSubsystem::Get(this);
 	if (!RecordManager)
@@ -154,7 +159,7 @@ void AKatanaPlayerController::OnEnemyDeath()
 	RecordManager->FinishStageRecord(UKatanaLevelSubsystem::GetTargetMapName(this));
 }
 
-void AKatanaPlayerController::OnEnemyTransitionFinished()
+void AKatanaPlayerController::HandleEnemyTransitionFinished()
 {
 	bShowMouseCursor = true;
 	FInputModeGameAndUI InputMode;
@@ -168,7 +173,7 @@ void AKatanaPlayerController::OnEnemyTransitionFinished()
 	UIManager->ShowStageResultWidget();
 }
 
-void AKatanaPlayerController::OnPlayerDead()
+void AKatanaPlayerController::HandlePlayerDead()
 {
 	bShowMouseCursor = true;
 	FInputModeGameAndUI InputMode;
@@ -180,4 +185,20 @@ void AKatanaPlayerController::OnPlayerDead()
 		return;
 
 	UIManager->ShowPlayerDeathWidget();
+}
+
+void AKatanaPlayerController::HandlePlayerLockOnStateChanged(bool bIsLockOn, AActor* LockOnTarget)
+{
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
+	if (!UIManager)
+		return;
+
+	if (bIsLockOn)
+	{
+		UIManager->ShowLockOnWidget(LockOnTarget);
+	}
+	else
+	{
+		UIManager->HideLockOnWidget();
+	}
 }

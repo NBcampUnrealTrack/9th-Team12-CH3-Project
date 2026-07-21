@@ -22,7 +22,7 @@ class UUserWidget;
  *
  */
 UCLASS()
-class CH3_TEAM12_API UKatanaUIManagerSubsystem : public ULocalPlayerSubsystem
+class CH3_TEAM12_API UKatanaUIManagerSubsystem : public ULocalPlayerSubsystem, public FTickableGameObject
 {
 	GENERATED_BODY()
 
@@ -30,6 +30,13 @@ public:
 	static UKatanaUIManagerSubsystem* Get(const UObject* WorldContextObject);
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+
+	virtual bool IsTickable() const override;
+	virtual TStatId GetStatId() const override;
+	virtual UWorld* GetTickableGameObjectWorld() const override;
+	virtual void Tick(float DeltaTime) override;
+	virtual ETickableTickType GetTickableTickType() const override { return ETickableTickType::Conditional; }
 
 	void ShowMainMenuWidget();
 	void HideMainMenuWidget();
@@ -43,6 +50,9 @@ public:
 
 	void ShowLoadingWidget();
 	void HideLoadingWidget();
+
+	void ShowLockOnWidget(AActor* InTargetActor);
+	void HideLockOnWidget();
 
 	void ShowPlayerWidget(APlayerCharacterBase* InPlayerCharacterBase);
 	void HidePlayerWidget();
@@ -75,6 +85,8 @@ private:
 
 	const FName LoadingWidgetName = FName("LoadingWidget");
 
+	const FName LockOnWidgetName = FName("LockOnWidget");
+
 	const FName PlayerWidgetName = FName("PlayerWidget");
 	const FName EnemyWidgetName = FName("EnemyWidget");
 
@@ -90,7 +102,7 @@ private:
 	TSoftObjectPtr<UUIDataAsset> UIDataAsset = nullptr;
 
 	UPROPERTY()
-	TMap<FName, UUserWidget*> ActiveViews;
+	TMap<FName, TObjectPtr<UUserWidget>> ActiveViews;
 
 	UPROPERTY()
 	TMap<FName, TScriptInterface<IPresenterInterface>> ActivePresenters;
@@ -138,7 +150,7 @@ private:
 		if (NewWidget)
 		{
 			NewWidget->AddToViewport(Info.ZOrder);
-			ActiveViews.Add(UIName, NewWidget);
+			ActiveViews.Add(UIName, Cast<UUserWidget>(NewWidget));
 		}
 
 		return NewWidget;
