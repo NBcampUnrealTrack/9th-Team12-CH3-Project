@@ -47,7 +47,6 @@ void USoundSettingsPresenter::HandleMasterVolumeChanged(const float NewVolume) c
 	if (!SoundManagerSubsystem.IsValid())
 		return;
 
-	UE_LOG(LogTemp, Warning, TEXT("Master Volume Changed: %f"), NewVolume);
 	SoundManagerSubsystem->SetVolume(EAudioType::Master, NewVolume);
 }
 
@@ -56,7 +55,6 @@ void USoundSettingsPresenter::HandleBGMVolumeChanged(const float NewVolume) cons
 	if (!SoundManagerSubsystem.IsValid())
 		return;
 
-	UE_LOG(LogTemp, Warning, TEXT("BGM Volume Changed: %f"), NewVolume);
 	SoundManagerSubsystem->SetVolume(EAudioType::BGM, NewVolume);
 }
 
@@ -65,7 +63,6 @@ void USoundSettingsPresenter::HandleSFXVolumeChanged(const float NewVolume) cons
 	if (!SoundManagerSubsystem.IsValid())
 		return;
 
-	UE_LOG(LogTemp, Warning, TEXT("SFX Volume Changed: %f"), NewVolume);
 	SoundManagerSubsystem->SetVolume(EAudioType::SFX, NewVolume);
 }
 

@@ -25,7 +25,16 @@ UKatanaLevelSubsystem* UKatanaLevelSubsystem::Get(const UObject* WorldContextObj
 		return nullptr;
 	}
 
-	return  GameInstance->GetSubsystem<UKatanaLevelSubsystem>();
+	return GameInstance->GetSubsystem<UKatanaLevelSubsystem>();
+}
+
+FName UKatanaLevelSubsystem::GetTargetMapName(const UObject* WorldContextObject)
+{
+	const UKatanaLevelSubsystem* KatanaLevelSubsystem = Get(WorldContextObject);
+	if (!KatanaLevelSubsystem)
+		return FName();
+
+	return KatanaLevelSubsystem->TargetMapName;
 }
 
 void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName)
@@ -51,11 +60,13 @@ void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName)
 	}
 
 	TargetMap = LevelDataAsset->LevelInfoMap[TargetLevelName].LevelMap;
+	TargetMapName = TargetLevelName;
 	DelayLoadTime = 0.0f;
 	MaxDelayLoadTime = LevelDataAsset->DelayLoadTime;
 	UGameplayStatics::OpenLevelBySoftObjectPtr(GetGameInstance(), LevelDataAsset->LoadingLevelInfo.LevelMap);
 }
 
+// LoadingGameMode 에서 실행하는 부분
 void UKatanaLevelSubsystem::StartLoadingTargetMapAsync()
 {
 	if (TargetMap.IsNull())
@@ -65,7 +76,8 @@ void UKatanaLevelSubsystem::StartLoadingTargetMapAsync()
 	}
 
 	GetWorld()->GetTimerManager().ClearTimer(LoopTimerHandle);
-	GetWorld()->GetTimerManager().SetTimer(LoopTimerHandle, this, &UKatanaLevelSubsystem::OnLoadingProgressTimer, LoopRate, true);
+	GetWorld()->GetTimerManager().SetTimer(LoopTimerHandle, this, &UKatanaLevelSubsystem::OnLoadingProgressTimer,
+	                                       LoopRate, true);
 
 	LoadingHandle = StreamableManager.RequestAsyncLoad(
 		TargetMap.ToSoftObjectPath()
@@ -97,4 +109,6 @@ void UKatanaLevelSubsystem::OnLoadingProgressTimer()
 
 	LoadingHandle->ReleaseHandle();
 	TargetMap.Reset();
+
+	OnLoadingCompleted.Broadcast();
 }

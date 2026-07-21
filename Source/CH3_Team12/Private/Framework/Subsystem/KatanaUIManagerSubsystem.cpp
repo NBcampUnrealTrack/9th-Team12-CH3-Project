@@ -8,8 +8,14 @@
 #include "UI/InventoryPresenter.h"
 #include "UI/LoadingPresenter.h"
 #include "UI/LoadingWidget.h"
+#include "UI/LockOnPresenter.h"
+#include "UI/LockOnWidget.h"
 #include "UI/MainMenuPresenter.h"
 #include "UI/MainMenuWidget.h"
+#include "UI/PlayerDeathPresenter.h"
+#include "UI/PlayerDeathWidget.h"
+#include "UI/StageResultPresenter.h"
+#include "UI/StageResultWidget.h"
 #include "UI/HUD/EnemyPresenter.h"
 #include "UI/HUD/EnemyWidget.h"
 #include "UI/HUD/PlayerPresenter.h"
@@ -57,6 +63,35 @@ void UKatanaUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	if (UIDataAsset.IsNull())
 	{
 		UE_LOG(LogTemp, Error, TEXT("UKatanaUIManagerSubsystem: UIDataAsset is null"));
+	}
+}
+
+void UKatanaUIManagerSubsystem::Deinitialize()
+{
+	Super::Deinitialize();
+}
+
+bool UKatanaUIManagerSubsystem::IsTickable() const
+{
+	return !HasAnyFlags(RF_ClassDefaultObject);
+}
+
+TStatId UKatanaUIManagerSubsystem::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UKatanaUIManagerSubsystem, STATGROUP_Tickables);
+}
+
+UWorld* UKatanaUIManagerSubsystem::GetTickableGameObjectWorld() const
+{
+	return GetWorld();
+}
+
+void UKatanaUIManagerSubsystem::Tick(const float DeltaTime)
+{
+	for (const auto ActivePresenter : ActivePresenters)
+	{
+		if (ActivePresenter.Value->IsTickable())
+			ActivePresenter.Value->Tick(DeltaTime);
 	}
 }
 
@@ -170,8 +205,36 @@ void UKatanaUIManagerSubsystem::HideLoadingWidget()
 	OpHideUI(LoadingWidgetName);
 }
 
+void UKatanaUIManagerSubsystem::ShowLockOnWidget(AActor* InTargetActor)
+{
+	if (!InTargetActor)
+		return;
+
+	const FName WidgetName = LockOnWidgetName;
+	ULockOnWidget* ActiveView = OpShowUI<ULockOnWidget>(WidgetName);
+	if (!ActiveView) return;
+
+	ULockOnPresenter* NewPresenter = NewObject<ULockOnPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(InTargetActor, ActiveView);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::HideLockOnWidget()
+{
+	OpHideUI(LockOnWidgetName);
+}
+
 void UKatanaUIManagerSubsystem::ShowPlayerWidget(APlayerCharacterBase* InPlayerCharacterBase)
 {
+	if (!InPlayerCharacterBase)
+		return;
+
 	const FName WidgetName = PlayerWidgetName;
 	UPlayerWidget* ActiveView = OpShowUI<UPlayerWidget>(WidgetName);
 	if (!ActiveView) return;
@@ -194,6 +257,9 @@ void UKatanaUIManagerSubsystem::HidePlayerWidget()
 
 void UKatanaUIManagerSubsystem::ShowEnemyWidget(AEnemyCharacterBase* InEnemyCharacterBase)
 {
+	if (!InEnemyCharacterBase)
+		return;
+
 	const FName WidgetName = EnemyWidgetName;
 	UEnemyWidget* ActiveView = OpShowUI<UEnemyWidget>(WidgetName);
 	if (!ActiveView) return;
@@ -212,6 +278,50 @@ void UKatanaUIManagerSubsystem::ShowEnemyWidget(AEnemyCharacterBase* InEnemyChar
 void UKatanaUIManagerSubsystem::HideEnemyWidget()
 {
 	OpHideUI(EnemyWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::ShowStageResultWidget()
+{
+	const FName WidgetName = StageResultWidgetName;
+	UStageResultWidget* ActiveView = OpShowUI<UStageResultWidget>(WidgetName);
+	if (!ActiveView) return;
+
+	UStageResultPresenter* NewPresenter = NewObject<UStageResultPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(ActiveView);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::HideStageResultWidget()
+{
+	OpHideUI(StageResultWidgetName);
+}
+
+void UKatanaUIManagerSubsystem::ShowPlayerDeathWidget()
+{
+	const FName WidgetName = PlayerDeathWidgetName;
+	UPlayerDeathWidget* ActiveView = OpShowUI<UPlayerDeathWidget>(WidgetName);
+	if (!ActiveView) return;
+
+	UPlayerDeathPresenter* NewPresenter = NewObject<UPlayerDeathPresenter>(this);
+	if (!NewPresenter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s Presenter 를 생성하지 못했습니다."), *WidgetName.ToString());
+		return;
+	}
+
+	NewPresenter->Initialize(ActiveView);
+	ActivePresenters.Add(WidgetName, NewPresenter);
+}
+
+void UKatanaUIManagerSubsystem::HidePlayerDeathWidget()
+{
+	OpHideUI(PlayerDeathWidgetName);
 }
 
 void UKatanaUIManagerSubsystem::RegisterInventoryWidget(UInventoryWidget* InWidget)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputCoreTypes.h"
 #include "Framework/Subsystem/KatanaGraphicManagerSubsystem.h"
 
 DECLARE_DYNAMIC_DELEGATE(FOnButtonClicked);

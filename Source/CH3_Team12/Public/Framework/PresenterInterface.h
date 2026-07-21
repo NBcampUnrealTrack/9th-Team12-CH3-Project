@@ -19,4 +19,7 @@ class CH3_TEAM12_API IPresenterInterface
 
 public:
 	virtual void Dispose() = 0;
+
+	virtual bool IsTickable() const { return false; }
+	virtual void Tick(float DeltaTime) {};
 };

@@ -1,0 +1,1 @@
+#include "Framework/KatanaStageRecordSaveGame.h"
