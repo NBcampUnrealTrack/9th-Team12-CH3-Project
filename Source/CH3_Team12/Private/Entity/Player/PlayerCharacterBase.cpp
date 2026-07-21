@@ -23,6 +23,7 @@
 #include "Entity/Player/PlayerItemUseComponent.h"
 #include "Entity/Player/CombatFeedbackComponent.h"
 #include "Entity/Player/FootstepComponent.h"
+#include "Entity/Player/PlayerTimeWarpComponent.h"
 
 // Sets default values
 APlayerCharacterBase::APlayerCharacterBase()
@@ -55,6 +56,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	ItemUseComponent = CreateDefaultSubobject<UPlayerItemUseComponent>(TEXT("ItemUseComponent"));
 	CombatFeedbackComponent = CreateDefaultSubobject<UCombatFeedbackComponent>(TEXT("CombatFeedbackComponent"));
 	FootstepComponent = CreateDefaultSubobject<UFootstepComponent>(TEXT("FootstepComponent"));
+	TimeWarpComponent = CreateDefaultSubobject<UPlayerTimeWarpComponent>(TEXT("TimeWarpComponent"));
 	
 	HeadMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Head"));
 	HeadMesh->SetupAttachment(GetMesh());
@@ -119,6 +121,11 @@ UCombatFeedbackComponent* APlayerCharacterBase::GetCombatFeedbackComponent() con
 UFootstepComponent* APlayerCharacterBase::GetFootstepComponent() const
 {
 	return FootstepComponent;
+}
+
+UPlayerTimeWarpComponent* APlayerCharacterBase::GetTimeWarpComponent() const
+{
+	return TimeWarpComponent;
 }
 
 UPlayerCameraComponent* APlayerCharacterBase::GetPlayerCameraComponent() const
