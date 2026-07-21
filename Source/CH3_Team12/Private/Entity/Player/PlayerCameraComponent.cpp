@@ -237,8 +237,73 @@ void UPlayerCameraComponent::BeginTimeWarpPostProcess(
 	}
 
 	TimeWarpPostProcessMID->SetScalarParameterValue(
-		TEXT("EffectAmount"),
-		TimeWarpPostProcessBlendWeight
+		TEXT("TW_EffectAlpha"),
+		1.0f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_ProgressDistance"),
+		0.0f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_HeadWidth"),
+		160.0f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_TrailLength"),
+		900.0f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_EdgeSoftness"),
+		180.0f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_TrailStrength"),
+		0.65f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_TrailPower"),
+		1.4f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_RimPower"),
+		2.2f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_RimStrength"),
+		0.8f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_DesatStrength"),
+		0.35f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_BrightnessBoost"),
+		0.45f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_MaxDistance"),
+		3200.0f
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_MaxDistanceFade"),
+		600.0f
+	);
+
+	TimeWarpPostProcessMID->SetVectorParameterValue(
+		TEXT("TW_TintColor"),
+		FLinearColor(0.9f, 0.97f, 1.0f, 1.0f)
 	);
 
 	AddTimeWarpPostProcessBlendable();
@@ -254,12 +319,58 @@ void UPlayerCameraComponent::EndTimeWarpPostProcess()
 	if (TimeWarpPostProcessMID)
 	{
 		TimeWarpPostProcessMID->SetScalarParameterValue(
-			TEXT("EffectAmount"),
+			TEXT("TW_EffectAlpha"),
 			0.0f
 		);
 	}
 
 	RemoveTimeWarpPostProcessBlendable();
+}
+
+void UPlayerCameraComponent::UpdateTimeWarpPostProcess(
+	const FVector& PlayerOriginWS,
+	const FVector& SweepDirectionWS,
+	float ProgressDistance,
+	float EffectAlpha
+)
+{
+	if (!TimeWarpPostProcessMID)
+	{
+		return;
+	}
+
+	const FVector SafeDirection =
+		SweepDirectionWS.GetSafeNormal();
+
+	TimeWarpPostProcessMID->SetVectorParameterValue(
+		TEXT("TW_PlayerOriginWS"),
+		FLinearColor(
+			PlayerOriginWS.X,
+			PlayerOriginWS.Y,
+			PlayerOriginWS.Z,
+			1.0f
+		)
+	);
+
+	TimeWarpPostProcessMID->SetVectorParameterValue(
+		TEXT("TW_SweepDirectionWS"),
+		FLinearColor(
+			SafeDirection.X,
+			SafeDirection.Y,
+			SafeDirection.Z,
+			0.0f
+		)
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_ProgressDistance"),
+		ProgressDistance
+	);
+
+	TimeWarpPostProcessMID->SetScalarParameterValue(
+		TEXT("TW_EffectAlpha"),
+		EffectAlpha
+	);
 }
 
 // 락온 상태면 해제, 아니면 락온 시도
