@@ -12,6 +12,7 @@
 #include "Entity/Player/PlayerCameraComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
 #include "Entity/Player/PlayerLocomotionComponent.h"
+#include "Framework/GameMode/KatanaGameMode.h"
 #include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "Framework/Subsystem/KatanaStageRecordManagerSubsystem.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
@@ -35,15 +36,14 @@ void AKatanaPlayerController::BeginPlay()
 	const FInputModeGameOnly InputMode;
 	SetInputMode(InputMode);
 
-	AEnemyCharacterBase* EnemyCharacterBase = FindEnemyCharacter();
-	if (!EnemyCharacterBase)
-		return;
+	AGameModeBase* BaseGameMode = UGameplayStatics::GetGameMode(GetWorld());
+	AKatanaGameMode* KatanaGameMode = Cast<AKatanaGameMode>(BaseGameMode);
 
-	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
-	if (!UIManager)
-		return;
+	KatanaGameMode->OnBossRoomEntered.AddUObject(this, &AKatanaPlayerController::HandleBossRoomEntered);
 
-	//UIManager->ShowEnemyWidget(EnemyCharacterBase);
+	EnemyCharacterBase = FindEnemyCharacter();
+	if (!EnemyCharacterBase.IsValid())
+		return;
 
 	EnemyCharacterBase->GetEnemyAttributeComponent()->OnEnemyDeath.AddDynamic(
 		this, &AKatanaPlayerController::HandleEnemyDeath);
@@ -153,6 +153,18 @@ void AKatanaPlayerController::ToggleInGameMenu(const FInputActionValue& Value)
 	}
 }
 
+void AKatanaPlayerController::HandleBossRoomEntered()
+{
+	if (!EnemyCharacterBase.IsValid())
+		return;
+
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
+	if (!UIManager)
+		return;
+
+	UIManager->ShowEnemyWidget(EnemyCharacterBase.Get());
+}
+
 void AKatanaPlayerController::HandleEnemyDeath()
 {
 	UKatanaStageRecordManagerSubsystem* RecordManager = UKatanaStageRecordManagerSubsystem::Get(this);
@@ -200,7 +212,7 @@ void AKatanaPlayerController::HandleDelayStageResult()
 
 	// 현재 눌린 키 상태 정리
 	FlushPressedKeys();
-	
+
 	// 캐릭터 현재 이동/속도 정지
 	if (ACharacter* PlayerCharacter = Cast<ACharacter>(GetPawn()))
 	{
@@ -214,7 +226,7 @@ void AKatanaPlayerController::HandleDelayStageResult()
 			Movement->DisableMovement();
 		}
 	}
-	
+
 	bShowMouseCursor = true;
 	FInputModeUIOnly InputMode;
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);

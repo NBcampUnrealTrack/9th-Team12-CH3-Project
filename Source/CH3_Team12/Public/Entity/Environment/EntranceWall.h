@@ -13,13 +13,13 @@ UCLASS()
 class CH3_TEAM12_API AEntranceWall : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	AEntranceWall();
 
 	UPROPERTY(BlueprintAssignable)
 	FOnBossRoomEntered OnBossRoomEntered;
-	
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -44,7 +44,7 @@ private:
 		const FHitResult& SweepResult);
 
 	void ActivateFogWall();
-	
+
 private:
 
 	UPROPERTY(VisibleAnywhere)
@@ -75,7 +75,4 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Fog")
 	float ActivatedOpacity = 0.95f;
-	
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<USoundBase> BossBGM;
 };
