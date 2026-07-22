@@ -5,6 +5,7 @@
 #include "Blueprint/UserWidget.h"
 #include "StageResultWidget.generated.h"
 
+class UImage;
 class UButton;
 class UTextBlock;
 /**
@@ -25,6 +26,9 @@ protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UImage> ImgBackground;
+
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> TxtBestTime;
 

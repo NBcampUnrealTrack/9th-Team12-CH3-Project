@@ -95,4 +95,21 @@ private:
 private:
 	UPROPERTY()
 	TArray<FTimeWarpDilationCache> AffectedActorCaches;
+	
+private:
+	void UpdateVisualEffects();
+
+	double VisualStartRealTime = 0.0;
+
+	UPROPERTY(EditDefaultsOnly, Category="TimeWarp|Visual")
+	float SurfaceSweepDuration = 0.65f;
+
+	UPROPERTY(EditDefaultsOnly, Category="TimeWarp|Visual")
+	float SweepStartDistance = -600.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="TimeWarp|Visual")
+	float SweepEndDistance = 3400.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category="TimeWarp|Visual")
+	float SweepFadeOutStartAlpha = 0.85f;
 };

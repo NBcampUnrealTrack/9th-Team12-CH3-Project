@@ -6,6 +6,9 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "KatanaLevelSubsystem.generated.h"
 
+class ULevelDataAsset;
+class UTexture2D;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoadingProgress, float, Progress);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCompletedProgress);
 
@@ -21,6 +24,8 @@ public:
 	static UKatanaLevelSubsystem* Get(const UObject* WorldContextObject);
 	static FName GetTargetMapName(const UObject* WorldContextObject);
 
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
 	UPROPERTY()
 	FOnLoadingProgress OnLoadingProgressUpdated;
 
@@ -28,12 +33,21 @@ public:
 	FOnCompletedProgress OnLoadingCompleted;
 
 	UFUNCTION()
-	void LoadLevel(FName TargetLevelName);
+	void LoadLevel(FName TargetLevelName, float MinDelayLoadTime = 3.0f);
+
+	UFUNCTION()
+	UTexture2D* GetTargetMapTexture2D() const;
+
+	UFUNCTION()
+	TArray<FText> GetLoadingTipTexts() const;
 
 	UFUNCTION()
 	void StartLoadingTargetMapAsync();
 
 private:
+	UPROPERTY()
+	TObjectPtr<ULevelDataAsset> CachedLevelDataAsset;
+
 	FName TargetMapName;
 
 	const float LoopRate = 0.05f;
@@ -49,5 +63,5 @@ private:
 	TSharedPtr<FStreamableHandle> LoadingHandle;
 
 	float GetLoadingProgress() const;
-	void OnLoadingProgressTimer();
+	void HandleLoadingProgressTimer();
 };
