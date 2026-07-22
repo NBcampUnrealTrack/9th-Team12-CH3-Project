@@ -126,6 +126,8 @@ private:
 	UFUNCTION()
 	void OnExecutedMontageDeadCheck(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
 
+	void OnTargetActorSetted();
+	
 public:
 	UBehaviorTree* GetBehaviorTreeAsset() const { return BehaviorTreeAsset; }
 

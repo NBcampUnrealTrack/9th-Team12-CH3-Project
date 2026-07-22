@@ -12,6 +12,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "Entity/Player/StateTagComponent.h"
+#include "Entity/Player/PlayerCharacterBase.h"
+#include "Entity/Player/PlayerAttributeComponent.h"
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -90,6 +92,13 @@ void AEnemyCharacterBase::BeginPlay()
 	if (AnimInstance)
 	{
 		AnimInstance->OnPlayMontageNotifyBegin.AddDynamic(this, &AEnemyCharacterBase::OnExecutedMontageDeadCheck);
+	}
+	
+	
+	AEnemyAIController* AIController = Cast<AEnemyAIController>(GetController());
+	if (AIController)
+	{
+		AIController->OnTargetActorSettedDelegate.AddUObject(this, &AEnemyCharacterBase::OnTargetActorSetted);
 	}
 }
 
@@ -286,7 +295,7 @@ void AEnemyCharacterBase::StopAILogic()
 		UBrainComponent* BrainComponent = AIController->GetBrainComponent();
 		if (BrainComponent)
 		{
-			BrainComponent->StopLogic(TEXT("Dead"));
+			BrainComponent->StopLogic(TEXT("Stoped"));
 		}
 	}
 }
@@ -383,6 +392,23 @@ void AEnemyCharacterBase::OnExecutedMontageDeadCheck(FName NotifyName,
 				UAnimMontage* ExecutionMontage = ExecutionData->EnemyExecutionData.EnemyMontage;
 			
 				AnimInstance->Montage_JumpToSection(ExecutionMontageLoopEndSectionKey, ExecutionMontage);	
+			}
+		}
+	}
+}
+
+void AEnemyCharacterBase::OnTargetActorSetted()
+{
+	AEnemyAIController* AIController = Cast<AEnemyAIController>(GetController());
+	if (AIController)
+	{
+		const APlayerCharacterBase* TargetActor = Cast<APlayerCharacterBase>(AIController->GetTargetActor());
+		if (TargetActor)
+		{
+			UPlayerAttributeComponent* PlayerAttributeComponent = TargetActor->GetAttributeComponent();
+			if (PlayerAttributeComponent)
+			{
+				PlayerAttributeComponent->OnDead.AddDynamic(this, &AEnemyCharacterBase::StopAILogic);
 			}
 		}
 	}
