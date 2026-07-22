@@ -220,7 +220,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	}
 	if (UInputAction* GuardAction = PlayerControllerBase->GetGuardAction())
 	{
-		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::StartGuard);
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Triggered, DefenseComponent.Get(), &UPlayerDefenseComponent::StartGuard);
 		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Completed, DefenseComponent.Get(), &UPlayerDefenseComponent::StopGuard);
 		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Canceled, DefenseComponent.Get(), &UPlayerDefenseComponent::StopGuard);
 	}
