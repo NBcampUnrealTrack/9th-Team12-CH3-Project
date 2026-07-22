@@ -4,12 +4,14 @@
 #include "EngineUtils.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "TimerManager.h"
 #include "Entity/Enemy/EnemyCharacterBase.h"
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "Entity/Enemy/Component/EnemyTransitionComponent.h"
 #include "Entity/Player/PlayerAttributeComponent.h"
 #include "Entity/Player/PlayerCameraComponent.h"
 #include "Entity/Player/PlayerCharacterBase.h"
+#include "Entity/Player/PlayerLocomotionComponent.h"
 #include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "Framework/Subsystem/KatanaStageRecordManagerSubsystem.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
@@ -161,30 +163,16 @@ void AKatanaPlayerController::HandleEnemyDeath()
 
 void AKatanaPlayerController::HandleEnemyTransitionFinished()
 {
-	bShowMouseCursor = true;
-	FInputModeGameAndUI InputMode;
-	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	SetInputMode(InputMode);
-
-	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
-	if (!UIManager)
-		return;
-
-	UIManager->ShowStageResultWidget();
+	GetWorldTimerManager().ClearTimer(DelayStageResultTimerHandle);
+	GetWorldTimerManager().SetTimer(DelayStageResultTimerHandle, this, &AKatanaPlayerController::HandleDelayStageResult,
+	                                1.5f);
 }
 
 void AKatanaPlayerController::HandlePlayerDead()
 {
-	bShowMouseCursor = true;
-	FInputModeGameAndUI InputMode;
-	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	SetInputMode(InputMode);
-
-	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
-	if (!UIManager)
-		return;
-
-	UIManager->ShowPlayerDeathWidget();
+	GetWorldTimerManager().ClearTimer(DelayPlayerDeathTimerHandle);
+	GetWorldTimerManager().SetTimer(DelayPlayerDeathTimerHandle, this, &AKatanaPlayerController::HandleDelayPlayerDeath,
+	                                0.5f);
 }
 
 void AKatanaPlayerController::HandlePlayerLockOnStateChanged(bool bIsLockOn, AActor* LockOnTarget)
@@ -201,4 +189,32 @@ void AKatanaPlayerController::HandlePlayerLockOnStateChanged(bool bIsLockOn, AAc
 	{
 		UIManager->HideLockOnWidget();
 	}
+}
+
+void AKatanaPlayerController::HandleDelayStageResult()
+{
+	bShowMouseCursor = true;
+	FInputModeUIOnly InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
+	if (!UIManager)
+		return;
+
+	UIManager->ShowStageResultWidget();
+}
+
+void AKatanaPlayerController::HandleDelayPlayerDeath()
+{
+	bShowMouseCursor = true;
+	FInputModeUIOnly InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
+
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(this);
+	if (!UIManager)
+		return;
+
+	UIManager->ShowPlayerDeathWidget();
 }

@@ -54,4 +54,7 @@ private:
 
 	UFUNCTION()
 	void HandleBtnDoneClicked() const;
+
+	UFUNCTION()
+	void HandleBtnBackClicked() const;
 };

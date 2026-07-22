@@ -3,6 +3,7 @@
 #include "Animation/Notifies/AN_PlaySoundAtMeshSocket.h"
 
 #include "Components/SkeletalMeshComponent.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 
@@ -21,8 +22,9 @@ void UAN_PlaySoundAtMeshSocket::Notify(
 			? MeshComp->GetSocketLocation(SocketName)
 			: MeshComp->GetComponentLocation();
 
-	UGameplayStatics::PlaySoundAtLocation(
+	UKatanaSoundManagerSubsystem::PlaySoundAtLocation(
 		MeshComp,
+		EAudioType::SFX,
 		Sound,
 		Location,
 		VolumeMultiplier,

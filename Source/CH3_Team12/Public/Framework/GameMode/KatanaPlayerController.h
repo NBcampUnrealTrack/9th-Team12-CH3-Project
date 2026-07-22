@@ -47,4 +47,13 @@ private:
 
 	UFUNCTION()
 	void HandlePlayerLockOnStateChanged(bool bIsLockOn, AActor* LockOnTarget);
+
+	FTimerHandle DelayStageResultTimerHandle;
+	FTimerHandle DelayPlayerDeathTimerHandle;
+
+	UFUNCTION()
+	void HandleDelayStageResult();
+
+	UFUNCTION()
+	void HandleDelayPlayerDeath();
 };

@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FLinearColor DisplayColor;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FLinearColor BackgroundColor;
+
 private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UImage> ImgBackground;

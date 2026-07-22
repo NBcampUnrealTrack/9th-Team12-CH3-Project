@@ -21,7 +21,7 @@ public:
 	FOnVolumeChanged OnBGMVolumeChanged;
 	FOnVolumeChanged OnSFXVolumeChanged;
 	FOnButtonClicked OnBtnResetClicked;
-	FOnButtonClicked OnBtnDoneClicked;
+	FOnButtonClicked OnBtnBackClicked;
 
 	void UpdateWidget(float MasterVolume, float BGMVolume, float SFXVolume);
 
@@ -38,11 +38,11 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UStepProgressBar> SFXVolumeStep;
 
-	UPROPERTY(meta=(BindWidget, OptionalWidget=true))
+	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> BtnReset;
 
 	UPROPERTY(meta=(BindWidget, OptionalWidget=true))
-	TObjectPtr<UButton> BtnDone;
+	TObjectPtr<UButton> BtnBack;
 
 	UFUNCTION()
 	void HandleMasterVolumeChanged(float Volume) const;
@@ -57,7 +57,7 @@ private:
 	void HandleBtnResetClicked() const;
 
 	UFUNCTION()
-	void HandleBtnDoneClicked() const;
+	void HandleBtnBackClicked() const;
 
 	void SetMasterVolumeWidget(const float Volume) const;
 	void SetBGMVolumeWidget(const float Volume) const;

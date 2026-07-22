@@ -20,6 +20,7 @@ void UGraphicSettingsPresenter::Initialize(UGraphicSettingsWidget* InWidget)
 
 	GraphicSettingsWidget->OnBtnResetClicked.BindDynamic(this, &UGraphicSettingsPresenter::HandleBtnResetClicked);
 	GraphicSettingsWidget->OnBtnDoneClicked.BindDynamic(this, &UGraphicSettingsPresenter::HandleBtnDoneClicked);
+	GraphicSettingsWidget->OnBtnBackClicked.BindDynamic(this, &UGraphicSettingsPresenter::HandleBtnBackClicked);
 
 	GraphicManagerSubsystem = UKatanaGraphicManagerSubsystem::Get(this);
 	if (!GraphicManagerSubsystem.IsValid())
@@ -55,6 +56,7 @@ void UGraphicSettingsPresenter::Dispose()
 	GraphicSettingsWidget->OnRefreshRateChanged.Unbind();
 	GraphicSettingsWidget->OnBtnResetClicked.Unbind();
 	GraphicSettingsWidget->OnBtnDoneClicked.Unbind();
+	GraphicSettingsWidget->OnBtnBackClicked.Unbind();
 }
 
 void UGraphicSettingsPresenter::HandleWindowModeChanged(const EKatanaWindowMode NewWindowMode)
@@ -125,4 +127,9 @@ void UGraphicSettingsPresenter::HandleBtnDoneClicked() const
 
 	if (GraphicSettingsWidget->bDoneAfterCollapsed)
 		GraphicSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UGraphicSettingsPresenter::HandleBtnBackClicked() const
+{
+	GraphicSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
 }

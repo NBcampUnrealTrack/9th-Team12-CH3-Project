@@ -21,4 +21,7 @@ public:
 private:
 	UPROPERTY()
 	TWeakObjectPtr<UInGameMenuWidget> InGameMenuWidget;
+
+	UFUNCTION()
+	void HandleBtnMainMenuClicked();
 };

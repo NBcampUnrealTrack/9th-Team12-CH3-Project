@@ -49,8 +49,7 @@ void UStageResultWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTi
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
 	const FLinearColor CurrentColor = ImgBackground->GetColorAndOpacity();
-	const FLinearColor TargetColor = FLinearColor::Black;
-	ImgBackground->SetColorAndOpacity(FMath::CInterpTo(CurrentColor, TargetColor, InDeltaTime, 1.0f));
+	ImgBackground->SetColorAndOpacity(FMath::CInterpTo(CurrentColor, BackgroundColor, InDeltaTime, 1.0f));
 }
 
 void UStageResultWidget::HandleBtnDoneClicked()

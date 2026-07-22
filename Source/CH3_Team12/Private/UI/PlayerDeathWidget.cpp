@@ -24,8 +24,7 @@ void UPlayerDeathWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTi
 	TxtDisplay->SetColorAndOpacity(FSlateColor(InterpolatedColor));
 
 	const FLinearColor CurrentColor = ImgBackground->GetColorAndOpacity();
-	const FLinearColor TargetColor = FLinearColor::Black;
-	ImgBackground->SetColorAndOpacity(FMath::CInterpTo(CurrentColor, TargetColor, InDeltaTime, 0.5f));
+	ImgBackground->SetColorAndOpacity(FMath::CInterpTo(CurrentColor, BackgroundColor, InDeltaTime, 0.5f));
 }
 
 void UPlayerDeathWidget::HandleRestartButtonClicked()

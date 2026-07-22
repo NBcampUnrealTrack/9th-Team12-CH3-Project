@@ -10,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 UCombatFeedbackComponent::UCombatFeedbackComponent()
 {
@@ -79,8 +80,9 @@ void UCombatFeedbackComponent::PlayCombatFeedback(
 
 	if (Feedback.Sound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(
+		UKatanaSoundManagerSubsystem::PlaySoundAtLocation(
 			this,
+			EAudioType::SFX,
 			Feedback.Sound,
 			Location
 		);

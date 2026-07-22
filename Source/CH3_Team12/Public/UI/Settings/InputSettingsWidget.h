@@ -17,6 +17,7 @@ public:
 	FOnKeyBindingChanged OnKeyBindingChanged;
 	FOnButtonClicked OnBtnResetClicked;
 	FOnButtonClicked OnBtnDoneClicked;
+	FOnButtonClicked OnBtnBackClicked;
 
 	void UpdateWidget(TMap<FName, FKey> KeyBindingMap);
 
@@ -72,6 +73,9 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> BtnDone;
 
+	UPROPERTY(meta=(BindWidget, OptionalWidget=true))
+	TObjectPtr<UButton> BtnBack;
+
 	UFUNCTION()
 	void HandleMoveForwardKeySelected(FInputChord SelectedKey);
 
@@ -116,6 +120,9 @@ private:
 
 	UFUNCTION()
 	void HandleBtnDoneClicked() const;
+
+	UFUNCTION()
+	void HandleBtnBackClicked() const;
 
 	UPROPERTY(Transient)
 	TMap<FName, TObjectPtr<UInputKeySelector>> KeySelectorMap;

@@ -1,5 +1,6 @@
 #include "UI/InGameMenuPresenter.h"
 
+#include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
 #include "UI/InGameMenuWidget.h"
 
@@ -24,6 +25,8 @@ void UInGameMenuPresenter::Initialize(UInGameMenuWidget* InWidget)
 	UIManagerSubsystem->RegisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
 	UIManagerSubsystem->RegisterGraphicSettingsWidget(InGameMenuWidget->GetGraphicSettingsWidget());
 	UIManagerSubsystem->RegisterInputSettingsWidget(InGameMenuWidget->GetInputSettingsWidget());
+
+	InGameMenuWidget->OnBtnMainMenuClicked.BindDynamic(this, &UInGameMenuPresenter::HandleBtnMainMenuClicked);
 }
 
 void UInGameMenuPresenter::Dispose()
@@ -45,4 +48,21 @@ void UInGameMenuPresenter::Dispose()
 	UIManagerSubsystem->UnregisterSoundSettingsWidget(InGameMenuWidget->GetSoundSettingsWidget());
 	UIManagerSubsystem->UnregisterGraphicSettingsWidget(InGameMenuWidget->GetGraphicSettingsWidget());
 	UIManagerSubsystem->UnregisterInputSettingsWidget(InGameMenuWidget->GetInputSettingsWidget());
+
+	InGameMenuWidget->OnBtnMainMenuClicked.Unbind();
+}
+
+void UInGameMenuPresenter::HandleBtnMainMenuClicked()
+{
+	UKatanaUIManagerSubsystem* UIManager = UKatanaUIManagerSubsystem::Get(GetWorld());
+	if (!UIManager)
+		return;
+
+	UIManager->HideInGameMenuWidget();
+
+	UKatanaLevelSubsystem* LevelManager = UKatanaLevelSubsystem::Get(GetWorld());
+	if (!LevelManager)
+		return;
+
+	LevelManager->LoadLevel("MainMenuLevel", 0.0f); // 타이틀 화면으로 이동
 }

@@ -31,10 +31,14 @@ void UGraphicSettingsWidget::NativeOnInitialized()
 	ResolutionComboBox->OnSelectionChanged.AddDynamic(this, &UGraphicSettingsWidget::HandleResolutionSelectionChanged);
 	QualityComboBox->OnSelectionChanged.AddDynamic(this, &UGraphicSettingsWidget::HandleQualitySelectionChanged);
 	VSyncCheckBox->OnCheckStateChanged.AddDynamic(this, &UGraphicSettingsWidget::HandleVSyncCheckStateChanged);
-	RefreshRateComboBox->OnSelectionChanged.AddDynamic(this, &UGraphicSettingsWidget::HandleRefreshRateSelectionChanged);
+	RefreshRateComboBox->OnSelectionChanged.
+	                     AddDynamic(this, &UGraphicSettingsWidget::HandleRefreshRateSelectionChanged);
 
 	BtnReset->OnClicked.AddDynamic(this, &UGraphicSettingsWidget::HandleBtnResetClicked);
 	BtnDone->OnClicked.AddDynamic(this, &UGraphicSettingsWidget::HandleBtnDoneClicked);
+
+	if (BtnBack)
+		BtnBack->OnClicked.AddDynamic(this, &UGraphicSettingsWidget::HandleBtnBackClicked);
 }
 
 void UGraphicSettingsWidget::InitializeComboBoxOptions() const
@@ -145,6 +149,11 @@ void UGraphicSettingsWidget::HandleBtnResetClicked() const
 void UGraphicSettingsWidget::HandleBtnDoneClicked() const
 {
 	(void)OnBtnDoneClicked.ExecuteIfBound();
+}
+
+void UGraphicSettingsWidget::HandleBtnBackClicked() const
+{
+	(void)OnBtnBackClicked.ExecuteIfBound();
 }
 
 void UGraphicSettingsWidget::SetWindowModeWidget(const EKatanaWindowMode WindowMode) const

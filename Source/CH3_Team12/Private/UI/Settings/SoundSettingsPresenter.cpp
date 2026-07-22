@@ -14,7 +14,7 @@ void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 	SoundSettingsWidget->OnBGMVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleBGMVolumeChanged);
 	SoundSettingsWidget->OnSFXVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleSFXVolumeChanged);
 	SoundSettingsWidget->OnBtnResetClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnResetClicked);
-	SoundSettingsWidget->OnBtnDoneClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnDoneClicked);
+	SoundSettingsWidget->OnBtnBackClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnBackClicked);
 
 	SoundManagerSubsystem = UKatanaSoundManagerSubsystem::Get(this);
 	if (!SoundManagerSubsystem.IsValid())
@@ -38,7 +38,7 @@ void USoundSettingsPresenter::Dispose()
 		SoundSettingsWidget->OnBGMVolumeChanged.Unbind();
 		SoundSettingsWidget->OnSFXVolumeChanged.Unbind();
 		SoundSettingsWidget->OnBtnResetClicked.Unbind();
-		SoundSettingsWidget->OnBtnDoneClicked.Unbind();
+		SoundSettingsWidget->OnBtnBackClicked.Unbind();
 	}
 }
 
@@ -78,7 +78,7 @@ void USoundSettingsPresenter::HandleBtnResetClicked() const
 	);
 }
 
-void USoundSettingsPresenter::HandleBtnDoneClicked() const
+void USoundSettingsPresenter::HandleBtnBackClicked() const
 {
 	SoundSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
 }

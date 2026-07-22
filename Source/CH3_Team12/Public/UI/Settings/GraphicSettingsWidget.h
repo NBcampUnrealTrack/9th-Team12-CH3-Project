@@ -26,6 +26,7 @@ public:
 
 	FOnButtonClicked OnBtnResetClicked;
 	FOnButtonClicked OnBtnDoneClicked;
+	FOnButtonClicked OnBtnBackClicked;
 
 	void UpdateWidget(const EKatanaWindowMode WindowMode, const FIntPoint Resolution,
 	                          const EKatanaGraphicQuality Quality, const bool bVSync, const int32 RefreshRate);
@@ -58,6 +59,9 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> BtnDone;
 
+	UPROPERTY(meta=(BindWidget, OptionalWidget=true))
+	TObjectPtr<UButton> BtnBack;
+
 	bool bIsUpdatingWidget = false;
 
 	UFUNCTION()
@@ -83,6 +87,9 @@ private:
 
 	UFUNCTION()
 	void HandleBtnDoneClicked() const;
+
+	UFUNCTION()
+	void HandleBtnBackClicked() const;
 
 	void SetWindowModeWidget(const EKatanaWindowMode WindowMode) const;
 	void SetResolutionWidget(const FIntPoint Resolution) const;

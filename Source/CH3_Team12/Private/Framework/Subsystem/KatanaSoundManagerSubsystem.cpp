@@ -49,6 +49,48 @@ UKatanaSoundManagerSubsystem* UKatanaSoundManagerSubsystem::Get(const UObject* W
 	return GameInstance->GetSubsystem<UKatanaSoundManagerSubsystem>();
 }
 
+void UKatanaSoundManagerSubsystem::PlaySound2D(const UObject* WorldContextObject, EAudioType AudioType,
+                                               USoundBase* SoundBase, float VolumeMultiplier, float PitchMultiplier)
+{
+	UKatanaSoundManagerSubsystem* Subsystem = Get(WorldContextObject);
+	if (!Subsystem)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UKatanaSoundManagerSubsystem: Subsystem is null"));
+
+		UGameplayStatics::PlaySound2D(
+			WorldContextObject,
+			SoundBase,
+			VolumeMultiplier,
+			PitchMultiplier
+		);
+		return;
+	}
+
+	Subsystem->PlaySound2D(AudioType, SoundBase, VolumeMultiplier, PitchMultiplier);
+}
+
+void UKatanaSoundManagerSubsystem::PlaySoundAtLocation(const UObject* WorldContextObject, EAudioType AudioType,
+                                                       USoundBase* SoundBase, const FVector& Location,
+                                                       float VolumeMultiplier, float PitchMultiplier)
+{
+	UKatanaSoundManagerSubsystem* Subsystem = Get(WorldContextObject);
+	if (!Subsystem)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UKatanaSoundManagerSubsystem: Subsystem is null"));
+
+		UGameplayStatics::PlaySoundAtLocation(
+			WorldContextObject,
+			SoundBase,
+			Location,
+			VolumeMultiplier,
+			PitchMultiplier
+		);
+		return;
+	}
+
+	Subsystem->PlaySoundAtLocation(AudioType, SoundBase, Location, VolumeMultiplier, PitchMultiplier);
+}
+
 void UKatanaSoundManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -102,7 +144,7 @@ void UKatanaSoundManagerSubsystem::Initialize(FSubsystemCollectionBase& Collecti
 
 	UE_LOG(LogTemp, Warning, TEXT("ControlBusMap: %d"), ControlBusMap.Num());
 
-	LoadAudioSettings();
+	FWorldDelegates::OnPostWorldInitialization.AddUObject(this, &UKatanaSoundManagerSubsystem::OnWorldInitialized);
 }
 
 float UKatanaSoundManagerSubsystem::GetDefaultVolume(EAudioType AudioType) const
@@ -177,63 +219,6 @@ void UKatanaSoundManagerSubsystem::SetVolume(const EAudioType AudioType, const f
 	}
 }
 
-
-UAudioComponent* UKatanaSoundManagerSubsystem::PlaySound2D(EAudioType AudioType, FString SoundKey,
-                                                           float VolumeMultiplier, float PitchMultiplier)
-{
-	USoundBase* SoundToPlay = GetOrLoadSound(SoundKey);
-	if (!SoundToPlay) return nullptr;
-
-	UAudioComponent* AudioComp = UGameplayStatics::SpawnSound2D(GetWorld(), SoundToPlay, VolumeMultiplier,
-	                                                            PitchMultiplier);
-
-	if (AudioComp)
-	{
-		// 볼륨 설정에 필요한 사운드 모듈레이터 추가
-		TSet<USoundModulatorBase*> TargetBusses;
-
-		if (ControlBusMap.Contains(EAudioType::Master))
-			TargetBusses.Add(Cast<USoundModulatorBase>(ControlBusMap[EAudioType::Master].Get()));
-
-		if (ControlBusMap.Contains(AudioType))
-			TargetBusses.Add(Cast<USoundModulatorBase>(ControlBusMap[AudioType].Get()));
-
-		if (TargetBusses.Num() > 0)
-			AudioComp->SetModulationRouting(TargetBusses, EModulationDestination::Volume, EModulationRouting::Override);
-	}
-
-	return AudioComp;
-}
-
-UAudioComponent* UKatanaSoundManagerSubsystem::PlaySound3DAtLocation(EAudioType AudioType, FString SoundKey,
-                                                                     FVector Location,
-                                                                     USoundAttenuation* AttenuationSettings)
-{
-	USoundBase* SoundToPlay = GetOrLoadSound(SoundKey);
-	if (!SoundToPlay) return nullptr;
-
-	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAtLocation(
-		GetWorld(), SoundToPlay, Location, FRotator::ZeroRotator, 1.0f, 1.0f, 0.0f,
-		AttenuationSettings);
-
-	if (AudioComp)
-	{
-		// 볼륨 설정에 필요한 사운드 모듈레이터 추가
-		TSet<USoundModulatorBase*> TargetBusses;
-
-		if (ControlBusMap.Contains(EAudioType::Master))
-			TargetBusses.Add(Cast<USoundModulatorBase>(ControlBusMap[EAudioType::Master].Get()));
-
-		if (ControlBusMap.Contains(AudioType))
-			TargetBusses.Add(Cast<USoundModulatorBase>(ControlBusMap[AudioType].Get()));
-
-		if (TargetBusses.Num() > 0)
-			AudioComp->SetModulationRouting(TargetBusses, EModulationDestination::Volume, EModulationRouting::Override);
-	}
-
-	return AudioComp;
-}
-
 void UKatanaSoundManagerSubsystem::LoadAudioSettings()
 {
 	TObjectPtr<UKatanaSoundSettingsSaveGame> LoadGameInstance = LoadSoundSettingsSaveGame(SlotName);
@@ -259,6 +244,14 @@ void UKatanaSoundManagerSubsystem::LoadAudioSettings()
 	}
 }
 
+void UKatanaSoundManagerSubsystem::OnWorldInitialized(UWorld* World, const UWorld::InitializationValues IVS)
+{
+	if (World && World->IsGameWorld())
+	{
+		LoadAudioSettings();
+	}
+}
+
 USoundBase* UKatanaSoundManagerSubsystem::GetOrLoadSound(const FString& SoundKey) const
 {
 	if (!CachedSoundDataAsset || !CachedSoundDataAsset->SoundMap.Contains(SoundKey))
@@ -269,4 +262,55 @@ USoundBase* UKatanaSoundManagerSubsystem::GetOrLoadSound(const FString& SoundKey
 
 	TSoftObjectPtr<USoundBase> SoftSound = CachedSoundDataAsset->SoundMap[SoundKey];
 	return SoftSound.IsPending() ? SoftSound.LoadSynchronous() : SoftSound.Get();
+}
+
+UAudioComponent* UKatanaSoundManagerSubsystem::PlaySound2D(EAudioType AudioType, USoundBase* SoundBase,
+                                                           float VolumeMultiplier, float PitchMultiplier)
+{
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSound2D(GetWorld(), SoundBase, VolumeMultiplier,
+	                                                            PitchMultiplier);
+
+	if (AudioComp)
+	{
+		// 볼륨 설정에 필요한 사운드 모듈레이터 추가
+		TSet<USoundModulatorBase*> TargetBusses;
+
+		if (ControlBusMap.Contains(EAudioType::Master))
+			TargetBusses.Add(Cast<USoundModulatorBase>(ControlBusMap[EAudioType::Master].Get()));
+
+		if (ControlBusMap.Contains(AudioType))
+			TargetBusses.Add(Cast<USoundModulatorBase>(ControlBusMap[AudioType].Get()));
+
+		if (TargetBusses.Num() > 0)
+			AudioComp->SetModulationRouting(TargetBusses, EModulationDestination::Volume, EModulationRouting::Override);
+	}
+
+	return AudioComp;
+}
+
+UAudioComponent* UKatanaSoundManagerSubsystem::PlaySoundAtLocation(EAudioType AudioType, USoundBase* SoundBase,
+                                                                   const FVector& Location, float VolumeMultiplier,
+                                                                   float PitchMultiplier,
+                                                                   USoundAttenuation* AttenuationSettings)
+{
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAtLocation(
+		GetWorld(), SoundBase, Location, FRotator::ZeroRotator, VolumeMultiplier, PitchMultiplier, 0.0f,
+		AttenuationSettings);
+
+	if (AudioComp)
+	{
+		// 볼륨 설정에 필요한 사운드 모듈레이터 추가
+		TSet<USoundModulatorBase*> TargetBusses;
+
+		if (ControlBusMap.Contains(EAudioType::Master))
+			TargetBusses.Add(Cast<USoundModulatorBase>(ControlBusMap[EAudioType::Master].Get()));
+
+		if (ControlBusMap.Contains(AudioType))
+			TargetBusses.Add(Cast<USoundModulatorBase>(ControlBusMap[AudioType].Get()));
+
+		if (TargetBusses.Num() > 0)
+			AudioComp->SetModulationRouting(TargetBusses, EModulationDestination::Volume, EModulationRouting::Override);
+	}
+
+	return AudioComp;
 }
