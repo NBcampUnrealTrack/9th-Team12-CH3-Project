@@ -1,8 +1,11 @@
 #include "Entity/Environment/EntranceWall.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
+#include "Engine/GameInstance.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Entity/Player/PlayerCharacterBase.h"
+#include "Framework/Subsystem/KatanaLevelSubsystem.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 AEntranceWall::AEntranceWall()
 {
@@ -52,6 +55,15 @@ void AEntranceWall::BeginPlay()
 	
 	FogMesh->SetCollisionProfileName(TEXT("BlockAll"));
 	FogMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UKatanaLevelSubsystem* LevelSubsystem =
+			GI->GetSubsystem<UKatanaLevelSubsystem>())
+		{
+			LevelSubsystem->RegisterEntranceWall(this);
+		}
+	}
 }
 
 void AEntranceWall::OnEnterTriggerBegin(
@@ -101,6 +113,16 @@ void AEntranceWall::ActivateFogWall()
 {
 	bActivated = true;
 
+	// 보스전 시작 알림
+	OnBossRoomEntered.Broadcast();
+	
+	if(BossBGM)
+	{
+		UKatanaSoundManagerSubsystem::PlaySound2D(
+			this, EAudioType::BGM, 
+			BossBGM);
+	}
+	
 	if (FogMid)
 	{
 		FogMid->SetScalarParameterValue(

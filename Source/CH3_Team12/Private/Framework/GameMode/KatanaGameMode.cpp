@@ -11,7 +11,7 @@ void AKatanaGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::BGM, BGMSound);
+	//UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::BGM, BGMSound);
 }
 
 void AKatanaGameMode::ChangeGamePlayRate(UWorld* InWorld, float InGamePlayRate)

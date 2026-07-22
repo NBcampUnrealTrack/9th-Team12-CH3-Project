@@ -7,6 +7,8 @@
 class UMaterialInstanceDynamic;
 class UBoxComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBossRoomEntered);
+
 UCLASS()
 class CH3_TEAM12_API AEntranceWall : public AActor
 {
@@ -15,6 +17,9 @@ class CH3_TEAM12_API AEntranceWall : public AActor
 public:	
 	AEntranceWall();
 
+	UPROPERTY(BlueprintAssignable)
+	FOnBossRoomEntered OnBossRoomEntered;
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -69,5 +74,8 @@ public:
 	FName OpacityParameter = "Opacity";
 
 	UPROPERTY(EditAnywhere, Category="Fog")
-	float ActivatedOpacity = 0.9f;
+	float ActivatedOpacity = 0.95f;
+	
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<USoundBase> BossBGM;
 };
