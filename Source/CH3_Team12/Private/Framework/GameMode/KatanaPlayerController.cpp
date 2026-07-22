@@ -43,7 +43,7 @@ void AKatanaPlayerController::BeginPlay()
 	if (!UIManager)
 		return;
 
-	UIManager->ShowEnemyWidget(EnemyCharacterBase);
+	//UIManager->ShowEnemyWidget(EnemyCharacterBase);
 
 	EnemyCharacterBase->GetEnemyAttributeComponent()->OnEnemyDeath.AddDynamic(
 		this, &AKatanaPlayerController::HandleEnemyDeath);

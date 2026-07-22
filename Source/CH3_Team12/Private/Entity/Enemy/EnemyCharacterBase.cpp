@@ -21,6 +21,8 @@
 #include "GameplayTags/CombatGameplayTags.h"
 #include "NiagaraSystem.h"
 #include "Framework/DataAsset/EnemyExecutionDataAsset.h"
+#include "Framework/Subsystem/KatanaLevelSubsystem.h"
+#include "Engine/GameInstance.h"
 
 // Sets default values
 AEnemyCharacterBase::AEnemyCharacterBase()
@@ -56,6 +58,17 @@ void AEnemyCharacterBase::BeginPlay()
 	// // 	MovementComponent->RotationRate = FRotator(0.f, 720.f, 0.f);
 	// // }
 
+	
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UKatanaLevelSubsystem* LevelSubsystem =
+			GameInstance->GetSubsystem<UKatanaLevelSubsystem>())
+		{
+			LevelSubsystem->RegisterBoss(this);
+		}
+	}
+	
+	
 	if (AttributeComponent)
 	{
 		AttributeComponent->OnEnemyDeath.AddDynamic(this, &AEnemyCharacterBase::OnDeath);
