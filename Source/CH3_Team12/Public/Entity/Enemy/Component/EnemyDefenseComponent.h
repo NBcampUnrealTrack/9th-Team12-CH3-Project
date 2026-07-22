@@ -13,6 +13,22 @@ class UEnemyAttackComponent;
 class UEnemyAttributeComponent;
 class UStateTagComponent;
 
+USTRUCT(BlueprintType)
+struct FHitSoundData
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound | Hit")
+	TObjectPtr<USoundBase> HitSound = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound | Hit")
+	float VolumeMultiplier = 1.0f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound | Hit")
+	float PitchMultiplier = 1.0f;
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CH3_TEAM12_API UEnemyDefenseComponent : public UActorComponent
 {
@@ -65,6 +81,10 @@ private:
 
 	void EndHitReaction();
 
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound | Hit")
+	FHitSoundData HitSoundData;
+	
 private:
 	UPROPERTY()
 	TObjectPtr<AEnemyCharacterBase> OwnerCharacter;
