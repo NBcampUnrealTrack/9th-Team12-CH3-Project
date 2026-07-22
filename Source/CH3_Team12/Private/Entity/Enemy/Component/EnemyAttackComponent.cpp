@@ -231,7 +231,7 @@ void UEnemyAttackComponent::StartHitCheck(const TArray<FHitBoxData>& HitBoxes)
 			FVector SocketLocation{};
 			FRotator SocketRotation{};
 			SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
-			DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
+			DrawDebugSphere(GetWorld(), SocketLocation, HitBoxData.TraceRadius, 16, FColor::White, false, 5.0f);
 		}
 	}
 	
@@ -305,13 +305,13 @@ void UEnemyAttackComponent::AttackTrace()
 			{
 				if (bUseDebugColliderDraw)
 				{
-					DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, 150.0f, 16, FColor::Blue, false, 5.0f);
+					DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, HitBoxData.TraceRadius, 16, FColor::Blue, false, 5.0f);
 				}
 				continue;
 			}
 			if (bUseDebugColliderDraw)
 			{
-				DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, 150.0f, 16, FColor::Red, false, 5.0f);
+				DrawDebugSphere(GetWorld(), CurrentHitBoxCenter, HitBoxData.TraceRadius, 16, FColor::Red, false, 5.0f);
 			}
 			
 			for (const FHitResult& Hit : HitResults)
@@ -362,7 +362,7 @@ void UEnemyAttackComponent::EndHitCheck()
 			FVector SocketLocation{};
 			FRotator SocketRotation{};
 			SkeletalMeshComponent->GetSocketWorldLocationAndRotation(SocketName, SocketLocation, SocketRotation);
-			DrawDebugSphere(GetWorld(), SocketLocation, 150.0f, 16, FColor::White, false, 5.0f);
+			DrawDebugSphere(GetWorld(), SocketLocation, HitBoxData.TraceRadius, 16, FColor::White, false, 5.0f);
 		}
 	}
 	
