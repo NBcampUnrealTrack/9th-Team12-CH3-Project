@@ -476,7 +476,7 @@ void UEnemyAttackComponent::OnAttackParried()
 	
 	if (AttributeComponent)
 	{
-		AttributeComponent->ApplyPostureDamage(CurrentAttackData->AttackInfo.Damage);
+		AttributeComponent->ApplyPostureDamage(CurrentAttackData->Rebound);
 	}
 	
 	if (CanParried() == false)
@@ -491,6 +491,8 @@ void UEnemyAttackComponent::OnAttackParried()
 		UAnimMontage* ParriedMontage = AttackAnimationData.AttackMontageSet.ParriedMontage;
 		if (AnimInstance
 			&& ParriedMontage
+			&& StateComponent
+			&& StateComponent->HasStateTagExact(CombatTags::State_Hit_PostureBroken) == false
 			)
 		{
 			AnimInstance->Montage_Play(ParriedMontage);
