@@ -10,6 +10,7 @@
 #include "Entity/Enemy/Component/EnemyAttributeComponent.h"
 #include "Entity/Player/StateTagComponent.h"
 #include "GameplayTags/CombatGameplayTags.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 UEnemyDefenseComponent::UEnemyDefenseComponent()
 {
@@ -274,6 +275,20 @@ void UEnemyDefenseComponent::HandleDirectHit(
 		}
 	}
 
+	const AActor* Owner = GetOwner();
+	if (Owner
+		&& HitSoundData.HitSound)
+	{
+		UKatanaSoundManagerSubsystem::PlaySoundAtLocation(
+			Owner,
+			EAudioType::SFX,
+			HitSoundData.HitSound,
+			Owner->GetActorLocation(),
+			HitSoundData.VolumeMultiplier,
+			HitSoundData.PitchMultiplier
+		);
+	}
+	
 	if (CanHitReaction())
 	{
 		if (!PlayMontageSafe(HitReactionMontage))
