@@ -77,6 +77,7 @@ public:
 	void EnableInvincible();
 	void DisableInvincible();
 	
+#if WITH_EDITOR
 	UFUNCTION(BlueprintCallable, Category="Combat|Debug")
 	void Debug_ReceiveTestAttackFront();
 
@@ -90,7 +91,9 @@ public:
 	void Debug_ReceiveTestAttackRight();
 
 	void Debug_ReceiveTestAttack(EHitReactionDirection Direction);
-
+	
+#endif
+	
 	UPROPERTY(EditAnywhere, Category="Combat|Debug")
 	float DebugAttackDamage = 10.0f;
 
