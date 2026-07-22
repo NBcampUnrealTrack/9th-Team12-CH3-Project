@@ -17,6 +17,7 @@
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 APlayerCharacterBase* AKatanaPlayerController::GetPlayerCharacter() const
 {
@@ -193,6 +194,27 @@ void AKatanaPlayerController::HandlePlayerLockOnStateChanged(bool bIsLockOn, AAc
 
 void AKatanaPlayerController::HandleDelayStageResult()
 {
+	// 플레이어 입력 차단
+	SetIgnoreMoveInput(true);
+	SetIgnoreLookInput(true);
+
+	// 현재 눌린 키 상태 정리
+	FlushPressedKeys();
+	
+	// 캐릭터 현재 이동/속도 정지
+	if (ACharacter* PlayerCharacter = Cast<ACharacter>(GetPawn()))
+	{
+		if (UCharacterMovementComponent* Movement =
+			PlayerCharacter->GetCharacterMovement())
+		{
+			Movement->StopMovementImmediately();
+			Movement->ClearAccumulatedForces();
+
+			// 결과창 동안 아예 못 움직이게 할 거면 이것까지
+			Movement->DisableMovement();
+		}
+	}
+	
 	bShowMouseCursor = true;
 	FInputModeUIOnly InputMode;
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
