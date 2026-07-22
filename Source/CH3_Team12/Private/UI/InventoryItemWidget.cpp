@@ -1,9 +1,10 @@
+// ReSharper disable CppMemberFunctionMayBeConst
 #include "UI/InventoryItemWidget.h"
 
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UInventoryItemWidget::UpdateData(const FPrimaryAssetId& InItemId, const FText& Name, UTexture2D* Icon,
                                       const int32 Count)
 {
@@ -33,13 +34,12 @@ FReply UInventoryItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry
 	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UInventoryItemWidget::HandleLeftClick()
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnMouseLeftClicked.ExecuteIfBound(ItemId);
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UInventoryItemWidget::HandleRightClick()
 {
 	(void)OnMouseRightClicked.ExecuteIfBound(ItemId);

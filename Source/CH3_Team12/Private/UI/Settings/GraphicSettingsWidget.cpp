@@ -3,6 +3,7 @@
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/CheckBox.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void UGraphicSettingsWidget::UpdateWidget(const EKatanaWindowMode WindowMode, const FIntPoint Resolution,
@@ -143,16 +144,19 @@ void UGraphicSettingsWidget::HandleRefreshRateSelectionChanged(FString SelectedI
 
 void UGraphicSettingsWidget::HandleBtnResetClicked() const
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnBtnResetClicked.ExecuteIfBound();
 }
 
 void UGraphicSettingsWidget::HandleBtnDoneClicked() const
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnBtnDoneClicked.ExecuteIfBound();
 }
 
 void UGraphicSettingsWidget::HandleBtnBackClicked() const
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnBtnBackClicked.ExecuteIfBound();
 }
 

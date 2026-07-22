@@ -27,7 +27,9 @@ public:
 	UInputSettingsWidget* GetInputSettings() const;
 
 protected:
-	UFUNCTION()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<USoundBase> ClickSound;
+
 	virtual void NativeOnInitialized() override;
 
 private:

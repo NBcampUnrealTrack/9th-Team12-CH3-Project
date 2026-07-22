@@ -5,6 +5,7 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Framework/Subsystem/KatanaLevelSubsystem.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
 
 void UStageResultWidget::UpdateWidget(const float BestTime, const float ClearTime)
@@ -54,5 +55,6 @@ void UStageResultWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTi
 
 void UStageResultWidget::HandleBtnDoneClicked()
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this,EAudioType::SFX, ClickSound);
 	(void)OnBtnDoneClicked.ExecuteIfBound();
 }

@@ -21,6 +21,9 @@ public:
 	FOnButtonClicked OnQuitButtonClicked;
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<USoundBase> ClickSound;
+
 	virtual void NativeConstruct() override;
 
 	UPROPERTY(meta=(BindWidget))

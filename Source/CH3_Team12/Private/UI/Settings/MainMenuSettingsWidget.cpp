@@ -1,6 +1,8 @@
+// ReSharper disable CppMemberFunctionMayBeConst
 #include "UI/Settings/MainMenuSettingsWidget.h"
 
 #include "Components/Button.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 #include "UI/Settings/GraphicSettingsWidget.h"
 #include "UI/Settings/InputSettingsWidget.h"
 #include "UI/Settings/SoundSettingsWidget.h"
@@ -43,15 +45,16 @@ void UMainMenuSettingsWidget::NativeOnInitialized()
 		this, &UMainMenuSettingsWidget::HandleVisibilityInputSettingsChanged);
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UMainMenuSettingsWidget::HandleBtnBackClicked()
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnBtnBackClicked.ExecuteIfBound();
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UMainMenuSettingsWidget::HandleBtnSoundSettingsClicked()
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
+
 	if (BtnSoundSettings)
 		BtnSoundSettings->SetIsEnabled(false);
 
@@ -59,9 +62,10 @@ void UMainMenuSettingsWidget::HandleBtnSoundSettingsClicked()
 		SoundSettingsWidget->SetVisibility(ESlateVisibility::Visible);
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UMainMenuSettingsWidget::HandleBtnGraphicSettingsClicked()
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
+
 	if (BtnGraphicSettings)
 		BtnGraphicSettings->SetIsEnabled(false);
 
@@ -69,9 +73,10 @@ void UMainMenuSettingsWidget::HandleBtnGraphicSettingsClicked()
 		GraphicSettingsWidget->SetVisibility(ESlateVisibility::Visible);
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UMainMenuSettingsWidget::HandleBtnInputSettingsClicked()
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
+
 	if (BtnInputSettings)
 		BtnInputSettings->SetIsEnabled(false);
 
@@ -81,10 +86,10 @@ void UMainMenuSettingsWidget::HandleBtnInputSettingsClicked()
 
 void UMainMenuSettingsWidget::HandleBtnResetStageRecordClicked()
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnBtnResetStageRecordClicked.ExecuteIfBound();
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UMainMenuSettingsWidget::HandleVisibilitySoundSettingsChanged(const ESlateVisibility InVisibility)
 {
 	if (InVisibility == ESlateVisibility::Collapsed)
@@ -94,7 +99,6 @@ void UMainMenuSettingsWidget::HandleVisibilitySoundSettingsChanged(const ESlateV
 	}
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UMainMenuSettingsWidget::HandleVisibilityGraphicSettingsChanged(const ESlateVisibility InVisibility)
 {
 	if (InVisibility == ESlateVisibility::Collapsed)
@@ -104,7 +108,6 @@ void UMainMenuSettingsWidget::HandleVisibilityGraphicSettingsChanged(const ESlat
 	}
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void UMainMenuSettingsWidget::HandleVisibilityInputSettingsChanged(ESlateVisibility InVisibility)
 {
 	if (InVisibility == ESlateVisibility::Collapsed)

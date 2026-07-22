@@ -26,5 +26,8 @@ public:
 	TSoftObjectPtr<USoundControlBus> SFXControlBus;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	TSoftObjectPtr<USoundControlBus> UIControlBus;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
 	TMap<FString, TSoftObjectPtr<USoundBase>> SoundMap;
 };

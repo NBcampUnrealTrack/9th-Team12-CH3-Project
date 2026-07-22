@@ -13,6 +13,8 @@ void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 	SoundSettingsWidget->OnMasterVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleMasterVolumeChanged);
 	SoundSettingsWidget->OnBGMVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleBGMVolumeChanged);
 	SoundSettingsWidget->OnSFXVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleSFXVolumeChanged);
+	SoundSettingsWidget->OnUIVolumeChanged.BindDynamic(this, &USoundSettingsPresenter::HandleUIVolumeChanged);
+
 	SoundSettingsWidget->OnBtnResetClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnResetClicked);
 	SoundSettingsWidget->OnBtnBackClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnBackClicked);
 
@@ -26,7 +28,8 @@ void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 	SoundSettingsWidget->UpdateWidget(
 		SoundManagerSubsystem->GetVolume(EAudioType::Master),
 		SoundManagerSubsystem->GetVolume(EAudioType::BGM),
-		SoundManagerSubsystem->GetVolume(EAudioType::SFX)
+		SoundManagerSubsystem->GetVolume(EAudioType::SFX),
+		SoundManagerSubsystem->GetVolume(EAudioType::UI)
 	);
 }
 
@@ -37,6 +40,7 @@ void USoundSettingsPresenter::Dispose()
 		SoundSettingsWidget->OnMasterVolumeChanged.Unbind();
 		SoundSettingsWidget->OnBGMVolumeChanged.Unbind();
 		SoundSettingsWidget->OnSFXVolumeChanged.Unbind();
+		SoundSettingsWidget->OnUIVolumeChanged.Unbind();
 		SoundSettingsWidget->OnBtnResetClicked.Unbind();
 		SoundSettingsWidget->OnBtnBackClicked.Unbind();
 	}
@@ -66,6 +70,14 @@ void USoundSettingsPresenter::HandleSFXVolumeChanged(const float NewVolume) cons
 	SoundManagerSubsystem->SetVolume(EAudioType::SFX, NewVolume);
 }
 
+void USoundSettingsPresenter::HandleUIVolumeChanged(float NewVolume) const
+{
+	if (!SoundManagerSubsystem.IsValid())
+		return;
+
+	SoundManagerSubsystem->SetVolume(EAudioType::UI, NewVolume);
+}
+
 void USoundSettingsPresenter::HandleBtnResetClicked() const
 {
 	if (!SoundSettingsWidget.IsValid())
@@ -74,7 +86,8 @@ void USoundSettingsPresenter::HandleBtnResetClicked() const
 	SoundSettingsWidget->UpdateWidget(
 		SoundManagerSubsystem->GetDefaultVolume(EAudioType::Master),
 		SoundManagerSubsystem->GetDefaultVolume(EAudioType::BGM),
-		SoundManagerSubsystem->GetDefaultVolume(EAudioType::SFX)
+		SoundManagerSubsystem->GetDefaultVolume(EAudioType::SFX),
+		SoundManagerSubsystem->GetDefaultVolume(EAudioType::UI)
 	);
 }
 

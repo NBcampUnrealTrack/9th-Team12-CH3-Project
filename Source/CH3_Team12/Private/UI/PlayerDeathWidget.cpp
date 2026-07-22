@@ -4,6 +4,7 @@
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 void UPlayerDeathWidget::NativeOnInitialized()
 {
@@ -29,10 +30,12 @@ void UPlayerDeathWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTi
 
 void UPlayerDeathWidget::HandleRestartButtonClicked()
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnRestartButtonClicked.ExecuteIfBound();
 }
 
 void UPlayerDeathWidget::HandleMainMenuButtonClicked()
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnMainMenuButtonClicked.ExecuteIfBound();
 }

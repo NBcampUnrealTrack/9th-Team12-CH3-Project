@@ -28,7 +28,9 @@ public:
 	FOnButtonClicked OnBtnMainMenuClicked;
 
 protected:
-	UFUNCTION()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<USoundBase> ClickSound;
+
 	virtual void NativeOnInitialized() override;
 
 private:

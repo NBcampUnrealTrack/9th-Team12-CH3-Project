@@ -25,6 +25,9 @@ public:
 	bool bDoneAfterCollapsed = false;
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<USoundBase> ClickSound;
+
 	virtual void NativeOnInitialized() override;
 
 private:
