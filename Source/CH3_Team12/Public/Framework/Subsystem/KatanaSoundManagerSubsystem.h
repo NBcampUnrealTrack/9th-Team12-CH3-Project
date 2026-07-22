@@ -16,7 +16,8 @@ enum class EAudioType : uint8
 {
 	Master UMETA(DisplayName = "Master Volume"),
 	BGM UMETA(DisplayName = "Background Music"),
-	SFX UMETA(DisplayName = "Sound Effects")
+	SFX UMETA(DisplayName = "Sound Effects"),
+	UI UMETA(DisplayName = "UI"),
 };
 
 UCLASS()

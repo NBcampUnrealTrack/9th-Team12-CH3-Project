@@ -23,6 +23,9 @@ public:
 	void UpdateData(const FPrimaryAssetId& InItemId, const FText& Name, UTexture2D* Icon, int32 Count);
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<USoundBase> ClickSound;
+
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 private:

@@ -17,11 +17,14 @@ public:
 
 	// 사운드 분류별 볼륨 값 (0.0 ~ 1.0)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	float MasterVolume;
+	float MasterVolume = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	float BGMVolume;
+	float BGMVolume = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	float SFXVolume;
+	float SFXVolume = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	float UIVolume = 1.0f;
 };

@@ -22,11 +22,14 @@ public:
 	void UpdateWidget(float BestTime, float ClearTime);
 
 protected:
-	virtual void NativeOnInitialized() override;
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<USoundBase> ClickSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FLinearColor BackgroundColor;
+
+	virtual void NativeOnInitialized() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
 	UPROPERTY(meta=(BindWidget))

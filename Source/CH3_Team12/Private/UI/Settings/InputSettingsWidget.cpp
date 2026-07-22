@@ -5,6 +5,7 @@
 #include "Components/Button.h"
 #include "Components/InputKeySelector.h"
 #include "Framework/InputActionNames.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 void UInputSettingsWidget::UpdateWidget(TMap<FName, FKey> KeyBindingMap)
 {
@@ -127,15 +128,18 @@ void UInputSettingsWidget::HandleInGameMenuKeySelected(FInputChord SelectedKey)
 
 void UInputSettingsWidget::HandleBtnResetClicked() const
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnBtnResetClicked.ExecuteIfBound();
 }
 
 void UInputSettingsWidget::HandleBtnDoneClicked() const
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnBtnDoneClicked.ExecuteIfBound();
 }
 
 void UInputSettingsWidget::HandleBtnBackClicked() const
 {
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::UI, ClickSound);
 	(void)OnBtnBackClicked.ExecuteIfBound();
 }

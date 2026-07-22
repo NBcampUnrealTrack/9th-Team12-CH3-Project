@@ -20,12 +20,17 @@ public:
 	FOnVolumeChanged OnMasterVolumeChanged;
 	FOnVolumeChanged OnBGMVolumeChanged;
 	FOnVolumeChanged OnSFXVolumeChanged;
+	FOnVolumeChanged OnUIVolumeChanged;
+
 	FOnButtonClicked OnBtnResetClicked;
 	FOnButtonClicked OnBtnBackClicked;
 
-	void UpdateWidget(float MasterVolume, float BGMVolume, float SFXVolume);
+	void UpdateWidget(float MasterVolume, float BGMVolume, float SFXVolume, float UIVolume);
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<USoundBase> ClickSound;
+
 	virtual void NativeOnInitialized() override;
 
 private:
@@ -37,6 +42,9 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UStepProgressBar> SFXVolumeStep;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UStepProgressBar> UIVolumeStep;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> BtnReset;
@@ -54,6 +62,9 @@ private:
 	void HandleSFXVolumeChanged(float Volume) const;
 
 	UFUNCTION()
+	void HandleUIVolumeChanged(float Volume) const;
+
+	UFUNCTION()
 	void HandleBtnResetClicked() const;
 
 	UFUNCTION()
@@ -62,4 +73,5 @@ private:
 	void SetMasterVolumeWidget(const float Volume) const;
 	void SetBGMVolumeWidget(const float Volume) const;
 	void SetSFXVolumeWidget(const float Volume) const;
+	void SetUIVolumeWidget(const float Volume) const;
 };

@@ -142,6 +142,17 @@ void UKatanaSoundManagerSubsystem::Initialize(FSubsystemCollectionBase& Collecti
 		ControlBusMap.Add(EAudioType::SFX, SFXControlBus);
 	}
 
+	if (!CachedSoundDataAsset->UIControlBus.IsNull())
+	{
+		USoundControlBus* UIControlBus = CachedSoundDataAsset->UIControlBus.LoadSynchronous();
+		if (!UIControlBus)
+		{
+			UE_LOG(LogTemp, Error, TEXT("UKatanaSoundManagerSubsystem : UIControlBus is null"));
+		}
+
+		ControlBusMap.Add(EAudioType::UI, UIControlBus);
+	}
+
 	UE_LOG(LogTemp, Warning, TEXT("ControlBusMap: %d"), ControlBusMap.Num());
 
 	FWorldDelegates::OnPostWorldInitialization.AddUObject(this, &UKatanaSoundManagerSubsystem::OnWorldInitialized);
@@ -165,6 +176,8 @@ float UKatanaSoundManagerSubsystem::GetDefaultVolume(EAudioType AudioType) const
 		return DefaultSaveGame->BGMVolume;
 	case EAudioType::SFX:
 		return DefaultSaveGame->SFXVolume;
+	case EAudioType::UI:
+		return DefaultSaveGame->UIVolume;
 	default:
 		return 0.0f;
 	}
@@ -187,6 +200,8 @@ float UKatanaSoundManagerSubsystem::GetVolume(const EAudioType AudioType)
 		return LoadGameInstance->BGMVolume;
 	case EAudioType::SFX:
 		return LoadGameInstance->SFXVolume;
+	case EAudioType::UI:
+		return LoadGameInstance->UIVolume;
 	default:
 		return 0.0f;
 	}
@@ -213,6 +228,7 @@ void UKatanaSoundManagerSubsystem::SetVolume(const EAudioType AudioType, const f
 		if (AudioType == EAudioType::Master) SaveGameInstance->MasterVolume = NewVolume;
 		else if (AudioType == EAudioType::BGM) SaveGameInstance->BGMVolume = NewVolume;
 		else if (AudioType == EAudioType::SFX) SaveGameInstance->SFXVolume = NewVolume;
+		else if (AudioType == EAudioType::UI) SaveGameInstance->UIVolume = NewVolume;
 
 		UGameplayStatics::SaveGameToSlot(SaveGameInstance, SlotName, 0);
 		// UE_LOG(LogTemp, Warning, TEXT("SaveGameInstance: %s"), *SaveGameInstance->GetName());
@@ -241,6 +257,10 @@ void UKatanaSoundManagerSubsystem::LoadAudioSettings()
 		if (ControlBusMap.Contains(EAudioType::SFX))
 			UAudioModulationStatics::SetGlobalBusMixValue(GetWorld(), ControlBusMap[EAudioType::SFX].Get(),
 			                                              LoadGameInstance->SFXVolume, 0.0f);
+
+		if (ControlBusMap.Contains(EAudioType::UI))
+			UAudioModulationStatics::SetGlobalBusMixValue(GetWorld(), ControlBusMap[EAudioType::UI].Get(),
+			                                              LoadGameInstance->UIVolume, 0.0f);
 	}
 }
 

@@ -36,6 +36,9 @@ private:
 	void HandleSFXVolumeChanged(float NewVolume) const;
 
 	UFUNCTION()
+	void HandleUIVolumeChanged(float NewVolume) const;
+
+	UFUNCTION()
 	void HandleBtnResetClicked() const;
 
 	UFUNCTION()
