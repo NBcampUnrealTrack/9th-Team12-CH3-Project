@@ -23,7 +23,6 @@
 #include "GameplayTags/CombatGameplayTags.h"
 #include "NiagaraSystem.h"
 #include "Framework/DataAsset/EnemyExecutionDataAsset.h"
-#include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "Engine/GameInstance.h"
 
 // Sets default values
@@ -31,7 +30,7 @@ AEnemyCharacterBase::AEnemyCharacterBase()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+
 	Tags.Add(TEXT("Enemy"));
 
 	AIControllerClass = AEnemyAIController::StaticClass();
@@ -60,41 +59,30 @@ void AEnemyCharacterBase::BeginPlay()
 	// // 	MovementComponent->RotationRate = FRotator(0.f, 720.f, 0.f);
 	// // }
 
-	
-	if (UGameInstance* GameInstance = GetGameInstance())
-	{
-		if (UKatanaLevelSubsystem* LevelSubsystem =
-			GameInstance->GetSubsystem<UKatanaLevelSubsystem>())
-		{
-			LevelSubsystem->RegisterBoss(this);
-		}
-	}
-	
-	
 	if (AttributeComponent)
 	{
 		AttributeComponent->OnEnemyDeath.AddDynamic(this, &AEnemyCharacterBase::OnDeath);
 		AttributeComponent->OnEnemyPostureBroken.AddDynamic(this, &AEnemyCharacterBase::HandlePostureBroken);
 	}
-	
+
 	if (EnemyTransitionComponent)
 	{
 		DestroyTime = EnemyTransitionComponent->GetDissolveDuration() + 15;
 	}
-	
+
 	USkeletalMeshComponent* SkeletalMesh = GetMesh();
 	if (SkeletalMesh == nullptr)
 	{
 		return;
 	}
-		
+
 	UAnimInstance* AnimInstance = SkeletalMesh->GetAnimInstance();
 	if (AnimInstance)
 	{
 		AnimInstance->OnPlayMontageNotifyBegin.AddDynamic(this, &AEnemyCharacterBase::OnExecutedMontageDeadCheck);
 	}
-	
-	
+
+
 	AEnemyAIController* AIController = Cast<AEnemyAIController>(GetController());
 	if (AIController)
 	{
@@ -181,8 +169,8 @@ bool AEnemyCharacterBase::CanExecuted()
 	const UEnemyExecutionDataAsset* EnemyData = GetExecutionData();
 
 	bool Result = EnemyData->EnemyExecutionData.EnemyMontage && EnemyData;
-	
-	ensure(EnemyData);  
+
+	ensure(EnemyData);
 	ensure(EnemyData->EnemyExecutionData.EnemyMontage);
 
 	return Result;
@@ -192,7 +180,7 @@ void AEnemyCharacterBase::StartExecuted()
 {
 	if (CanExecuted())
 	{
-		StartExecuted_Implement();	
+		StartExecuted_Implement();
 	}
 }
 
@@ -211,9 +199,9 @@ void AEnemyCharacterBase::OnDeath()
 			{
 				SkeletalMesh->SetHiddenInGame(true);
 			}
-		}	
+		}
 	}
-	
+
 	ProcessDeath();
 }
 
@@ -247,7 +235,7 @@ bool AEnemyCharacterBase::PlayDeathMontage()
 	}
 
 	AnimInstance->Montage_Play(DeathMontage);
-	
+
 	return true;
 }
 
@@ -322,13 +310,13 @@ void AEnemyCharacterBase::StartExecuted_Implement()
 	if (StateTagComponent)
 	{
 		StateTagComponent->AddStateTag(CombatTags::State_Action_Executing);
-		
+
 		StopAILogic();
 		if (!PlayExecutedMontage())
 		{
 			OnExecutedMontageEnded(nullptr, false);
 		}
-	}	
+	}
 }
 
 bool AEnemyCharacterBase::PlayExecutedMontage()
@@ -351,10 +339,10 @@ bool AEnemyCharacterBase::PlayExecutedMontage()
 		FOnMontageEnded OnMontageEndedDelegate;
 		OnMontageEndedDelegate.BindUObject(
 				this, &AEnemyCharacterBase::OnExecutedMontageEnded);
-		
+
 		AnimInstance->Montage_Play(ExecutedMontage);
 		AnimInstance->Montage_SetEndDelegate(OnMontageEndedDelegate, ExecutedMontage);
-		
+
 		return true;
 	}
 
@@ -365,7 +353,7 @@ void AEnemyCharacterBase::OnExecutedMontageEnded(UAnimMontage* Montage, bool bIn
 {
 	if (StateTagComponent)
 	{
-		StateTagComponent->RemoveStateTag(CombatTags::State_Action_Executing);		
+		StateTagComponent->RemoveStateTag(CombatTags::State_Action_Executing);
 	}
 	ResumeAILogic();
 }
@@ -377,21 +365,21 @@ void AEnemyCharacterBase::OnExecutedMontageDeadCheck(FName NotifyName,
 		&& StateTagComponent
 		&& StateTagComponent->HasStateTagExact(CombatTags::State_Hit_Dead) == false
 		)
-	{	
+	{
 		USkeletalMeshComponent* SkeletalMesh = GetMesh();
 		if (SkeletalMesh == nullptr)
 		{
 			return;
 		}
-		
+
 		UAnimInstance* AnimInstance = SkeletalMesh->GetAnimInstance();
 		if (AnimInstance)
 		{
 			if (ExecutionData)
 			{
 				UAnimMontage* ExecutionMontage = ExecutionData->EnemyExecutionData.EnemyMontage;
-			
-				AnimInstance->Montage_JumpToSection(ExecutionMontageLoopEndSectionKey, ExecutionMontage);	
+
+				AnimInstance->Montage_JumpToSection(ExecutionMontageLoopEndSectionKey, ExecutionMontage);
 			}
 		}
 	}
