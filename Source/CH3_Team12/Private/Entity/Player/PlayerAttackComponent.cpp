@@ -25,7 +25,7 @@
 UPlayerAttackComponent::UPlayerAttackComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.SetTickFunctionEnable(false);
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UPlayerAttackComponent::BeginPlay()
