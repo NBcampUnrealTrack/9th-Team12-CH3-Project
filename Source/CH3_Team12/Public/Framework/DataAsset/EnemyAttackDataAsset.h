@@ -49,6 +49,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack", meta = (ClampMin = 0.1f, UIMin = 0.1f))
 	float PostureDamageRate = 1.0f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack", meta = (ClampMin = 0.1f, UIMin = 0.1f))
+	float Rebound = 10.0f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack")
 	FAttackInfo AttackInfo;
 };
