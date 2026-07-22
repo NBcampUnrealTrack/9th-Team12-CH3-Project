@@ -23,11 +23,10 @@ void USoundSettingsWidget::NativeOnInitialized()
 	BGMVolumeStep->OnValueChanged.AddDynamic(this, &USoundSettingsWidget::HandleBGMVolumeChanged);
 	SFXVolumeStep->OnValueChanged.AddDynamic(this, &USoundSettingsWidget::HandleSFXVolumeChanged);
 
-	if (BtnReset)
-		BtnReset->OnClicked.AddDynamic(this, &USoundSettingsWidget::HandleBtnResetClicked);
+	BtnReset->OnClicked.AddDynamic(this, &USoundSettingsWidget::HandleBtnResetClicked);
 
-	if (BtnDone)
-		BtnDone->OnClicked.AddDynamic(this, &USoundSettingsWidget::HandleBtnDoneClicked);
+	if (BtnBack)
+		BtnBack->OnClicked.AddDynamic(this, &USoundSettingsWidget::HandleBtnBackClicked);
 }
 
 void USoundSettingsWidget::HandleMasterVolumeChanged(const float Volume) const
@@ -50,9 +49,9 @@ void USoundSettingsWidget::HandleBtnResetClicked() const
 	(void)OnBtnResetClicked.ExecuteIfBound();
 }
 
-void USoundSettingsWidget::HandleBtnDoneClicked() const
+void USoundSettingsWidget::HandleBtnBackClicked() const
 {
-	(void)OnBtnDoneClicked.ExecuteIfBound();
+	(void)OnBtnBackClicked.ExecuteIfBound();
 }
 
 void USoundSettingsWidget::SetMasterVolumeWidget(const float Volume) const

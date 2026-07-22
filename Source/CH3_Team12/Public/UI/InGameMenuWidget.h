@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UICommonTypes.h"
 #include "Blueprint/UserWidget.h"
 #include "InGameMenuWidget.generated.h"
 
@@ -24,6 +25,8 @@ public:
 	UGraphicSettingsWidget* GetGraphicSettingsWidget() const;
 	UInputSettingsWidget* GetInputSettingsWidget() const;
 
+	FOnButtonClicked OnBtnMainMenuClicked;
+
 protected:
 	UFUNCTION()
 	virtual void NativeOnInitialized() override;
@@ -34,6 +37,9 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> BtnSettings;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UButton> BtnMainMenu;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UWidgetSwitcher> WidgetSwitcher;
@@ -69,6 +75,9 @@ private:
 
 	UFUNCTION()
 	void HandleBtnSettingsClicked();
+
+	UFUNCTION()
+	void HandleBtnMainMenuClicked();
 
 	UFUNCTION()
 	void HandleBtnChildSoundSettingsClicked();

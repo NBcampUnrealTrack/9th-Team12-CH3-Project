@@ -39,5 +39,5 @@ private:
 	void HandleBtnResetClicked() const;
 
 	UFUNCTION()
-	void HandleBtnDoneClicked() const;
+	void HandleBtnBackClicked() const;
 };

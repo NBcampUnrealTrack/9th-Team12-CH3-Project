@@ -25,6 +25,9 @@ protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FLinearColor BackgroundColor;
+
 private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UImage> ImgBackground;

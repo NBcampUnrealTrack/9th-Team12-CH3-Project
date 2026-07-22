@@ -29,6 +29,7 @@ void UInGameMenuWidget::NativeOnInitialized()
 
 	BtnInventory->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnInventoryClicked);
 	BtnSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnSettingsClicked);
+	BtnMainMenu->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnMainMenuClicked);
 
 	BtnChildSoundSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnChildSoundSettingsClicked);
 	BtnChildGraphicsSettings->OnClicked.AddDynamic(this, &UInGameMenuWidget::HandleBtnChildGraphicsSettingsClicked);
@@ -43,6 +44,11 @@ void UInGameMenuWidget::HandleBtnInventoryClicked()
 void UInGameMenuWidget::HandleBtnSettingsClicked()
 {
 	WidgetSwitcherChanged(1);
+}
+
+void UInGameMenuWidget::HandleBtnMainMenuClicked()
+{
+	(void)OnBtnMainMenuClicked.ExecuteIfBound();
 }
 
 void UInGameMenuWidget::HandleBtnChildSoundSettingsClicked()

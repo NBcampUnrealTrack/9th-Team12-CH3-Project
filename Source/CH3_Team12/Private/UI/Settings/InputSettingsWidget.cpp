@@ -62,6 +62,9 @@ void UInputSettingsWidget::NativeOnInitialized()
 
 	BtnReset->OnClicked.AddDynamic(this, &UInputSettingsWidget::HandleBtnResetClicked);
 	BtnDone->OnClicked.AddDynamic(this, &UInputSettingsWidget::HandleBtnDoneClicked);
+
+	if (BtnBack)
+		BtnBack->OnClicked.AddDynamic(this, &UInputSettingsWidget::HandleBtnBackClicked);
 }
 
 void UInputSettingsWidget::HandleMoveForwardKeySelected(FInputChord SelectedKey)
@@ -137,4 +140,9 @@ void UInputSettingsWidget::HandleBtnResetClicked() const
 void UInputSettingsWidget::HandleBtnDoneClicked() const
 {
 	(void)OnBtnDoneClicked.ExecuteIfBound();
+}
+
+void UInputSettingsWidget::HandleBtnBackClicked() const
+{
+	(void)OnBtnBackClicked.ExecuteIfBound();
 }

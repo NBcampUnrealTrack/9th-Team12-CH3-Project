@@ -35,4 +35,7 @@ private:
 
 	UFUNCTION()
 	void HandleBtnDoneClicked();
+
+	UFUNCTION()
+	void HandleBtnBackClicked();
 };

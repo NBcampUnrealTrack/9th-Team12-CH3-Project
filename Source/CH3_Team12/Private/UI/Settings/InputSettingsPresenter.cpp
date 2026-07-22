@@ -14,6 +14,7 @@ void UInputSettingsPresenter::Initialize(UInputSettingsWidget* InWidget)
 	InputSettingsWidget->OnKeyBindingChanged.BindDynamic(this, &UInputSettingsPresenter::HandleKeyBindingChanged);
 	InputSettingsWidget->OnBtnResetClicked.BindDynamic(this, &UInputSettingsPresenter::HandleBtnResetClicked);
 	InputSettingsWidget->OnBtnDoneClicked.BindDynamic(this, &UInputSettingsPresenter::HandleBtnDoneClicked);
+	InputSettingsWidget->OnBtnBackClicked.BindDynamic(this, &UInputSettingsPresenter::HandleBtnBackClicked);
 
 	InputManagerSubsystem = UKatanaInputManagerSubsystem::Get(this);
 	if (!InputManagerSubsystem.IsValid())
@@ -34,6 +35,7 @@ void UInputSettingsPresenter::Dispose()
 	InputSettingsWidget->OnKeyBindingChanged.Unbind();
 	InputSettingsWidget->OnBtnResetClicked.Unbind();
 	InputSettingsWidget->OnBtnDoneClicked.Unbind();
+	InputSettingsWidget->OnBtnBackClicked.Unbind();
 }
 
 void UInputSettingsPresenter::HandleKeyBindingChanged(FName ActionName, FKey NewKey)
@@ -74,4 +76,9 @@ void UInputSettingsPresenter::HandleBtnDoneClicked()
 
 	if (InputSettingsWidget->bDoneAfterCollapsed)
 		InputSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UInputSettingsPresenter::HandleBtnBackClicked()
+{
+	InputSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
 }
