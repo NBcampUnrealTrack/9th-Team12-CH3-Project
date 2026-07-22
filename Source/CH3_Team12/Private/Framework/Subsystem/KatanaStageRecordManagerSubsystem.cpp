@@ -245,3 +245,10 @@ void UKatanaStageRecordManagerSubsystem::SaveStageRecords()
 		UE_LOG(LogTemp, Error, TEXT("KatanaStageRecordManagerSubsystem: 스테이지 기록 저장 실패"));
 	}
 }
+
+void UKatanaStageRecordManagerSubsystem::ResetStageRecord()
+{
+	UE_LOG(LogTemp, Log, TEXT("KatanaStageRecordManagerSubsystem: 스테이지 기록을 초기화합니다."));
+	UGameplayStatics::DeleteGameInSlot(SlotName, 0);
+	BestStageTimeMap.Reset();
+}

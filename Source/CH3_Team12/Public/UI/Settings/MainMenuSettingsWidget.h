@@ -19,6 +19,7 @@ class CH3_TEAM12_API UMainMenuSettingsWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	FOnButtonClicked OnBtnResetStageRecordClicked;
 	FOnButtonClicked OnBtnBackClicked;
 
 	USoundSettingsWidget* GetSoundSettings() const;
@@ -43,6 +44,9 @@ private:
 	TObjectPtr<UButton> BtnInputSettings;
 
 	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UButton> BtnResetStageRecord;
+
+	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<USoundSettingsWidget> SoundSettingsWidget;
 
 	UPROPERTY(meta=(BindWidget))
@@ -62,6 +66,9 @@ private:
 
 	UFUNCTION()
 	void HandleBtnInputSettingsClicked();
+
+	UFUNCTION()
+	void HandleBtnResetStageRecordClicked();
 
 	UFUNCTION()
 	void HandleVisibilitySoundSettingsChanged(ESlateVisibility InVisibility);
