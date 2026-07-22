@@ -710,6 +710,7 @@ void UPlayerDefenseComponent::DisableInvincible()
 	);
 }
 
+#if WITH_EDITOR
 void UPlayerDefenseComponent::Debug_ReceiveTestAttackFront()
 {
 	Debug_ReceiveTestAttack(EHitReactionDirection::Front);
@@ -791,6 +792,8 @@ void UPlayerDefenseComponent::Debug_ReceiveTestAttack(
 		*UEnum::GetValueAsString(Result)
 	);
 }
+
+#endif
 
 void UPlayerDefenseComponent::HandleOwnerDead()
 {

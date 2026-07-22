@@ -14,7 +14,6 @@ namespace InputActionNames
 	extern const FName Attack;
 	extern const FName LockOn;
 	extern const FName UseItem;
-	extern const FName Equip;
 	extern const FName Special;
 	extern const FName HeavyAttack;
 	extern const FName InGameMenu;

@@ -26,6 +26,7 @@ class CH3_TEAM12_API UKatanaSoundManagerSubsystem : public UGameInstanceSubsyste
 
 public:
 	static UKatanaSoundManagerSubsystem* Get(const UObject* WorldContextObject);
+
 	static void PlaySound2D(const UObject* WorldContextObject, EAudioType AudioType, USoundBase* SoundBase,
 	                        float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f);
 

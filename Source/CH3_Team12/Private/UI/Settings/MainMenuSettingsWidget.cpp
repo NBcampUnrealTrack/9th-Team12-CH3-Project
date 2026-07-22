@@ -24,6 +24,7 @@ void UMainMenuSettingsWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
+	BtnResetStageRecord->OnClicked.AddDynamic(this, &UMainMenuSettingsWidget::HandleBtnResetStageRecordClicked);
 	BtnBack->OnClicked.AddDynamic(this, &UMainMenuSettingsWidget::HandleBtnBackClicked);
 
 	BtnSoundSettings->OnClicked.AddDynamic(this, &UMainMenuSettingsWidget::HandleBtnSoundSettingsClicked);
@@ -76,6 +77,11 @@ void UMainMenuSettingsWidget::HandleBtnInputSettingsClicked()
 
 	if (InputSettingsWidget)
 		InputSettingsWidget->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UMainMenuSettingsWidget::HandleBtnResetStageRecordClicked()
+{
+	(void)OnBtnResetStageRecordClicked.ExecuteIfBound();
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

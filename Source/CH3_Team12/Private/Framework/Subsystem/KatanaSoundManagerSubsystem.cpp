@@ -267,6 +267,12 @@ USoundBase* UKatanaSoundManagerSubsystem::GetOrLoadSound(const FString& SoundKey
 UAudioComponent* UKatanaSoundManagerSubsystem::PlaySound2D(EAudioType AudioType, USoundBase* SoundBase,
                                                            float VolumeMultiplier, float PitchMultiplier)
 {
+	if (!SoundBase)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SoundBase is nullptr"));
+		return nullptr;
+	}
+
 	UAudioComponent* AudioComp = UGameplayStatics::SpawnSound2D(GetWorld(), SoundBase, VolumeMultiplier,
 	                                                            PitchMultiplier);
 
@@ -293,6 +299,12 @@ UAudioComponent* UKatanaSoundManagerSubsystem::PlaySoundAtLocation(EAudioType Au
                                                                    float PitchMultiplier,
                                                                    USoundAttenuation* AttenuationSettings)
 {
+	if (!SoundBase)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SoundBase is nullptr"));
+		return nullptr;
+	}
+
 	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAtLocation(
 		GetWorld(), SoundBase, Location, FRotator::ZeroRotator, VolumeMultiplier, PitchMultiplier, 0.0f,
 		AttenuationSettings);

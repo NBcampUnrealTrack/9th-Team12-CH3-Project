@@ -24,5 +24,8 @@ private:
 	TWeakObjectPtr<UMainMenuSettingsWidget> MainMenuSettingsWidget;
 
 	UFUNCTION()
+	void HandleBtnResetStageRecordClicked();
+
+	UFUNCTION()
 	void HandleBtnBackClicked();
 };
