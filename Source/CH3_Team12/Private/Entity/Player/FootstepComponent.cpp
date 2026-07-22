@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Engine/World.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 UFootstepComponent::UFootstepComponent()
 {
@@ -42,7 +43,7 @@ void UFootstepComponent::PlayFootstep(FName FootSocketName)
 	}
 
 	LastFootstepTime = Now;
-	
+
 	if (MovementComponent->IsFalling())
 	{
 		return;
@@ -89,8 +90,9 @@ void UFootstepComponent::PlayFootstep(FName FootSocketName)
 
 	if (DefaultFootstepSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(
+		UKatanaSoundManagerSubsystem::PlaySoundAtLocation(
 			this,
+			EAudioType::SFX,
 			DefaultFootstepSound,
 			SoundLocation,
 			VolumeMultiplier

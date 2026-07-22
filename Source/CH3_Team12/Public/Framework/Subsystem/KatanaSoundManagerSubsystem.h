@@ -13,9 +13,9 @@ class USoundBase;
 UENUM(BlueprintType)
 enum class EAudioType : uint8
 {
-	Master  UMETA(DisplayName = "Master Volume"),
-	BGM     UMETA(DisplayName = "Background Music"),
-	SFX     UMETA(DisplayName = "Sound Effects")
+	Master UMETA(DisplayName = "Master Volume"),
+	BGM UMETA(DisplayName = "Background Music"),
+	SFX UMETA(DisplayName = "Sound Effects")
 };
 
 UCLASS()
@@ -25,6 +25,11 @@ class CH3_TEAM12_API UKatanaSoundManagerSubsystem : public UGameInstanceSubsyste
 
 public:
 	static UKatanaSoundManagerSubsystem* Get(const UObject* WorldContextObject);
+	static void PlaySound2D(const UObject* WorldContextObject, EAudioType AudioType, USoundBase* SoundBase,
+	                        float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f);
+
+	static void PlaySoundAtLocation(const UObject* WorldContextObject, EAudioType AudioType, USoundBase* SoundBase,
+	                                const FVector& Location, float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f);
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
@@ -34,15 +39,6 @@ public:
 
 	float GetVolume(EAudioType AudioType);
 	void SetVolume(EAudioType AudioType, float NewVolume);
-
-
-	UFUNCTION()
-	UAudioComponent* PlaySound2D(EAudioType AudioType, FString SoundKey, float VolumeMultiplier = 1.0f,
-	                             float PitchMultiplier = 1.0f);
-
-	UFUNCTION()
-	UAudioComponent* PlaySound3DAtLocation(EAudioType AudioType, FString SoundKey, FVector Location,
-	                                       USoundAttenuation* AttenuationSettings = nullptr);
 
 private:
 	UPROPERTY()
@@ -54,4 +50,11 @@ private:
 	const FString SlotName = TEXT("AudioSettingsSlot_Modulation");
 
 	USoundBase* GetOrLoadSound(const FString& SoundKey) const;
+
+	UAudioComponent* PlaySound2D(EAudioType AudioType, USoundBase* SoundBase, float VolumeMultiplier = 1.0f,
+								 float PitchMultiplier = 1.0f);
+
+	UAudioComponent* PlaySoundAtLocation(EAudioType AudioType, USoundBase* SoundBase, const FVector& Location,
+	                                     float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f,
+	                                     USoundAttenuation* AttenuationSettings = nullptr);
 };

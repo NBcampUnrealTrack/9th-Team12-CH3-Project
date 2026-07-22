@@ -14,6 +14,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/StaticMeshComponent.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 UPlayerItemUseComponent::UPlayerItemUseComponent()
 {
@@ -33,25 +34,25 @@ void UPlayerItemUseComponent::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("PlayerItemUseComponent : OwnerCharacter is nullptr"));
 		return;
 	}
-	
+
 	Inventory = OwnerCharacter->GetInventoryComponent();
-	
+
 	if (!Inventory)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerItemUseComponent : Inventory is nullptr"));
 		return;
 	}
-	
+
 	StateComp = OwnerCharacter->GetStateTagComponent();
-	
+
 	if (!StateComp)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerItemUseComponent : StateComponent is nullptr"));
 		return;
 	}
-	
+
 	Locomotion = OwnerCharacter->GetLocomotionComponent();
-	
+
 	if (!Locomotion)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerItemUseComponent : LocomotionComponent is nullptr"));
@@ -67,7 +68,7 @@ void UPlayerItemUseComponent::UseConsumableInput(
 		UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : Inventory is nullptr"));
 		return;
 	}
-	
+
 	if (!OwnerCharacter)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : OwnerCharacter is nullptr"));
@@ -79,33 +80,33 @@ void UPlayerItemUseComponent::UseConsumableInput(
 		UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : CurrentConsumable is nullptr"));
 		return;
 	}
-	
+
 	if (!Inventory->GetCurrentConsumable()->GetItemData())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayerItemUseComponent : ConsumableData is nullptr"));
 		return;
 	}
-	
+
 	if (!canUseItem())
 	{
 		return;
 	}
-	
+
 	CurrentUsingItem = Inventory->GetCurrentConsumable();
-		
+
 	StateComp->AddStateTag(CombatTags::State_Action_UsingItem);
-	
+
 	Locomotion->RefreshMovementSettings();
-	
+
 	UAnimInstance* AnimInstance =
 		OwnerCharacter->GetMesh()->GetAnimInstance();
-	
+
 	if (!AnimInstance)
 	{
 		StateComp->RemoveStateTag(CombatTags::State_Action_UsingItem);
 		return;
 	}
-	
+
 	const float Duration =
 		AnimInstance->Montage_Play(
 			Inventory->GetCurrentConsumable()->GetItemData()->UseMontage);
@@ -115,7 +116,7 @@ void UPlayerItemUseComponent::UseConsumableInput(
 		StateComp->RemoveStateTag(CombatTags::State_Action_UsingItem);
 		return;
 	}
-	
+
 	FOnMontageEnded EndDelegate;
 	EndDelegate.BindUObject(
 		this,
@@ -176,15 +177,16 @@ void UPlayerItemUseComponent::UseConsumable(
 		return;
 	}
 
-	UGameplayStatics::PlaySoundAtLocation(
+	UKatanaSoundManagerSubsystem::PlaySoundAtLocation(
 		this,
+		EAudioType::SFX,
 		CurrentUsingItem->GetItemData()->UseSound,
 		OwnerCharacter->GetActorLocation());
-	
-	UE_LOG(LogTemp, Warning, TEXT("Item Use %s, Item Count : %d"), 
+
+	UE_LOG(LogTemp, Warning, TEXT("Item Use %s, Item Count : %d"),
 			*ConsumableData->ItemName.ToString(),
 			Item->GetCount());
-	
+
 	if (ConsumableData->bConsumeOnUse)
 	{
 		Inventory->RemoveItem(Item, 1);
@@ -223,7 +225,7 @@ bool UPlayerItemUseComponent::ApplyConsumableEffects(
 
 		Effect->Apply(OwnerActor);
 	}
-	
+
 	return true;
 }
 
@@ -233,7 +235,7 @@ void UPlayerItemUseComponent::OnItemUseMontageEnded(
 {
 	StateComp->RemoveStateTag(CombatTags::State_Action_UsingItem);
 	Locomotion->RefreshMovementSettings();
-	
+
 	HideItemMesh();
 }
 
@@ -243,12 +245,12 @@ bool UPlayerItemUseComponent::canUseItem()
 	{
 		return false;
 	}
-	
+
 	if (StateComp->HasStateTag(CombatTags::State_Action_UsingItem))
 	{
 		return false;
 	}
-	
+
 	if (StateComp->HasStateTag(CombatTags::State_Combat_Attacking))
 	{
 		return false;
@@ -263,17 +265,17 @@ bool UPlayerItemUseComponent::canUseItem()
 	{
 		return false;
 	}
-	
+
 	if (StateComp->HasStateTag(CombatTags::State_Hit_Dead))
 	{
 		return false;
 	}
-	
+
 	if (StateComp->HasStateTag(CombatTags::State_Action_Executing))
 	{
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -283,12 +285,12 @@ void UPlayerItemUseComponent::AnimNotify_ShowItem(bool InShowItem, FName SocketN
 	{
 		return;
 	}
-	
+
 	if (!CurrentUsingItem)
 	{
 		return;
 	}
-	
+
 	if (InShowItem)
 	{
 		ShowItemMesh(SocketName);
@@ -306,12 +308,12 @@ void UPlayerItemUseComponent::ShowItemMesh(FName InSocketName) const
 	{
 		return;
 	}
-	
+
 	UStaticMesh* ItemStaticMesh = ItemData->StaticMesh;
 	if (ItemStaticMesh
 		&& ItemMesh
 		)
-	{	
+	{
 		ItemMesh->SetStaticMesh(ItemStaticMesh);
 		ItemMesh->SetHiddenInGame(false);
 		ItemMesh->AttachToComponent(OwnerCharacter->GetMesh(),
@@ -323,7 +325,7 @@ void UPlayerItemUseComponent::ShowItemMesh(FName InSocketName) const
 void UPlayerItemUseComponent::HideItemMesh() const
 {
 	if (ItemMesh)
-	{	
+	{
 		ItemMesh->SetStaticMesh(nullptr);
 		ItemMesh->SetHiddenInGame(true);
 	}

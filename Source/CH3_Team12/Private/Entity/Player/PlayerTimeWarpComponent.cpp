@@ -10,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 UPlayerTimeWarpComponent::UPlayerTimeWarpComponent()
 {
@@ -249,8 +250,9 @@ void UPlayerTimeWarpComponent::StartVisualEffects()
 
 	if (TimeWarpData->StartSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(
+		UKatanaSoundManagerSubsystem::PlaySoundAtLocation(
 			this,
+			EAudioType::SFX,
 			TimeWarpData->StartSound,
 			OwnerCharacter->GetActorLocation()
 		);
@@ -295,8 +297,9 @@ void UPlayerTimeWarpComponent::StopVisualEffects()
 
 	if (TimeWarpData->EndSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(
+		UKatanaSoundManagerSubsystem::PlaySoundAtLocation(
 			this,
+			EAudioType::SFX,
 			TimeWarpData->EndSound,
 			OwnerCharacter->GetActorLocation()
 		);
