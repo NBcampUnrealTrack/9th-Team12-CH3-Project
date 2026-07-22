@@ -12,9 +12,11 @@ struct FLevelInfo
 {
 	GENERATED_BODY()
 
-public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSoftObjectPtr<UWorld> LevelMap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSoftObjectPtr<UTexture2D> LoadingLevelTexture;
 };
 
 /**
@@ -33,7 +35,7 @@ public:
 	FLevelInfo LoadingLevelInfo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float DelayLoadTime = 5.0f;
+	TArray<FText> LoadingTipTexts;
 
 private:
 	FTimerHandle DelayLoadTimerHandle;

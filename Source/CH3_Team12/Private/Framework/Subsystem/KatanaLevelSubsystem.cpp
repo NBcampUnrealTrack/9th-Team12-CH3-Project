@@ -37,8 +37,10 @@ FName UKatanaLevelSubsystem::GetTargetMapName(const UObject* WorldContextObject)
 	return KatanaLevelSubsystem->TargetMapName;
 }
 
-void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName)
+void UKatanaLevelSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+	Super::Initialize(Collection);
+
 	const UKatanaSystemSettings* SystemSettings = GetDefault<UKatanaSystemSettings>();
 	if (!SystemSettings)
 	{
@@ -46,24 +48,60 @@ void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName)
 		return;
 	}
 
-	const ULevelDataAsset* LevelDataAsset = SystemSettings->LevelDataAsset.LoadSynchronous();
-	if (!LevelDataAsset)
+	CachedLevelDataAsset = SystemSettings->LevelDataAsset.LoadSynchronous();
+	if (!CachedLevelDataAsset)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem : LevelDataAsset is null"));
-		return;
 	}
+}
 
-	if (!LevelDataAsset->LevelInfoMap.Contains(TargetLevelName))
+void UKatanaLevelSubsystem::LoadLevel(const FName TargetLevelName, const float MinDelayLoadTime)
+{
+	if (!CachedLevelDataAsset->LevelInfoMap.Contains(TargetLevelName))
 	{
 		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem : TargetLevelName is not found in LevelDataAsset"));
 		return;
 	}
 
-	TargetMap = LevelDataAsset->LevelInfoMap[TargetLevelName].LevelMap;
+	TargetMap = CachedLevelDataAsset->LevelInfoMap[TargetLevelName].LevelMap;
 	TargetMapName = TargetLevelName;
 	DelayLoadTime = 0.0f;
-	MaxDelayLoadTime = LevelDataAsset->DelayLoadTime;
-	UGameplayStatics::OpenLevelBySoftObjectPtr(GetGameInstance(), LevelDataAsset->LoadingLevelInfo.LevelMap);
+	MaxDelayLoadTime = FMath::Max(0.0f, MinDelayLoadTime);
+	UGameplayStatics::OpenLevelBySoftObjectPtr(GetGameInstance(), CachedLevelDataAsset->LoadingLevelInfo.LevelMap);
+}
+
+UTexture2D* UKatanaLevelSubsystem::GetTargetMapTexture2D() const
+{
+	if (TargetMapName == TEXT(""))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem : TargetMapName is null"));
+		return nullptr;
+	}
+
+	if (!CachedLevelDataAsset)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem : CachedLevelDataAsset is null"));
+		return nullptr;
+	}
+
+	if (!CachedLevelDataAsset->LevelInfoMap.Contains(TargetMapName))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem : TargetMapName is not found in LevelDataAsset"));
+		return nullptr;
+	}
+
+	return CachedLevelDataAsset->LevelInfoMap[TargetMapName].LoadingLevelTexture.LoadSynchronous();
+}
+
+TArray<FText> UKatanaLevelSubsystem::GetLoadingTipTexts() const
+{
+	if (!CachedLevelDataAsset)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UKatanaLevelSubsystem : CachedLevelDataAsset is null"));
+		return {};
+	}
+
+	return CachedLevelDataAsset->LoadingTipTexts;
 }
 
 // LoadingGameMode 에서 실행하는 부분
@@ -76,7 +114,7 @@ void UKatanaLevelSubsystem::StartLoadingTargetMapAsync()
 	}
 
 	GetWorld()->GetTimerManager().ClearTimer(LoopTimerHandle);
-	GetWorld()->GetTimerManager().SetTimer(LoopTimerHandle, this, &UKatanaLevelSubsystem::OnLoadingProgressTimer,
+	GetWorld()->GetTimerManager().SetTimer(LoopTimerHandle, this, &UKatanaLevelSubsystem::HandleLoadingProgressTimer,
 	                                       LoopRate, true);
 
 	LoadingHandle = StreamableManager.RequestAsyncLoad(
@@ -94,7 +132,7 @@ float UKatanaLevelSubsystem::GetLoadingProgress() const
 	return FMath::Min(TimeProgress, LoadingProgress);
 }
 
-void UKatanaLevelSubsystem::OnLoadingProgressTimer()
+void UKatanaLevelSubsystem::HandleLoadingProgressTimer()
 {
 	DelayLoadTime += LoopRate;
 

@@ -2,6 +2,7 @@
 #include "UI/StageResultWidget.h"
 
 #include "Components/Button.h"
+#include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
@@ -39,11 +40,17 @@ void UStageResultWidget::NativeOnInitialized()
 	Super::NativeOnInitialized();
 
 	BtnDone->OnClicked.AddDynamic(this, &UStageResultWidget::HandleBtnDoneClicked);
+
+	ImgBackground->SetColorAndOpacity(FLinearColor::Transparent);
 }
 
 void UStageResultWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	const FLinearColor CurrentColor = ImgBackground->GetColorAndOpacity();
+	const FLinearColor TargetColor = FLinearColor::Black;
+	ImgBackground->SetColorAndOpacity(FMath::CInterpTo(CurrentColor, TargetColor, InDeltaTime, 1.0f));
 }
 
 void UStageResultWidget::HandleBtnDoneClicked()
