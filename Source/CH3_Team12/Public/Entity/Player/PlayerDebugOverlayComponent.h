@@ -41,7 +41,7 @@ private:
 	TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
 	UPROPERTY(EditAnywhere, Category="Debug")
-	bool bShowDebugOverlay = true;
+	bool bShowDebugOverlay = false;
 
 	UPROPERTY(EditAnywhere, Category="Debug")
 	int32 ScreenMessageKey = 10001;
