@@ -34,7 +34,6 @@ void UInputSettingsWidget::NativeOnInitialized()
 		{ InputActionNames::Attack, AttackKeySelector },
 		{ InputActionNames::LockOn, LockOnKeySelector },
 		{ InputActionNames::UseItem, UseItemKeySelector },
-		{ InputActionNames::Equip, EquipKeySelector },
 		{ InputActionNames::Special, SpecialKeySelector },
 		{ InputActionNames::InGameMenu, InGameMenuKeySelector },
 	};
@@ -56,7 +55,6 @@ void UInputSettingsWidget::NativeOnInitialized()
 	AttackKeySelector->OnKeySelected.AddDynamic(this, &UInputSettingsWidget::HandleAttackKeySelected);
 	LockOnKeySelector->OnKeySelected.AddDynamic(this, &UInputSettingsWidget::HandleLockOnKeySelected);
 	UseItemKeySelector->OnKeySelected.AddDynamic(this, &UInputSettingsWidget::HandleUseItemKeySelected);
-	EquipKeySelector->OnKeySelected.AddDynamic(this, &UInputSettingsWidget::HandleEquipKeySelected);
 	SpecialKeySelector->OnKeySelected.AddDynamic(this, &UInputSettingsWidget::HandleSpecialKeySelected);
 	InGameMenuKeySelector->OnKeySelected.AddDynamic(this, &UInputSettingsWidget::HandleInGameMenuKeySelected);
 
@@ -115,11 +113,6 @@ void UInputSettingsWidget::HandleLockOnKeySelected(FInputChord SelectedKey)
 void UInputSettingsWidget::HandleUseItemKeySelected(FInputChord SelectedKey)
 {
 	(void)OnKeyBindingChanged.ExecuteIfBound(InputActionNames::UseItem, SelectedKey.Key);
-}
-
-void UInputSettingsWidget::HandleEquipKeySelected(FInputChord SelectedKey)
-{
-	(void)OnKeyBindingChanged.ExecuteIfBound(InputActionNames::Equip, SelectedKey.Key);
 }
 
 void UInputSettingsWidget::HandleSpecialKeySelected(FInputChord SelectedKey)
