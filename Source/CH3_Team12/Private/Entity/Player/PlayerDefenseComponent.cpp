@@ -237,15 +237,15 @@ void UPlayerDefenseComponent::OpenParryWindow()
 		CombatTags::State_Combat_Parry
 	);
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1, // Key (화면 덮어쓰기 키)
-			2.0f, // 화면에 떠 있을 시간 (초)
-			FColor::Red, // 텍스트 색상
-			FString(TEXT("Open Parry Window"))
-		);
-	}
+	// if (GEngine)
+	// {
+	// 	GEngine->AddOnScreenDebugMessage(
+	// 		-1, // Key (화면 덮어쓰기 키)
+	// 		2.0f, // 화면에 떠 있을 시간 (초)
+	// 		FColor::Red, // 텍스트 색상
+	// 		FString(TEXT("Open Parry Window"))
+	// 	);
+	// }
 }
 
 void UPlayerDefenseComponent::CloseParryWindow()
@@ -259,15 +259,15 @@ void UPlayerDefenseComponent::CloseParryWindow()
 		CombatTags::State_Combat_Parry
 	);
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.0f,
-			FColor::Red,
-			FString(TEXT("Close Parry Window"))
-		);
-	}
+	// if (GEngine)
+	// {
+	// 	GEngine->AddOnScreenDebugMessage(
+	// 		-1,
+	// 		2.0f,
+	// 		FColor::Red,
+	// 		FString(TEXT("Close Parry Window"))
+	// 	);
+	// }
 }
 
 EDefenseResult UPlayerDefenseComponent::ResolveIncomingAttack(
