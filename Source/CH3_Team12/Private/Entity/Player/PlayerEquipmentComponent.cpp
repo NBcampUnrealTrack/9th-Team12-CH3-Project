@@ -51,6 +51,9 @@ void UPlayerEquipmentComponent::BeginPlay()
 	}
 	
 	SpawnAndAttachScabbard();
+	
+	const FInputActionValue Value;
+	ToggleWeaponInput(Value);
 }
 
 
