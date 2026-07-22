@@ -6,6 +6,8 @@
 #include "AIController.h"
 #include "EnemyAIController.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnTargetActorSetted);
+
 class UBehaviorTreeComponent;
 /**
  * 
@@ -23,6 +25,9 @@ public:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 
+	AActor* GetTargetActor() const {return TargetActor;}
+	
+	FOnTargetActorSetted OnTargetActorSettedDelegate;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	TObjectPtr<UBehaviorTreeComponent> BehaviorTreeComponent;
@@ -43,4 +48,6 @@ private:
 	UFUNCTION()
 	void OnPlayerEvadeSuccess(const FIncomingAttackContext& InAttackContext);
 	
+	UPROPERTY()
+	TObjectPtr<AActor> TargetActor = nullptr;
 };
