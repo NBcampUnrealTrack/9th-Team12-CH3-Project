@@ -144,7 +144,7 @@ void UKatanaSoundManagerSubsystem::Initialize(FSubsystemCollectionBase& Collecti
 
 	UE_LOG(LogTemp, Warning, TEXT("ControlBusMap: %d"), ControlBusMap.Num());
 
-	LoadAudioSettings();
+	FWorldDelegates::OnPostWorldInitialization.AddUObject(this, &UKatanaSoundManagerSubsystem::OnWorldInitialized);
 }
 
 float UKatanaSoundManagerSubsystem::GetDefaultVolume(EAudioType AudioType) const
@@ -241,6 +241,14 @@ void UKatanaSoundManagerSubsystem::LoadAudioSettings()
 		if (ControlBusMap.Contains(EAudioType::SFX))
 			UAudioModulationStatics::SetGlobalBusMixValue(GetWorld(), ControlBusMap[EAudioType::SFX].Get(),
 			                                              LoadGameInstance->SFXVolume, 0.0f);
+	}
+}
+
+void UKatanaSoundManagerSubsystem::OnWorldInitialized(UWorld* World, const UWorld::InitializationValues IVS)
+{
+	if (World && World->IsGameWorld())
+	{
+		LoadAudioSettings();
 	}
 }
 

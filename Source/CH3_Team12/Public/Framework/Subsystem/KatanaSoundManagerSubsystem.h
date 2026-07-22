@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/World.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "KatanaSoundManagerSubsystem.generated.h"
 
@@ -48,6 +49,8 @@ private:
 	TMap<EAudioType, TObjectPtr<USoundControlBus>> ControlBusMap;
 
 	const FString SlotName = TEXT("AudioSettingsSlot_Modulation");
+
+	void OnWorldInitialized(UWorld* World, const UWorld::InitializationValues IVS);
 
 	USoundBase* GetOrLoadSound(const FString& SoundKey) const;
 
