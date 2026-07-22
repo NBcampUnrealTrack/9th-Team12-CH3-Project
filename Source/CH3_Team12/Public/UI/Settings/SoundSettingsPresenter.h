@@ -21,9 +21,6 @@ public:
 
 private:
 	UPROPERTY()
-	TWeakObjectPtr<UKatanaSoundManagerSubsystem> SoundManagerSubsystem;
-
-	UPROPERTY()
 	TWeakObjectPtr<USoundSettingsWidget> SoundSettingsWidget;
 
 	UFUNCTION()
