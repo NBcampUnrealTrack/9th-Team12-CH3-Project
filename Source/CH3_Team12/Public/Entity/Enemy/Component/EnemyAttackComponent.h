@@ -69,6 +69,9 @@ protected:
 	void OnMontageLastAttack(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointPayload);
 	
 	UFUNCTION()
+	void OnAttackMontageEnd(UAnimMontage* Montage,	bool bInterrupted);
+	
+	UFUNCTION()
 	void OnInnerPostureProcess();
 public:
 	UPROPERTY(BlueprintAssignable, Category="Attack")
