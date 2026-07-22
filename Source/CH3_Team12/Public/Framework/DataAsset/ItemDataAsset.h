@@ -20,6 +20,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	TObjectPtr<UAnimMontage> UseMontage;
 	
+	// 재생속도
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float PlayRate = 1.0f;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	TObjectPtr<USoundBase> UseSound;
 	
