@@ -6,8 +6,6 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "KatanaLevelSubsystem.generated.h"
 
-class AEntranceWall;
-class AEnemyCharacterBase;
 class USoundBase;
 class ULevelDataAsset;
 class UTexture2D;
@@ -46,13 +44,7 @@ public:
 
 	UFUNCTION()
 	void StartLoadingTargetMapAsync();
-	
-	void RegisterBoss(AEnemyCharacterBase* Boss);
-	void RegisterEntranceWall(AEntranceWall* EntranceWall);
-	
-	UFUNCTION()
-	void StartBossBattle();
-	
+
 private:
 	UPROPERTY()
 	TObjectPtr<ULevelDataAsset> CachedLevelDataAsset;
@@ -71,11 +63,6 @@ private:
 	FStreamableManager StreamableManager;
 	TSharedPtr<FStreamableHandle> LoadingHandle;
 
-	UPROPERTY()
-	TObjectPtr<AEnemyCharacterBase> CurrentBoss;
-	
 	float GetLoadingProgress() const;
 	void HandleLoadingProgressTimer();
-	
-	void ShowBossUI();
 };

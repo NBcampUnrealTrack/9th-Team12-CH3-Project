@@ -4,7 +4,6 @@
 #include "TimerManager.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
-#include "Entity/Environment/EntranceWall.h"
 #include "Framework/KatanaSystemSettings.h"
 #include "Framework/DataAsset/LevelDataAsset.h"
 #include "Framework/Subsystem/KatanaUIManagerSubsystem.h"
@@ -152,65 +151,4 @@ void UKatanaLevelSubsystem::HandleLoadingProgressTimer()
 	TargetMap.Reset();
 
 	OnLoadingCompleted.Broadcast();
-}
-
-void UKatanaLevelSubsystem::RegisterBoss(
-	AEnemyCharacterBase* Boss)
-{
-	if (!Boss)
-	{
-		return;
-	}
-	
-	CurrentBoss = Boss;
-}
-
-void UKatanaLevelSubsystem::RegisterEntranceWall(
-	AEntranceWall* EntranceWall)
-{
-	if (!EntranceWall)
-	{
-		return;
-	}
-	
-	//RegisteredEntranceWall = EntranceWall;
-	
-	EntranceWall->OnBossRoomEntered.AddDynamic(
-		this,
-		&UKatanaLevelSubsystem::StartBossBattle);
-}
-
-void UKatanaLevelSubsystem::StartBossBattle()
-{
-	if (!CurrentBoss)
-	{
-		return;
-	}
-
-	// UI 표시
-	ShowBossUI();
-	
-	CurrentBoss = nullptr;
-}
-
-void UKatanaLevelSubsystem::ShowBossUI()
-{
-	APlayerController* PC =
-		UGameplayStatics::GetPlayerController(
-			GetWorld(),0);
-
-	if(!PC)
-	{
-		return;
-	}
-
-
-	UKatanaUIManagerSubsystem* UIManager =
-		UKatanaUIManagerSubsystem::Get(PC);
-
-
-	if(UIManager)
-	{
-		UIManager->ShowEnemyWidget(CurrentBoss);
-	}
 }

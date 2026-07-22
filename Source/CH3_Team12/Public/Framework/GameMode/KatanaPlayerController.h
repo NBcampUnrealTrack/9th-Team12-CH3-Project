@@ -33,8 +33,14 @@ private:
 	UPROPERTY()
 	TWeakObjectPtr<APlayerCharacterBase> PlayerCharacterBase;
 
+	UPROPERTY()
+	TWeakObjectPtr<AEnemyCharacterBase> EnemyCharacterBase;
+
 	AEnemyCharacterBase* FindEnemyCharacter() const;
 	void ToggleInGameMenu(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void HandleBossRoomEntered();
 
 	UFUNCTION()
 	void HandleEnemyDeath();

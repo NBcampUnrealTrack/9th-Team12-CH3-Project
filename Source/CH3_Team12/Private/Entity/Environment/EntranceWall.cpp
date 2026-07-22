@@ -4,7 +4,6 @@
 #include "Engine/GameInstance.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Entity/Player/PlayerCharacterBase.h"
-#include "Framework/Subsystem/KatanaLevelSubsystem.h"
 #include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 AEntranceWall::AEntranceWall()
@@ -35,7 +34,7 @@ AEntranceWall::AEntranceWall()
 void AEntranceWall::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	EnterTrigger->OnComponentBeginOverlap.AddDynamic(
 		this,
 		&AEntranceWall::OnEnterTriggerBegin);
@@ -45,25 +44,16 @@ void AEntranceWall::BeginPlay()
 		&AEntranceWall::OnExitTriggerBegin);
 
 	FogMid = FogMesh->CreateDynamicMaterialInstance(0);
-	
+
 	if (FogMid)
 	{
 		FogMid->SetScalarParameterValue(
 			OpacityParameter,
 			0.0f);
 	}
-	
+
 	FogMesh->SetCollisionProfileName(TEXT("BlockAll"));
 	FogMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
-	if (UGameInstance* GI = GetGameInstance())
-	{
-		if (UKatanaLevelSubsystem* LevelSubsystem =
-			GI->GetSubsystem<UKatanaLevelSubsystem>())
-		{
-			LevelSubsystem->RegisterEntranceWall(this);
-		}
-	}
 }
 
 void AEntranceWall::OnEnterTriggerBegin(
@@ -82,7 +72,7 @@ void AEntranceWall::OnEnterTriggerBegin(
 	{
 		return;
 	}
-	
+
 	bPlayerEntered = true;
 }
 
@@ -105,7 +95,7 @@ void AEntranceWall::OnExitTriggerBegin(
 	{
 		return;
 	}
-	
+
 	ActivateFogWall();
 }
 
@@ -115,14 +105,7 @@ void AEntranceWall::ActivateFogWall()
 
 	// 보스전 시작 알림
 	OnBossRoomEntered.Broadcast();
-	
-	if(BossBGM)
-	{
-		UKatanaSoundManagerSubsystem::PlaySound2D(
-			this, EAudioType::BGM, 
-			BossBGM);
-	}
-	
+
 	if (FogMid)
 	{
 		FogMid->SetScalarParameterValue(
@@ -142,6 +125,6 @@ void AEntranceWall::ActivateFogWall()
 
 	ExitTrigger->SetCollisionEnabled(
 		ECollisionEnabled::NoCollision);
-	
-	
+
+
 }
