@@ -225,6 +225,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Canceled, DefenseComponent.Get(), &UPlayerDefenseComponent::StopGuard);
 	}
 	
+#if WITH_EDITOR
 	// TestAction
 	if (UInputAction* TestAction1 = PlayerControllerBase->GetTestAction1())
 	{
@@ -242,6 +243,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	{
 		EnhancedInputComponent->BindAction(TestAction4, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::Debug_ReceiveTestAttackRight);
 	}
+#endif
 	
 	if (UInputAction* EquipAction = PlayerControllerBase->GetEquipAction())
 	{
