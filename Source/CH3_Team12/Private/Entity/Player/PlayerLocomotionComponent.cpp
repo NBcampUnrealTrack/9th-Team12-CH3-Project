@@ -265,6 +265,7 @@ bool UPlayerLocomotionComponent::CanDodge() const
 	FGameplayTagContainer BlockTags;
 	BlockTags.AddTag(CombatTags::State_Combat_Attacking);
 	BlockTags.AddTag(CombatTags::State_Combat_Dodging);
+	BlockTags.AddTag(CombatTags::State_Action_Equipping);
 	BlockTags.AddTag(CombatTags::State_Combat_Guarding);
 	BlockTags.AddTag(CombatTags::State_Combat_Parry);
 	BlockTags.AddTag(CombatTags::State_Movement_Locked);
