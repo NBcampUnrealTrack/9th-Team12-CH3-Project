@@ -155,6 +155,10 @@ bool UEnemyAttackComponent::ExecuteAttack(AActor* TargetActor, int32 SelectedAct
 	
 	const float MontageLength = AnimInstance->Montage_Play(SelectedMontage);
 	
+	FOnMontageEnded MontageEndedDelegate;
+	MontageEndedDelegate.BindUObject(this, &UEnemyAttackComponent::OnAttackMontageEnd);
+	AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, SelectedMontage);
+	
 	// AnimInstance->Montage_SetNextSection(
 	//
 	// 	TEXT("Attack1"),
@@ -532,6 +536,11 @@ void UEnemyAttackComponent::OnMontageLastAttack(FName NotifyName, const FBranchi
 	{
 		bLastAttack = true;
 	}
+}
+
+void UEnemyAttackComponent::OnAttackMontageEnd(UAnimMontage* Montage, bool bInterrupted)
+{
+	FinishAttack();
 }
 
 void UEnemyAttackComponent::OnInnerPostureProcess()
