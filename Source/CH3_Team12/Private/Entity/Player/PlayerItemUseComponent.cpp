@@ -109,7 +109,8 @@ void UPlayerItemUseComponent::UseConsumableInput(
 
 	const float Duration =
 		AnimInstance->Montage_Play(
-			Inventory->GetCurrentConsumable()->GetItemData()->UseMontage);
+			Inventory->GetCurrentConsumable()->GetItemData()->UseMontage,
+			Inventory->GetCurrentConsumable()->GetItemData()->PlayRate);
 
 	if (Duration <= 0.f)
 	{
