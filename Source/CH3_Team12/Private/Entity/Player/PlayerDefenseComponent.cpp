@@ -295,13 +295,13 @@ EDefenseResult UPlayerDefenseComponent::ResolveIncomingAttack(
 			CombatTags::State_Combat_Invincible
 		);
 
-	if (bIsDodging && bIsInvincible)
-	{
-		OnEvadeSuccess.Broadcast(Context);
-		UE_LOG(LogTemp, Warning, TEXT("ResolveIncomingAttack: Evade"));
-
-		return EDefenseResult::Evade;
-	}
+	// if (bIsDodging && bIsInvincible)
+	// {
+	// 	OnEvadeSuccess.Broadcast(Context);
+	// 	UE_LOG(LogTemp, Warning, TEXT("ResolveIncomingAttack: Evade"));
+	//
+	// 	return EDefenseResult::Evade;
+	// }
 	
 	if (bIsInvincible)
 	{
