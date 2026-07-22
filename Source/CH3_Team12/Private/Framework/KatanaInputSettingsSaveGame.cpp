@@ -17,7 +17,6 @@ UKatanaInputSettingsSaveGame::UKatanaInputSettingsSaveGame()
 		{ InputActionNames::Attack, EKeys::LeftMouseButton },
 		{ InputActionNames::LockOn, EKeys::MiddleMouseButton },
 		{ InputActionNames::UseItem, EKeys::R },
-		{ InputActionNames::Equip, EKeys::E },
 		{ InputActionNames::Special, EKeys::LeftControl },
 		{ InputActionNames::InGameMenu, EKeys::Tab },
 	};

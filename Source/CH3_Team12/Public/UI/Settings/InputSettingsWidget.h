@@ -59,9 +59,6 @@ private:
 	TObjectPtr<UInputKeySelector> UseItemKeySelector;
 
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UInputKeySelector> EquipKeySelector;
-
-	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UInputKeySelector> SpecialKeySelector;
 
 	UPROPERTY(meta=(BindWidget))
@@ -105,9 +102,6 @@ private:
 
 	UFUNCTION()
 	void HandleUseItemKeySelected(FInputChord SelectedKey);
-
-	UFUNCTION()
-	void HandleEquipKeySelected(FInputChord SelectedKey);
 
 	UFUNCTION()
 	void HandleSpecialKeySelected(FInputChord SelectedKey);

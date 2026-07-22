@@ -44,6 +44,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stage Record")
 	void SaveStageRecords();
 
+	UFUNCTION(BlueprintCallable, Category = "Stage Record")
+	void ResetStageRecord();
+
 private:
 	UPROPERTY()
 	TMap<FName, float> BestStageTimeMap;

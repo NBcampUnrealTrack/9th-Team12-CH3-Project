@@ -5,10 +5,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "Framework/Subsystem/KatanaSoundManagerSubsystem.h"
 
 void AKatanaGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UKatanaSoundManagerSubsystem::PlaySound2D(this, EAudioType::BGM, BGMSound);
 }
 
 void AKatanaGameMode::ChangeGamePlayRate(UWorld* InWorld, float InGamePlayRate)
@@ -17,7 +20,7 @@ void AKatanaGameMode::ChangeGamePlayRate(UWorld* InWorld, float InGamePlayRate)
 	{
 		return;
 	}
-	
+
 	UGameplayStatics::SetGlobalTimeDilation(InWorld, InGamePlayRate);
 }
 
@@ -27,9 +30,9 @@ void AKatanaGameMode::SlowMotion(UWorld* InWorld, float InGamePlayRate, float In
 	{
 		return;
 	}
-	
+
 	ChangeGamePlayRate(InWorld, InGamePlayRate);
-	
+
 	FTimerHandle TimerHandle;
 	InWorld->GetTimerManager().SetTimer(
 		TimerHandle,
@@ -39,5 +42,4 @@ void AKatanaGameMode::SlowMotion(UWorld* InWorld, float InGamePlayRate, float In
 		},
 		InTime,
 		false);
-	
 }

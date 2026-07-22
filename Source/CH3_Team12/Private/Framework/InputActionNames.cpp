@@ -12,7 +12,6 @@ namespace InputActionNames
 	const FName Attack(TEXT("Attack"));
 	const FName LockOn(TEXT("LockOn"));
 	const FName UseItem(TEXT("UseItem"));
-	const FName Equip(TEXT("Equip"));
 	const FName Special(TEXT("Special"));
 	const FName HeavyAttack(TEXT("HeavyAttack"));
 	const FName InGameMenu(TEXT("InGameMenu"));
