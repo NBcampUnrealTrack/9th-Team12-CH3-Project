@@ -18,18 +18,11 @@ void USoundSettingsPresenter::Initialize(USoundSettingsWidget* InWidget)
 	SoundSettingsWidget->OnBtnResetClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnResetClicked);
 	SoundSettingsWidget->OnBtnBackClicked.BindDynamic(this, &USoundSettingsPresenter::HandleBtnBackClicked);
 
-	SoundManagerSubsystem = UKatanaSoundManagerSubsystem::Get(this);
-	if (!SoundManagerSubsystem.IsValid())
-	{
-		UE_LOG(LogTemp, Error, TEXT("USoundSettingsPresenter: SoundManagerSubsystem is null"));
-		return;
-	}
-
 	SoundSettingsWidget->UpdateWidget(
-		SoundManagerSubsystem->GetVolume(EAudioType::Master),
-		SoundManagerSubsystem->GetVolume(EAudioType::BGM),
-		SoundManagerSubsystem->GetVolume(EAudioType::SFX),
-		SoundManagerSubsystem->GetVolume(EAudioType::UI)
+		UKatanaSoundManagerSubsystem::GetVolume(this, EAudioType::Master),
+		UKatanaSoundManagerSubsystem::GetVolume(this, EAudioType::BGM),
+		UKatanaSoundManagerSubsystem::GetVolume(this, EAudioType::SFX),
+		UKatanaSoundManagerSubsystem::GetVolume(this, EAudioType::UI)
 	);
 }
 
@@ -48,34 +41,22 @@ void USoundSettingsPresenter::Dispose()
 
 void USoundSettingsPresenter::HandleMasterVolumeChanged(const float NewVolume) const
 {
-	if (!SoundManagerSubsystem.IsValid())
-		return;
-
-	SoundManagerSubsystem->SetVolume(EAudioType::Master, NewVolume);
+	UKatanaSoundManagerSubsystem::SetVolume(this, EAudioType::Master, NewVolume);
 }
 
 void USoundSettingsPresenter::HandleBGMVolumeChanged(const float NewVolume) const
 {
-	if (!SoundManagerSubsystem.IsValid())
-		return;
-
-	SoundManagerSubsystem->SetVolume(EAudioType::BGM, NewVolume);
+	UKatanaSoundManagerSubsystem::SetVolume(this, EAudioType::BGM, NewVolume);
 }
 
 void USoundSettingsPresenter::HandleSFXVolumeChanged(const float NewVolume) const
 {
-	if (!SoundManagerSubsystem.IsValid())
-		return;
-
-	SoundManagerSubsystem->SetVolume(EAudioType::SFX, NewVolume);
+	UKatanaSoundManagerSubsystem::SetVolume(this, EAudioType::SFX, NewVolume);
 }
 
 void USoundSettingsPresenter::HandleUIVolumeChanged(float NewVolume) const
 {
-	if (!SoundManagerSubsystem.IsValid())
-		return;
-
-	SoundManagerSubsystem->SetVolume(EAudioType::UI, NewVolume);
+	UKatanaSoundManagerSubsystem::SetVolume(this, EAudioType::UI, NewVolume);
 }
 
 void USoundSettingsPresenter::HandleBtnResetClicked() const
@@ -84,10 +65,10 @@ void USoundSettingsPresenter::HandleBtnResetClicked() const
 		return;
 
 	SoundSettingsWidget->UpdateWidget(
-		SoundManagerSubsystem->GetDefaultVolume(EAudioType::Master),
-		SoundManagerSubsystem->GetDefaultVolume(EAudioType::BGM),
-		SoundManagerSubsystem->GetDefaultVolume(EAudioType::SFX),
-		SoundManagerSubsystem->GetDefaultVolume(EAudioType::UI)
+		UKatanaSoundManagerSubsystem::GetDefaultVolume(EAudioType::Master),
+		UKatanaSoundManagerSubsystem::GetDefaultVolume(EAudioType::BGM),
+		UKatanaSoundManagerSubsystem::GetDefaultVolume(EAudioType::SFX),
+		UKatanaSoundManagerSubsystem::GetDefaultVolume(EAudioType::UI)
 	);
 }
 

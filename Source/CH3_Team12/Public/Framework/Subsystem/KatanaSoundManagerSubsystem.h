@@ -26,7 +26,7 @@ class CH3_TEAM12_API UKatanaSoundManagerSubsystem : public UGameInstanceSubsyste
 	GENERATED_BODY()
 
 public:
-	static UKatanaSoundManagerSubsystem* Get(const UObject* WorldContextObject);
+	static void LoadAudioSettings(const UObject* WorldContextObject);
 
 	static void PlaySound2D(const UObject* WorldContextObject, EAudioType AudioType, USoundBase* SoundBase,
 	                        float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f);
@@ -34,14 +34,11 @@ public:
 	static void PlaySoundAtLocation(const UObject* WorldContextObject, EAudioType AudioType, USoundBase* SoundBase,
 	                                const FVector& Location, float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f);
 
+	static float GetDefaultVolume(EAudioType AudioType);
+	static float GetVolume(const UObject* WorldContextObject, EAudioType AudioType);
+	static void SetVolume(const UObject* WorldContextObject, EAudioType AudioType, float NewVolume);
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-
-	void LoadAudioSettings();
-
-	float GetDefaultVolume(EAudioType AudioType) const;
-
-	float GetVolume(EAudioType AudioType);
-	void SetVolume(EAudioType AudioType, float NewVolume);
 
 private:
 	UPROPERTY()
@@ -52,14 +49,19 @@ private:
 
 	const FString SlotName = TEXT("AudioSettingsSlot_Modulation");
 
-	void OnWorldInitialized(UWorld* World, const UWorld::InitializationValues IVS);
-
 	USoundBase* GetOrLoadSound(const FString& SoundKey) const;
 
-	UAudioComponent* PlaySound2D(EAudioType AudioType, USoundBase* SoundBase, float VolumeMultiplier = 1.0f,
+	static UKatanaSoundManagerSubsystem* OpGet(const UObject* WorldContextObject);
+
+	void OpLoadAudioSettings();
+
+	UAudioComponent* OpPlaySound2D(EAudioType AudioType, USoundBase* SoundBase, float VolumeMultiplier = 1.0f,
 								 float PitchMultiplier = 1.0f);
 
-	UAudioComponent* PlaySoundAtLocation(EAudioType AudioType, USoundBase* SoundBase, const FVector& Location,
+	UAudioComponent* OpPlaySoundAtLocation(EAudioType AudioType, USoundBase* SoundBase, const FVector& Location,
 	                                     float VolumeMultiplier = 1.0f, float PitchMultiplier = 1.0f,
 	                                     USoundAttenuation* AttenuationSettings = nullptr);
+
+	float OpGetVolume(EAudioType AudioType) const;
+	void OpSetVolume(EAudioType AudioType, float NewVolume);
 };

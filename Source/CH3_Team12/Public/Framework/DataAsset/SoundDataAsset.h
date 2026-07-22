@@ -17,16 +17,16 @@ class CH3_TEAM12_API USoundDataAsset : public UPrimaryDataAsset
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Audio")
-	TSoftObjectPtr<USoundControlBus> MasterControlBus;
+	TObjectPtr<USoundControlBus> MasterControlBus;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Audio")
-	TSoftObjectPtr<USoundControlBus> BGMControlBus;
+	TObjectPtr<USoundControlBus> BGMControlBus;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Audio")
-	TSoftObjectPtr<USoundControlBus> SFXControlBus;
+	TObjectPtr<USoundControlBus> SFXControlBus;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
-	TSoftObjectPtr<USoundControlBus> UIControlBus;
+	TObjectPtr<USoundControlBus> UIControlBus;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
 	TMap<FString, TSoftObjectPtr<USoundBase>> SoundMap;

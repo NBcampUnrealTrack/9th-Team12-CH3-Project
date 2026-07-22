@@ -11,6 +11,8 @@ void AKatanaGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UKatanaSoundManagerSubsystem::LoadAudioSettings(this);
+
 	if (AEntranceWall* EntranceWall = FindEntranceWall())
 	{
 		EntranceWall->OnBossRoomEntered.AddDynamic(this, &AKatanaGameMode::HandleBossRoomEntered);
