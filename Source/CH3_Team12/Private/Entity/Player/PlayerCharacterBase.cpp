@@ -1,0 +1,299 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#include "Entity/Player/PlayerCharacterBase.h"
+
+#include "EnhancedInputComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/Player.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
+#include "Entity/Player/PlayerControllerBase.h"
+#include "Entity/Player/StateTagComponent.h"
+#include "Entity/Player/PlayerLocomotionComponent.h"
+#include "Entity/Player/PlayerAttributeComponent.h"
+#include "Entity/Player/PlayerCameraComponent.h"
+#include "Entity/Player/PlayerAttackComponent.h"
+#include "Entity/Player/PlayerEquipmentComponent.h"
+#include "Entity/Player/PlayerInventoryComponent.h"
+#include "Entity/Player/PlayerWeaponComponent.h"
+#include "Entity/Player/PlayerDefenseComponent.h"
+#include "Entity/Player/PlayerDebugOverlayComponent.h"
+#include "Entity/Player/PlayerItemUseComponent.h"
+#include "Entity/Player/CombatFeedbackComponent.h"
+#include "Entity/Player/FootstepComponent.h"
+#include "Entity/Player/PlayerTimeWarpComponent.h"
+
+// Sets default values
+APlayerCharacterBase::APlayerCharacterBase()
+{
+	PrimaryActorTick.bCanEverTick = true;
+
+	// 아래는 임시 설정 이후에 컴포넌트에서 각자 알아서 조절해야함
+	{
+		bUseControllerRotationPitch = false;
+		bUseControllerRotationYaw = false;
+		bUseControllerRotationRoll = false;
+	
+		CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+		CameraBoom->SetupAttachment(RootComponent);
+
+		FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+		FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	}
+	
+	StateTagComponent = CreateDefaultSubobject<UStateTagComponent>(TEXT("StateComponent"));
+	LocomotionComponent = CreateDefaultSubobject<UPlayerLocomotionComponent>(TEXT("LocomotionComponent"));
+	AttributeComponent = CreateDefaultSubobject<UPlayerAttributeComponent>(TEXT("AttributeComponent"));
+	AttackComponent = CreateDefaultSubobject<UPlayerAttackComponent>(TEXT("AttackComponent"));
+	CameraComponent = CreateDefaultSubobject<UPlayerCameraComponent>(TEXT("CameraComponent"));
+	InventoryComponent = CreateDefaultSubobject<UPlayerInventoryComponent>(TEXT("InventoryComponent"));
+	EquipmentComponent = CreateDefaultSubobject<UPlayerEquipmentComponent>(TEXT("EquipmentComponent"));
+	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
+	DefenseComponent = CreateDefaultSubobject<UPlayerDefenseComponent>(TEXT("DefenseComponent"));
+	DebugOverlayComponent = CreateDefaultSubobject<UPlayerDebugOverlayComponent>(TEXT("DebugOverlayComponent"));
+	ItemUseComponent = CreateDefaultSubobject<UPlayerItemUseComponent>(TEXT("ItemUseComponent"));
+	CombatFeedbackComponent = CreateDefaultSubobject<UCombatFeedbackComponent>(TEXT("CombatFeedbackComponent"));
+	FootstepComponent = CreateDefaultSubobject<UFootstepComponent>(TEXT("FootstepComponent"));
+	TimeWarpComponent = CreateDefaultSubobject<UPlayerTimeWarpComponent>(TEXT("TimeWarpComponent"));
+	
+	HeadMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Head"));
+	HeadMesh->SetupAttachment(GetMesh());
+	HeadMesh->SetLeaderPoseComponent(GetMesh());
+}
+
+UStateTagComponent* APlayerCharacterBase::GetStateTagComponent() const
+{
+	return StateTagComponent;
+}
+
+UPlayerLocomotionComponent* APlayerCharacterBase::GetLocomotionComponent() const
+{
+	return LocomotionComponent;
+}
+
+UPlayerAttributeComponent* APlayerCharacterBase::GetAttributeComponent() const
+{
+	return AttributeComponent;
+}
+
+UPlayerInventoryComponent* APlayerCharacterBase::GetInventoryComponent() const
+{
+	return InventoryComponent;
+}
+
+UPlayerItemUseComponent* APlayerCharacterBase::GetItemUseComponent() const
+{
+	return ItemUseComponent;
+}
+
+UPlayerEquipmentComponent* APlayerCharacterBase::GetEquipmentComponent() const
+{
+	return EquipmentComponent;
+}
+
+UPlayerWeaponComponent* APlayerCharacterBase::GetWeaponComponent() const
+{
+	return WeaponComponent;
+}
+
+UPlayerDefenseComponent* APlayerCharacterBase::GetDefenseComponent() const
+{
+	return DefenseComponent;
+}
+
+UPlayerAttackComponent* APlayerCharacterBase::GetAttackComponent() const
+{
+	return AttackComponent;
+}
+
+UPlayerDebugOverlayComponent* APlayerCharacterBase::GetDebugOverlayComponent() const
+{
+	return DebugOverlayComponent;
+}
+
+UCombatFeedbackComponent* APlayerCharacterBase::GetCombatFeedbackComponent() const
+{
+	return CombatFeedbackComponent;
+}
+
+UFootstepComponent* APlayerCharacterBase::GetFootstepComponent() const
+{
+	return FootstepComponent;
+}
+
+UPlayerTimeWarpComponent* APlayerCharacterBase::GetTimeWarpComponent() const
+{
+	return TimeWarpComponent;
+}
+
+UPlayerCameraComponent* APlayerCharacterBase::GetPlayerCameraComponent() const
+{
+	return CameraComponent;
+}
+
+USpringArmComponent* APlayerCharacterBase::GetCameraBoom() const
+{
+	return CameraBoom;
+}
+
+UCameraComponent* APlayerCharacterBase::GetFollowCamera() const
+{
+	return FollowCamera;
+}
+
+// Called when the game starts or when spawned
+void APlayerCharacterBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+}
+
+void APlayerCharacterBase::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	if (AttackComponent)
+	{
+		AttackComponent->HandleOwnerLanded(Hit);
+	}
+}
+
+// Called every frame
+void APlayerCharacterBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
+// Called to bind functionality to input
+void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+
+	if (!EnhancedInputComponent)
+	{
+		return;
+	}
+
+	APlayerControllerBase* PlayerControllerBase = Cast<APlayerControllerBase>(GetController());
+	if (!PlayerControllerBase) return;
+
+	// Locomotion
+	if (UInputAction* LookAction = PlayerControllerBase->GetLookAction())
+	{
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, CameraComponent.Get(), &UPlayerCameraComponent::Look);
+	}
+	if (UInputAction* MoveAction = PlayerControllerBase->GetMoveAction())
+	{
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoMove);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopMove);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Canceled, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopMove);
+	}
+	if (UInputAction* JumpAction = PlayerControllerBase->GetJumpAction())
+	{
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStartJump);
+		// EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::DoStopJump);
+	}
+	if (UInputAction* DodgeAction = PlayerControllerBase->GetDodgeAction())
+	{
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnDodgeSprintPressed);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Completed, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnDodgeSprintReleased);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Canceled, LocomotionComponent.Get(), &UPlayerLocomotionComponent::OnDodgeSprintReleased);
+	}
+	
+	// Combat
+	if (UInputAction* AttackAction = PlayerControllerBase->GetAttackAction())
+	{
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, AttackComponent.Get(), &UPlayerAttackComponent::Attack);
+	}
+	if (UInputAction* HeavyAttackAction = PlayerControllerBase->GetHeavyAttackAction())
+	{
+		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, AttackComponent.Get(), &UPlayerAttackComponent::HeavyAttack);
+	}
+	if (UInputAction* LockOnAction = PlayerControllerBase->GetLockOnAction())
+	{
+		EnhancedInputComponent->BindAction(LockOnAction, ETriggerEvent::Started, CameraComponent.Get(), &UPlayerCameraComponent::LockOn);
+	}
+	if (UInputAction* GuardAction = PlayerControllerBase->GetGuardAction())
+	{
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Triggered, DefenseComponent.Get(), &UPlayerDefenseComponent::StartGuard);
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Completed, DefenseComponent.Get(), &UPlayerDefenseComponent::StopGuard);
+		EnhancedInputComponent->BindAction(GuardAction, ETriggerEvent::Canceled, DefenseComponent.Get(), &UPlayerDefenseComponent::StopGuard);
+	}
+	
+#if WITH_EDITOR
+	// TestAction
+	if (UInputAction* TestAction1 = PlayerControllerBase->GetTestAction1())
+	{
+		EnhancedInputComponent->BindAction(TestAction1, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::Debug_ReceiveTestAttackFront);
+	}
+	if (UInputAction* TestAction2 = PlayerControllerBase->GetTestAction2())
+	{
+		EnhancedInputComponent->BindAction(TestAction2, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::Debug_ReceiveTestAttackBack);
+	}
+	if (UInputAction* TestAction3 = PlayerControllerBase->GetTestAction3())
+	{
+		EnhancedInputComponent->BindAction(TestAction3, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::Debug_ReceiveTestAttackLeft);
+	}
+	if (UInputAction* TestAction4 = PlayerControllerBase->GetTestAction4())
+	{
+		EnhancedInputComponent->BindAction(TestAction4, ETriggerEvent::Started, DefenseComponent.Get(), &UPlayerDefenseComponent::Debug_ReceiveTestAttackRight);
+	}
+#endif
+	
+	if (UInputAction* EquipAction = PlayerControllerBase->GetEquipAction())
+	{
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, EquipmentComponent.Get(), &UPlayerEquipmentComponent::ToggleWeaponInput);
+	}
+	
+	if (UInputAction* UseItemAction = PlayerControllerBase->GetUseItemAction())
+	{
+		EnhancedInputComponent->BindAction(UseItemAction, ETriggerEvent::Started, ItemUseComponent.Get(), &UPlayerItemUseComponent::UseConsumableInput);
+	}
+}
+
+void APlayerCharacterBase::AttackAnimationEnd()
+{
+	ensureMsgf(AttackComponent, TEXT("Katana_PlayerCharacterBase. DefenseComponent is invalid."));
+	
+	if (AttackComponent)
+	{
+		AttackComponent->EndAttack();
+	}	
+}
+
+void APlayerCharacterBase::AttackHitCheckStart(int32 HitIndex, const TArray<FHitBoxData>& HitBoxes)
+{
+	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
+	
+	if (WeaponComponent)
+	{
+		WeaponComponent->StartWeaponHitCheck(HitIndex);
+	}
+}
+
+void APlayerCharacterBase::AttackHitCheckTick()
+{
+	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
+	
+	if (WeaponComponent)
+	{
+		WeaponComponent->WeaponTrace();
+	}
+}
+
+void APlayerCharacterBase::AttackHitCheckEnd()
+{
+	ensureMsgf(WeaponComponent, TEXT("Katana_PlayerCharacterBase. WeaponComponent is invalid."));
+	
+	if (WeaponComponent)
+	{
+		WeaponComponent->EndWeaponHitCheck();
+	}
+}
+
+

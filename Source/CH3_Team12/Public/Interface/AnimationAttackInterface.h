@@ -1,0 +1,31 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/Interface.h"
+#include "AnimationAttackInterface.generated.h"
+
+struct FHitBoxData;
+
+// This class does not need to be modified.
+UINTERFACE(MinimalAPI)
+class UAnimationAttackInterface : public UInterface
+{
+	GENERATED_BODY()
+};
+
+/**
+ * 
+ */
+class IAnimationAttackInterface
+{
+	GENERATED_BODY()
+
+	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
+public:
+	virtual void AttackAnimationEnd() = 0;
+	virtual void AttackHitCheckStart(int32 HitIndex, const TArray<FHitBoxData>& HitBoxes) = 0;
+	virtual void AttackHitCheckTick() = 0;
+	virtual void AttackHitCheckEnd() = 0;
+};

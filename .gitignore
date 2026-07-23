@@ -30,6 +30,7 @@ Plugins/**/Saved/
 # ------------------------------------------------------------
 .vs/
 *.sln
+*.slnx
 *.suo
 *.user
 *.userosscache
@@ -59,6 +60,7 @@ Plugins/**/Saved/
 *.out
 *.app
 *.ipa
+Content/ParagonRampage/
 
 # ------------------------------------------------------------
 # Logs / temporary files
@@ -97,3 +99,36 @@ desktop.ini
 !Config/**
 !Content/**
 !Plugins/**
+
+# ------------------------------------------------------------
+# Marketplace/sample assets kept local only
+# ------------------------------------------------------------
+Content/ParagonRampage/
+Content/ParagonRampage/**
+
+Content/Assets/GhostSamurai_Bundle/
+Content/Assets/GhostSamurai_Bundle/**
+
+Content/Assets/Kannagi_Usagi/
+Content/Assets/Kannagi_Usagi/**
+
+Content/Assets/Guard/
+Content/Assets/Guard/**
+
+Content/Assets/Sound/
+Content/Assets/Sound/**
+
+Content/KiteDemo/
+Content/KiteDemo/**
+
+Content/Assets/The_Forgotten_Shrine/
+Content/Assets/The_Forgotten_Shrine/**
+
+Content/Assets/Mountain/
+Content/Assets/Mountain/**
+
+Content/Assets/ParagonProps/
+Content/Assets/ParagonProps/**
+
+Content/Assets/Sky/
+Content/Assets/Sky/**

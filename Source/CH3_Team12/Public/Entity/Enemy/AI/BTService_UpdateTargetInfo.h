@@ -1,0 +1,37 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "BehaviorTree/BTService.h"
+#include "BTService_UpdateTargetInfo.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class CH3_TEAM12_API UBTService_UpdateTargetInfo : public UBTService
+{
+	GENERATED_BODY()
+
+public:
+	UBTService_UpdateTargetInfo();
+
+protected:
+	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName TargetActorKeyName = TEXT("TargetActor");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName DistanceToTargetKeyName = TEXT("DistanceToTarget");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FName CanStartCombatKeyName = TEXT("bCanStartCombat");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FVector NavMeshProjectionExtent = FVector(100.f, 100.f, 300.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	float RotationInterpSpeed = 25.f;
+};

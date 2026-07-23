@@ -1,4 +1,4 @@
-# 세키로라이크 보스 1:1 전투 프로젝트
+# 가제: Katana
 
 > **내일배움캠프 Unreal Track 9기 Chapter 3 12조 프로젝트**  
 > Unreal Engine 5.8 기반 세키로라이크 보스 1:1 전투 프로젝트
@@ -9,7 +9,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 프로젝트명 | 세키로라이크 보스 1:1 전투 프로젝트 |
+| 프로젝트명 | Katana |
 | 팀명 | 12조 |
 | 저장소 | https://github.com/NBcampUnrealTrack/9th-Team12-CH3-Project.git |
 | Unreal Engine | 5.8 |
@@ -18,6 +18,18 @@
 | 형상 관리 | Git / Git LFS |
 
 ---
+
+## 혹시 에디터키고 푸시날려서 수정하지않은 파일이 수정사항으로 뜨시나요?
+
+저런! 그렇다면 아래 지침을 확인하십시오.
+
+```bash
+git reset --hard HEAD
+
+git fetch origin
+
+git reset --hard origin/dev
+```
 
 ## 커밋 규칙
 
